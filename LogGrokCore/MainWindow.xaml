@@ -1,0 +1,42 @@
+﻿<mahapps:MetroWindow x:Class="LogGrokCore.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:avalonDock="http://schemas.xceed.com/wpf/xaml/avalondock"
+        xmlns:local="clr-namespace:LogGrokCore"
+        xmlns:localBehaviors="clr-namespace:LogGrokCore.AvalonDock"
+        xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
+        mc:Ignorable="d"
+        Title="LOGGROK" Height="450" Width="800">
+    <mahapps:MetroWindow.Resources>
+        <ResourceDictionary>
+            <DataTemplate x:Key="DocumentTemplate">
+                <TextBlock Text="{Binding Text}"/>
+            </DataTemplate>
+        </ResourceDictionary>
+    </mahapps:MetroWindow.Resources>
+    <Grid>
+
+        <avalonDock:DockingManager x:Name="DockingManager"
+                                   Grid.Row="1"
+                                   localBehaviors:BindingBehavior.CurrentDocument="{Binding CurrentDocument}"
+                                   localBehaviors:BindingBehavior.DocumentViewTemplate="{StaticResource DocumentTemplate}"
+                                   localBehaviors:BindingBehavior.DocumentsSource="{Binding Documents}">
+            <avalonDock:DockingManager.LayoutItemContainerStyle>
+                <Style TargetType="{x:Type avalonDock:LayoutItem}">
+                    <Setter Property="Title" Value="{Binding Model.Content.Title}" />
+                    <Setter Property="ToolTip" Value="{Binding Model.Content.Title}" />
+                </Style>
+            </avalonDock:DockingManager.LayoutItemContainerStyle>
+            <avalonDock:LayoutRoot>
+                <avalonDock:LayoutPanel Orientation="Vertical">
+                    <avalonDock:LayoutDocumentPane />
+                </avalonDock:LayoutPanel>
+            </avalonDock:LayoutRoot>
+
+        </avalonDock:DockingManager>
+
+
+    </Grid>
+</mahapps:MetroWindow>
