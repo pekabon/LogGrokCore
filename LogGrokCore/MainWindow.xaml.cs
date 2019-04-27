@@ -1,7 +1,5 @@
 ﻿using MahApps.Metro.Controls;
-using ReactiveUI;
 using Splat;
-using System.Windows;
 
 namespace LogGrokCore
 {

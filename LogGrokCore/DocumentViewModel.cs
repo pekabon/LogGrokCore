@@ -1,8 +1,6 @@
 ﻿using ReactiveUI;
-using System;
 using System.Diagnostics;
 using System.IO;
-using System.Reactive;
 using System.Windows.Input;
 
 namespace LogGrokCore
@@ -29,8 +27,8 @@ namespace LogGrokCore
         {
             var filePath = _document.FilePath;
 
-            var cmdLine = File.Exists(filePath) 
-                ? $"/select, {filePath}" 
+            var cmdLine = File.Exists(filePath)
+                ? $"/select, {filePath}"
                 : $"/select, {Directory.GetParent(filePath).FullName}";
 
             _ = Process.Start("explorer.exe", cmdLine);

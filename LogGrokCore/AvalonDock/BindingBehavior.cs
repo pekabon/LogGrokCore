@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -63,7 +61,7 @@ namespace LogGrokCore.AvalonDock
         {
             return (ICommand)dockingManager.GetValue(OnDocumentCloseCommandProperty);
         }
-        
+
         public static void SetCurrentDocument(DockingManager dockingManager, object value)
         {
             dockingManager.SetValue(CurrentDocumentProperty, value);
@@ -79,14 +77,14 @@ namespace LogGrokCore.AvalonDock
             return (DataTemplateSelector)dockingManager.GetValue(DocumentViewTemplateSelectorProperty);
         }
 
-        private static void OnCurrentDocumentChanged(DependencyObject d, DependencyPropertyChangedEventArgs args) 
+        private static void OnCurrentDocumentChanged(DependencyObject d, DependencyPropertyChangedEventArgs args)
         {
             var dockingManager = (DockingManager)d;
 
-            var documentToDocumentViewLink = 
+            var documentToDocumentViewLink =
                 (ObservableCollectionFactoryLink<UIElement>?)GetObservableCollectionFactoryLink(dockingManager);
 
-            if (documentToDocumentViewLink != null && 
+            if (documentToDocumentViewLink != null &&
                 documentToDocumentViewLink.TargetFromSource(args.NewValue).HasValue)
             {
                 dockingManager.ActiveContent = documentToDocumentViewLink.TargetFromSource(args.NewValue).Value;
@@ -100,7 +98,7 @@ namespace LogGrokCore.AvalonDock
             void SetDocumentsSourceWithViewFactory(IList documentsSource, Func<object, UIElement> factory)
             {
                 var targetCollection = new ObservableCollection<UIElement>();
-                var documentToDocumentViewLink = 
+                var documentToDocumentViewLink =
                     new ObservableCollectionFactoryLink<UIElement>(documentsSource, targetCollection, factory);
 
                 SetObservableCollectionFactoryLink(dockingManager, documentToDocumentViewLink);
@@ -112,12 +110,8 @@ namespace LogGrokCore.AvalonDock
                     documentsSource.Remove(closedSource.Value);
 
                     var command = GetOnDocumentCloseCommand(dockingManager);
-                    if (command != null)
-                    {
-                        command.Execute(closedSource.Value);
-                    }
+                    command?.Execute(closedSource.Value);
                 };
-
 
                 dockingManager.ActiveContentChanged += (_, __) =>
                         {
@@ -143,7 +137,7 @@ namespace LogGrokCore.AvalonDock
 
             void SetDocumentsSourceWithTemplateSelector(IList documents, DataTemplateSelector templateSelector)
             {
-                UIElement DocumentViewFactory(object doc) 
+                UIElement DocumentViewFactory(object doc)
                 {
                     return new ContentControl { Content = doc,
                         ContentTemplate = templateSelector.SelectTemplate(doc, null) };
@@ -152,9 +146,9 @@ namespace LogGrokCore.AvalonDock
                 SetDocumentsSourceWithViewFactory(documents, DocumentViewFactory);
             }
 
-            var (ds, dt, dts) = 
-                (GetDocumentsSource(dockingManager), 
-                GetDocumentViewTemplate(dockingManager), 
+            var (ds, dt, dts) =
+                (GetDocumentsSource(dockingManager),
+                GetDocumentViewTemplate(dockingManager),
                 GetDocumentViewTemplateSelector(dockingManager));
 
             switch ((ds, dt, dts))
@@ -169,7 +163,7 @@ namespace LogGrokCore.AvalonDock
                     break;
                 case (_, object dd, object t) when dd != null && t != null:
                     throw new InvalidOperationException("Unable set DocumentViewTemplate & DocumentViewTemplateSelector simultaniously");
-                case (_, _, _) : break;                    
+                case (_, _, _) : break;
             }
         }
     }
