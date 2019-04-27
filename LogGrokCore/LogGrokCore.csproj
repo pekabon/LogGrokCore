@@ -10,14 +10,16 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <WarningsAsErrors>NU1605, CS8604, CS8625,  CS8602, CS8618</WarningsAsErrors>
+    <WarningsAsErrors>NU1605, CS8604, CS8625,  CS8602, CS8618, CS8601</WarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Functional.Maybe" Version="2.0.10" />
     <PackageReference Include="MahApps.Metro" Version="2.0.0-alpha0262" />
     <PackageReference Include="MiqM.Xceed.Wpf.Toolkit.NETCore" Version="3.4.0.1" />
-    <PackageReference Include="ReactiveUI" Version="10.0.0-preview.3" />
+    <PackageReference Include="ReactiveUI" Version="10.0.1-preview.2" />
+    <PackageReference Include="Splat.DryIoc" Version="8.0.0-dotnet3-preview.5" />
+    <PackageReference Include="TextCopy" Version="1.5.2" />
   </ItemGroup>
 
 </Project>

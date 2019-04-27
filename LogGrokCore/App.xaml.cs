@@ -1,17 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Splat;
 using System.Windows;
+using DryIoc;
+using Splat.DryIoc;
 
 namespace LogGrokCore
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
     public partial class App : Application
     {
+        public App()
+        {
+            var container = new Container();
+            container.UseDryIocDependencyResolver();
+            RegisterDependencies(container);
+        }
+
+        private void RegisterDependencies(Container container)
+        {
+            container.Register<MainWindowViewModel>();
+        }
     }
 }

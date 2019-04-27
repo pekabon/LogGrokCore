@@ -4,7 +4,6 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:avalonDock="http://schemas.xceed.com/wpf/xaml/avalondock"
-        xmlns:local="clr-namespace:LogGrokCore"
         xmlns:localBehaviors="clr-namespace:LogGrokCore.AvalonDock"
         xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
         mc:Ignorable="d"
@@ -14,15 +13,35 @@
             <DataTemplate x:Key="DocumentTemplate">
                 <TextBlock Text="{Binding Text}"/>
             </DataTemplate>
+            <localBehaviors:MenuItemCollection x:Key="AdditionalDocumentMenuItems">
+                <MenuItem Header="Copy Full Path" Command="{Binding CopyPathToClipboardCommand}"></MenuItem>
+                <MenuItem Header="Open Containing Folder" Command="{Binding OpenContainingFolderCommand}"></MenuItem>
+            </localBehaviors:MenuItemCollection>
         </ResourceDictionary>
     </mahapps:MetroWindow.Resources>
+    <mahapps:MetroWindow.LeftWindowCommands>
+        <mahapps:WindowCommands>
+            <Menu>
+                <MenuItem Header="File">
+                    <MenuItem Command="{Binding OpenFileCommand}" Header="Open" />
+                    <Separator />
+                    <MenuItem Command="{Binding ExitCommand}" Header="Exit" />
+                </MenuItem>
+            </Menu>
+        </mahapps:WindowCommands>
+    </mahapps:MetroWindow.LeftWindowCommands>
+    <mahapps:MetroWindow.InputBindings>
+        <KeyBinding Command="{Binding OpenFileCommand}" Gesture="CTRL+O" />
+    </mahapps:MetroWindow.InputBindings>
     <Grid>
-
         <avalonDock:DockingManager x:Name="DockingManager"
                                    Grid.Row="1"
                                    localBehaviors:BindingBehavior.CurrentDocument="{Binding CurrentDocument}"
                                    localBehaviors:BindingBehavior.DocumentViewTemplate="{StaticResource DocumentTemplate}"
-                                   localBehaviors:BindingBehavior.DocumentsSource="{Binding Documents}">
+                                   localBehaviors:BindingBehavior.DocumentsSource="{Binding Documents}"
+                                   localBehaviors:DocumentContextMenu.AdditionalContextMenuItems=
+                                    "{StaticResource AdditionalDocumentMenuItems}">
+           
             <avalonDock:DockingManager.LayoutItemContainerStyle>
                 <Style TargetType="{x:Type avalonDock:LayoutItem}">
                     <Setter Property="Title" Value="{Binding Model.Content.Title}" />
@@ -34,9 +53,6 @@
                     <avalonDock:LayoutDocumentPane />
                 </avalonDock:LayoutPanel>
             </avalonDock:LayoutRoot>
-
         </avalonDock:DockingManager>
-
-
     </Grid>
 </mahapps:MetroWindow>
