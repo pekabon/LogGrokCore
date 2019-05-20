@@ -11,8 +11,9 @@
     <mahapps:MetroWindow.Resources>
         <ResourceDictionary>
             <DataTemplate x:Key="DocumentTemplate">
-                <TextBlock Text="{Binding Text}"/>
-            </DataTemplate>
+                <ListView ItemsSource="{Binding Lines}">
+                </ListView>
+             </DataTemplate>
             <localBehaviors:MenuItemCollection x:Key="AdditionalDocumentMenuItems">
                 <MenuItem Header="Copy Full Path" Command="{Binding Model.Content.CopyPathToClipboardCommand}"></MenuItem>
                 <MenuItem Header="Open Containing Folder" Command="{Binding Model.Content.OpenContainingFolderCommand}"></MenuItem>

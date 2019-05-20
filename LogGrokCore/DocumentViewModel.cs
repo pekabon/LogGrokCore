@@ -1,4 +1,5 @@
 ﻿using ReactiveUI;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Input;
@@ -13,6 +14,8 @@ namespace LogGrokCore
             _document = document;
             Title = Path.GetFileName(document.FilePath);
             Text = document.Content;
+            Lines = new ObservableCollection<string>(Text.Split(new[] { '\r', '\n' }));
+
             CopyPathToClipboardCommand = ReactiveCommand.Create(() => TextCopy.Clipboard.SetText(_document.FilePath));
             OpenContainingFolderCommand = ReactiveCommand.Create(OpenContainingFolder);
         }
@@ -20,8 +23,10 @@ namespace LogGrokCore
         public ICommand CopyPathToClipboardCommand { get; }
         public ICommand OpenContainingFolderCommand { get; }
         public string Title { get; }
-        
+
         public string Text { get; }
+
+        public ObservableCollection<string> Lines { get; }
 
         private void OpenContainingFolder()
         {
