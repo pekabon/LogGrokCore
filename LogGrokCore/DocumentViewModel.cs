@@ -13,9 +13,9 @@ namespace LogGrokCore
         {
             _document = document;
             Title = Path.GetFileName(document.FilePath);
-            Text = document.Content;
-            Lines = new ObservableCollection<string>(Text.Split(new[] { '\r', '\n' }));
 
+            Lines = new GrowingCollectionAdapter<string>(_document.Lines);
+                
             CopyPathToClipboardCommand = ReactiveCommand.Create(() => TextCopy.Clipboard.SetText(_document.FilePath));
             OpenContainingFolderCommand = ReactiveCommand.Create(OpenContainingFolder);
         }
@@ -24,9 +24,7 @@ namespace LogGrokCore
         public ICommand OpenContainingFolderCommand { get; }
         public string Title { get; }
 
-        public string Text { get; }
-
-        public ObservableCollection<string> Lines { get; }
+        public GrowingCollectionAdapter<string> Lines { get; }
 
         private void OpenContainingFolder()
         {

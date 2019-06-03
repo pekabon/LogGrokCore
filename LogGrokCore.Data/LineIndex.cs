@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using LogGrokCore.Data.Virtualization;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace LogGrokCore.Data
 {
-    public class LineIndex
+    public class LineIndex 
     {
         public (long offset, int lenghth) GetLine(int index)
         {
@@ -40,7 +42,7 @@ namespace LogGrokCore.Data
             _lastLineLength = lastLength;
         }
 
-        private List<long> _lineStarts = new List<long>();
+        private readonly List<long> _lineStarts = new List<long>();
         private int? _lastLineLength;
     }
 

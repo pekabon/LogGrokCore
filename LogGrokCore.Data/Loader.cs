@@ -7,13 +7,19 @@ namespace LogGrokCore.Data
 {
     public class Loader
     {
+        private readonly LineIndex _lineIndex;
+        private readonly byte[] _buffer = new byte[1024 * 1024];
+        private readonly Task _loadingTask;
+
         public Loader(Func<Stream> streamFactory)
         {
             var encoding = DetectEncoding(streamFactory());
             _loadingTask = Task.Factory.StartNew(() => Load(streamFactory(), encoding.GetBytes("\r"), encoding.GetBytes("\n")));
+            _lineIndex = new LineIndex();
+            LineProvider = new LineProvider(_lineIndex, streamFactory, encoding);
         }
 
-        public LineIndex LineIndex { get; } = new LineIndex();
+        public LineProvider LineProvider { get; }
 
         public bool IsLoading => !_loadingTask.IsCompleted;
 
@@ -39,7 +45,7 @@ namespace LogGrokCore.Data
                     else if (isInCrLfs)
                     {
                         isInCrLfs = false;
-                        LineIndex.Add(lineStart);
+                        _lineIndex.Add(lineStart);
                         lineStart = i + position;
                     }
                 }
@@ -47,7 +53,7 @@ namespace LogGrokCore.Data
 
                 if (bytesRead < _buffer.Length)
                 {
-                    LineIndex.Finish((int)(position - lineStart));
+                    _lineIndex.Finish((int)(position - lineStart));
                     break;
                 }
             }
@@ -59,9 +65,5 @@ namespace LogGrokCore.Data
             _ = reader.ReadLine();
             return reader.CurrentEncoding;
         }
-
-        private byte[] _buffer = new byte[4 * 1024 * 1024];
-        private Task _loadingTask;
     }
-
 }

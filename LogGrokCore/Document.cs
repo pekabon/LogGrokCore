@@ -1,21 +1,35 @@
-﻿using System;
+﻿using LogGrokCore.Data;
+using LogGrokCore.Data.Virtualization;
+using System;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace LogGrokCore
 {
     public class Document
     {
-        private readonly Lazy<string> _content;
+        private readonly Loader _loader;
 
         public string FilePath { get; }
 
-        public string Content => _content.Value;
+        public VirtualList<string> Lines { get; }
 
         public Document(string filePath)
         {
             FilePath = filePath;
+            _loader = new Loader(() => OpenFile(FilePath));
+            Lines = new VirtualList<string>(_loader.LineProvider);
+        }
 
-            _content = new Lazy<string>(() => File.ReadAllText(FilePath), true);
+        private static Stream OpenFile(string fileName)
+        {
+            const int bufferSize = 64 * 1024;
+            return new FileStream(fileName,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite,
+                bufferSize,
+                options: FileOptions.SequentialScan);
         }
     }
 }
