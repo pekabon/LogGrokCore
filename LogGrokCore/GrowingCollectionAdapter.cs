@@ -2,11 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Text;
 
 namespace LogGrokCore
 {
-    class GrowingCollectionAdapter<T> : IList<T>, IList, INotifyCollectionChanged
+    class GrowingCollectionAdapter<T> : IList<T>, IList, INotifyCollectionChanged, INotifyPropertyChanged
     {
         private IList<T> _sourceCollection;
 
@@ -22,15 +23,19 @@ namespace LogGrokCore
 
         public void UpdateCount()
         {
+            if (_count == _sourceCollection.Count)
+                return;
+
             _count = _sourceCollection.Count;
             CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Count)));
         }
 
         public T this[int index] { get => _sourceCollection[index]; set => _sourceCollection[index] = value; }
 
-        object IList.this[int index] { get => _sourceCollection[index]; set => throw new NotImplementedException(); }
+        object? IList.this[int index] { get => _sourceCollection[index]; set => throw new NotImplementedException(); }
 
-        public int Count => _count;
+        public int Count => _sourceCollection.Count;
 
         public bool IsReadOnly => _sourceCollection.IsReadOnly;
 
@@ -41,6 +46,7 @@ namespace LogGrokCore
         public object SyncRoot => SourceList.SyncRoot;
 
         public event NotifyCollectionChangedEventHandler CollectionChanged;
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public void Add(T item) => _sourceCollection.Add(item);
 

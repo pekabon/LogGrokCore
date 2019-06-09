@@ -14,6 +14,8 @@ namespace LogGrokCore
 
         public VirtualList<string> Lines { get; }
 
+        public bool IsLoading => _loader.IsLoading;
+
         public Document(string filePath)
         {
             FilePath = filePath;

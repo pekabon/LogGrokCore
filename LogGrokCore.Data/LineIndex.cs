@@ -26,8 +26,10 @@ namespace LogGrokCore.Data
         {
             get
             {
-                lock(_lineStarts)
-                return _lastLineLength.HasValue? _lineStarts.Count: _lineStarts.Count - 1;
+                lock (_lineStarts)
+                    //return _lastLineLength.HasValue? _lineStarts.Count: _lineStarts.Count - 1;
+                    return _lineStarts.Count;
+
             }
         }
 

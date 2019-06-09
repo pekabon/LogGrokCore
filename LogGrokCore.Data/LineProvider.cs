@@ -30,17 +30,19 @@ namespace LogGrokCore.Data
             var size = (int)(lastLineOffset + lastLineLength - startOffset);
 
             using var owner = MemoryPool<byte>.Shared.Rent(size);
-            using var stream = _streamFactory();
 
             var span = owner.Memory.Span.Slice(0, size);
 
+            using var stream = _streamFactory();
+            stream.Seek(startOffset, SeekOrigin.Begin);
             stream.Read(span);
+            
             var result = new List<string>(count);
             for (var i = start; i < start + count; i++)
             {
-                var (offset, len) = _lineIndex.GetLine(start);
+                var (offset, len) = _lineIndex.GetLine(i);
                 var lineSpan = span.Slice((int)(offset - startOffset), len);
-                result.Add(_encoding.GetString(lineSpan));
+                result.Add(_encoding.GetString(lineSpan).TrimEnd());
             }
             return result;
         }

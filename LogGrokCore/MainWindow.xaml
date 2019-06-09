@@ -5,13 +5,24 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:avalonDock="http://schemas.xceed.com/wpf/xaml/avalondock"
         xmlns:localBehaviors="clr-namespace:LogGrokCore.AvalonDock"
+        xmlns:localControls="clr-namespace:LogGrokCore.Controls"
         xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
         mc:Ignorable="d"
         Title="LOGGROK" Height="450" Width="800">
     <mahapps:MetroWindow.Resources>
         <ResourceDictionary>
             <DataTemplate x:Key="DocumentTemplate">
-                <ListView ItemsSource="{Binding Lines}">
+                <ListView ItemsSource="{Binding Lines}"
+                          FontFamily="Consolas"
+                          ScrollViewer.VerticalScrollBarVisibility="Visible"
+                          ScrollViewer.CanContentScroll="True"
+                          VirtualizingStackPanel.IsVirtualizing="True"
+                          VirtualizingStackPanel.VirtualizationMode="Recycling">
+                    <ListView.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <localControls:VirtualizingStackPanel/>
+                        </ItemsPanelTemplate>
+                    </ListView.ItemsPanel>
                 </ListView>
              </DataTemplate>
             <localBehaviors:MenuItemCollection x:Key="AdditionalDocumentMenuItems">
