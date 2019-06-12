@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -128,12 +129,12 @@ namespace LogGrokCore.Controls
             var necessaryChidrenTouch = this.Children;
             var itemContainerGenerator = (ItemContainerGenerator)ItemContainerGenerator;
             using var itemGenerator = new ItemGenerator(itemContainerGenerator, GeneratorDirection.Forward);
-            double currentOffset = relativeOffset;
+            double? currentOffset = null;
             int currentIndex = startIndex;
 
             var oldItems = new HashSet<VisibleItem>(currentVisibleItems, new GenericEqualityComparer<VisibleItem>());
             var newItems = new List<VisibleItem>();
-            while (currentOffset < heightToBuild)
+            while (currentOffset == null || currentOffset < heightToBuild)
             {
                 VisibleItem? item = currentVisibleItems.Search(item => item.Index == currentIndex);
                 if (item is VisibleItem existingItem)
@@ -142,7 +143,8 @@ namespace LogGrokCore.Controls
 
                     if (itemContainerGenerator.IndexFromContainer(existingItem.Element) >= 0)
                     {
-                        newItems.Add(existingItem.MoveTo(currentOffset));
+                        currentOffset = currentOffset ?? existingItem.Height * relativeOffset;
+                        newItems.Add(existingItem.MoveTo(currentOffset.Value));
                         currentIndex++;
                         currentOffset += existingItem.Height;
                         existingItem.Element.Measure(availableSize);
@@ -161,7 +163,8 @@ namespace LogGrokCore.Controls
                     InsertAndMeasureItem(itm, currentIndex, _recycled.Contains(itm), isNewlyRealized);
 
                     var itemHeight = itm.DesiredSize.Height;
-                    newItems.Add(new VisibleItem(itm, currentIndex, currentOffset, currentOffset + itemHeight));
+                    currentOffset = currentOffset ?? itemHeight * relativeOffset;
+                    newItems.Add(new VisibleItem(itm, currentIndex, currentOffset.Value, currentOffset.Value + itemHeight));
                     currentIndex++;
                     currentOffset += itemHeight;
 
@@ -285,7 +288,7 @@ namespace LogGrokCore.Controls
 
         public void LineDown()
         {
-            SetVerticalOffset(_offset.Y + 1);
+            ScrollDown(20);
         }
 
         public void LineLeft()
@@ -312,7 +315,7 @@ namespace LogGrokCore.Controls
 
         public void MouseWheelDown()
         {
-            throw new NotImplementedException();
+            ScrollDown(20); ;
         }
 
         public void MouseWheelLeft()
@@ -332,7 +335,7 @@ namespace LogGrokCore.Controls
 
         public void PageDown()
         {
-            throw new NotImplementedException();
+            ScrollDown(_viewPortHeightInPixels);
         }
 
         public void PageLeft()
@@ -381,18 +384,57 @@ namespace LogGrokCore.Controls
             // throw new NotImplementedException();
         }
 
+        private void ScrollUp(double distance)
+        {
+        }
+
         private void ScrollDown(double distance)
         {
             var lastItem =
-                _visibleItems.Search(v => v.UpperBound < _viewPort.Height
-                && GreaterOrEquals(v.LowerBound, _viewPort.Height));
+                _visibleItems.Search(v => v.UpperBound < _viewPortHeightInPixels
+                && GreaterOrEquals(v.LowerBound, _viewPortHeightInPixels));
 
             if (lastItem == null) return;
+
+            var lastItemValue = lastItem.Value;
+            var currentOffset = lastItemValue.LowerBound;
+            var currentIndex = lastItemValue.Index;
+
+            var itemContainerGenerator = (ItemContainerGenerator)ItemContainerGenerator;
+            using var itemGenerator = new ItemGenerator(itemContainerGenerator, GeneratorDirection.Forward);
+            var builtDistance = distance;
+            while (currentOffset - _viewPortHeightInPixels < distance)
+            {
+                currentIndex++;
+                var newItem = itemGenerator.GenerateNext(currentIndex, out var isNewlyRealized);
+
+                if (newItem is UIElement itm)
+                {
+                    InsertAndMeasureItem(itm, currentIndex, _recycled.Contains(itm), isNewlyRealized);
+                    var itemHeight = itm.DesiredSize.Height;
+                    _visibleItems.Add(new VisibleItem(itm, currentIndex, currentOffset, currentOffset + itemHeight));
+                    currentIndex++;
+                    currentOffset += itemHeight;
+                    continue;
+                }
+
+                builtDistance = currentOffset - _viewPortHeightInPixels;
+                break;
+            }
+
+            var itemToScroll = _visibleItems.Search(v => v.UpperBound < builtDistance
+                && GreaterOrEquals(v.LowerBound, builtDistance));
+
+            Debug.Assert(itemToScroll.HasValue);
+            var itemToScrollValue = itemToScroll.Value;
+
+            var delta = (builtDistance - itemToScrollValue.UpperBound) / itemToScrollValue.Height;
+            SetVerticalOffset(itemToScrollValue.Index + delta);
         }
 
         private static double epsilon = 0.00001;
 
-		private static bool Less(double d1, double d2) => d1 + epsilon < d2;
+        private static bool Less(double d1, double d2) => d1 + epsilon < d2;
 
         private static bool Greater(double d1, double d2) => d1 > d2 + epsilon;
 
