@@ -1,5 +1,4 @@
-﻿using Functional.Maybe;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -56,8 +55,8 @@ namespace LogGrokCore.AvalonDock
                 {
                     target.Remove(i);
 
-                    foreach (var s in SourceFromTarget(i).ToEnumerable())
-                    {
+                    if (SourceFromTarget(i) is object s)
+                    { 
                         _sourceToTargetMapping.Remove(s);
                     }
                 }
@@ -80,22 +79,22 @@ namespace LogGrokCore.AvalonDock
             TargetCollection.CollectionChanged += (_, __) => SyncTargetChanges(SourceCollection, TargetCollection);
         }
 
-        public Maybe<object> SourceFromTarget(TTarget target) 
+        public object? SourceFromTarget(TTarget target)
         {
             var result = _sourceToTargetMapping.FirstOrDefault(kv => ReferenceEquals(kv.Value, target));
 
             if (result.Equals(default(KeyValuePair<object, TTarget>)))
-                return Maybe<object>.Nothing;
+                return null;
             else
-                return result.Key.ToMaybe();
+                return result.Key;
         }
 
-        public Maybe<TTarget> TargetFromSource(object source) 
+        public TTarget? TargetFromSource(object source)
         {
             if (source == null || !_sourceToTargetMapping.ContainsKey(source))
-                return Maybe<TTarget>.Nothing;
+                return null;
             else
-                return _sourceToTargetMapping[source].ToMaybe();
-        }        
+                return _sourceToTargetMapping[source];
+        }
     }
 }

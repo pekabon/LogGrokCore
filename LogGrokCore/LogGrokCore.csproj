@@ -12,7 +12,6 @@
 
 
   <ItemGroup>
-    <PackageReference Include="Functional.Maybe" Version="2.0.10" />
     <PackageReference Include="MahApps.Metro" Version="2.0.0-alpha0262" />
     <PackageReference Include="MiqM.Xceed.Wpf.Toolkit.NETCore" Version="3.4.0.1" />
     <PackageReference Include="ReactiveUI.WPF" Version="10.0.1-preview.2" />

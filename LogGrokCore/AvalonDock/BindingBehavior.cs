@@ -84,10 +84,9 @@ namespace LogGrokCore.AvalonDock
             var documentToDocumentViewLink =
                 (ObservableCollectionFactoryLink<UIElement>?)GetObservableCollectionFactoryLink(dockingManager);
 
-            if (documentToDocumentViewLink != null &&
-                documentToDocumentViewLink.TargetFromSource(args.NewValue).HasValue)
+            if (documentToDocumentViewLink?.TargetFromSource(args.NewValue) != null)
             {
-                dockingManager.ActiveContent = documentToDocumentViewLink.TargetFromSource(args.NewValue).Value;
+                dockingManager.ActiveContent = documentToDocumentViewLink.TargetFromSource(args.NewValue);
             }
         }
 
@@ -107,10 +106,10 @@ namespace LogGrokCore.AvalonDock
                 dockingManager.DocumentClosed += (_, args) =>
                 {
                     var closedSource = documentToDocumentViewLink.SourceFromTarget((UIElement)args.Document.Content);
-                    documentsSource.Remove(closedSource.Value);
+                    documentsSource.Remove(closedSource);
 
                     var command = GetOnDocumentCloseCommand(dockingManager);
-                    command?.Execute(closedSource.Value);
+                    command?.Execute(closedSource);
                 };
 
                 dockingManager.ActiveContentChanged += (_, __) =>
@@ -118,9 +117,9 @@ namespace LogGrokCore.AvalonDock
                             var activeSource =
                                 documentToDocumentViewLink.SourceFromTarget((UIElement)dockingManager.ActiveContent);
 
-                            if (activeSource.HasValue)
+                            if (activeSource is object value)
                             {
-                                SetCurrentDocument(dockingManager, activeSource.Value);
+                                SetCurrentDocument(dockingManager, value);
                             }
                         };
             }
