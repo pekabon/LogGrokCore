@@ -8,37 +8,6 @@ using System.Windows.Media;
 
 namespace LogGrokCore.Controls
 {
-    public static class ListExtensions
-    {
-        public static T? Search<T>(this List<T> source, Predicate<T> predicate) where T : struct
-        {
-            var idx = source.FindIndex(predicate);
-            if (idx >= 0)
-                return source[idx];
-            return null;
-        }
-
-        public static T? TakeFirst<T>(this IEnumerable<T> source) where T : struct
-        {
-            if (source.Any())
-                return source.First();
-            else
-                return null;
-        }
-    }
-
-    public class GenericEqualityComparer<T> : EqualityComparer<T> where T : struct, IEquatable<T>
-    {
-        public override bool Equals(T x, T y)
-        {
-            return x.Equals(y);
-        }
-
-        public override int GetHashCode(T obj)
-        {
-            return obj.GetHashCode();
-        }
-    }
 
     public class VirtualizingStackPanel : VirtualizingPanel, IScrollInfo
     {
@@ -125,8 +94,7 @@ namespace LogGrokCore.Controls
 
             return finalSize;
 		}
-
-
+        
         private void MeasureOverrideCore(Size availableSize, double verticalOffset, int count)
         {
             var firstVisibleItemIndex = (int)Math.Floor(verticalOffset);
@@ -152,14 +120,14 @@ namespace LogGrokCore.Controls
             }
         }
 
-        private (List<VisibleItem> newVisibleItems, List<VisibleItem> newItemsToRecycle) GenerateItemsDownWithRelativeOffset(
-            double relativeOffset, int startIndex,
-            double heightToBuild, List<VisibleItem> currentVisibleItems, Size availableSize)
+        private (List<VisibleItem> newVisibleItems, List<VisibleItem> newItemsToRecycle) 
+            GenerateItemsDownWithRelativeOffset(
+                double relativeOffset, int startIndex,
+                double heightToBuild, List<VisibleItem> currentVisibleItems, Size availableSize)
         {
             var necessaryChidrenTouch = this.Children;
             var itemContainerGenerator = (ItemContainerGenerator)ItemContainerGenerator;
             using var itemGenerator = new ItemGenerator(itemContainerGenerator, GeneratorDirection.Forward);
-
             double currentOffset = relativeOffset;
             int currentIndex = startIndex;
 
@@ -168,7 +136,6 @@ namespace LogGrokCore.Controls
             while (currentOffset < heightToBuild)
             {
                 VisibleItem? item = currentVisibleItems.Search(item => item.Index == currentIndex);
-
                 if (item is VisibleItem existingItem)
                 {
                     oldItems.Remove(existingItem);
@@ -224,7 +191,7 @@ namespace LogGrokCore.Controls
         }
 
         private void InsertAndMeasureItem(UIElement item, int itemIndex, bool isRecycled, bool isNewElement)
-	{
+	    {
 
         if (InternalChildren == null || !InternalChildren.Cast<UIElement>().Contains(item))
                 AddInternalChild(item);
@@ -292,9 +259,9 @@ namespace LogGrokCore.Controls
 
 			if (viewPort != _viewPort)
             {
-            _viewPort = viewPort;
-            if (ScrollOwner != null) ScrollOwner.InvalidateScrollInfo();
-            SetVerticalOffset(VerticalOffset);
+                _viewPort = viewPort;
+                if (ScrollOwner != null) ScrollOwner.InvalidateScrollInfo();
+                SetVerticalOffset(VerticalOffset);
             }
         }
 
@@ -412,6 +379,15 @@ namespace LogGrokCore.Controls
         {
             // TODO
             // throw new NotImplementedException();
+        }
+
+        private void ScrollDown(double distance)
+        {
+            var lastItem =
+                _visibleItems.Search(v => v.UpperBound < _viewPort.Height
+                && GreaterOrEquals(v.LowerBound, _viewPort.Height));
+
+            if (lastItem == null) return;
         }
 
         private static double epsilon = 0.00001;

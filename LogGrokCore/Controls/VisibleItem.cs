@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using System.Windows;
 
 namespace LogGrokCore.Controls
@@ -24,8 +22,20 @@ namespace LogGrokCore.Controls
         public readonly double UpperBound;
         
         public readonly double LowerBound;
-
         public double Height => LowerBound - UpperBound;
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+                hash = hash * 23 + Element.GetHashCode();
+                hash = hash * 23 + Index.GetHashCode();
+                hash = hash * 23 + UpperBound.GetHashCode();
+                hash = hash * 23 + LowerBound.GetHashCode();
+                return hash;
+            }
+        }
 
         public VisibleItem Move(double offset) => new VisibleItem(Element, Index, UpperBound + offset, LowerBound + offset);
 
