@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Buffers;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace LogGrokCore.Data
@@ -8,8 +10,8 @@ namespace LogGrokCore.Data
     public class Loader
     {
         private readonly LineIndex _lineIndex;
-        private readonly byte[] _buffer = new byte[1024 * 1024];
         private readonly Task _loadingTask;
+        private const int BufferSize = 1024*1024;
 
         public Loader(Func<Stream> streamFactory)
         {
@@ -30,32 +32,41 @@ namespace LogGrokCore.Data
             long position = 0;
             int crLength = cr.Length;
 
-            while (true)
+            var buffer = ArrayPool<byte>.Shared.Rent(BufferSize);
+  
+            try
             {
-                var bytesRead = stream.Read(_buffer, 0, _buffer.Length);
-                var data = _buffer.AsSpan();
-                
-                for (int i = 0; i < data.Length; i+= crLength)
+                while (true)
                 {
-                    var current = data.Slice(i, crLength);
-                    if (current.SequenceEqual(cr) || current.SequenceEqual(lf))
-                    {
-                        isInCrLfs = true;
-                    }
-                    else if (isInCrLfs)
-                    {
-                        isInCrLfs = false;
-                        _lineIndex.Add(lineStart);
-                        lineStart = i + position;
-                    }
-                }
-                position += bytesRead;
+                    var bytesRead = stream.Read(buffer, 0, BufferSize);
+                    var data = buffer.AsSpan();
 
-                if (bytesRead < _buffer.Length)
-                {
-                    _lineIndex.Finish((int)(position - lineStart));
-                    break;
+                    for (int i = 0; i < data.Length; i += crLength)
+                    {
+                        var current = data.Slice(i, crLength);
+                        if (current.SequenceEqual(cr) || current.SequenceEqual(lf))
+                        {
+                            isInCrLfs = true;
+                        }
+                        else if (isInCrLfs)
+                        {
+                            isInCrLfs = false;
+                            _lineIndex.Add(lineStart);
+                            lineStart = i + position;
+                        }
+                    }
+                    position += bytesRead;
+
+                    if (bytesRead < BufferSize)
+                    {
+                        _lineIndex.Finish((int)(position - lineStart));
+                        break;
+                    }
                 }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
             }
         }
 
