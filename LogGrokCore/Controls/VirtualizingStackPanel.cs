@@ -9,7 +9,6 @@ using System.Windows.Media;
 
 namespace LogGrokCore.Controls
 {
-
     public class VirtualizingStackPanel : VirtualizingPanel, IScrollInfo
     {
         private readonly TranslateTransform _trans = new TranslateTransform();
@@ -33,7 +32,7 @@ namespace LogGrokCore.Controls
             UpdateExtent();
             var count = ItemsControl.GetItemsOwner(this).Items.Count;
             if (count > 0)
-                MeasureOverrideCore(availableSize, VerticalOffset, count);
+                MeasureOverrideCore(availableSize, VerticalOffset);
 
             return (availableSize.Height == double.PositiveInfinity) ? new Size(1, 1) : availableSize;
         }
@@ -47,13 +46,13 @@ namespace LogGrokCore.Controls
 
             var renderOffset = visibleElements.TakeFirst() switch
             {
-                VisibleItem(var firstItem, var firstIndex, _, _) v 
+                VisibleItem(var firstItem, var firstIndex, _, _) v
                     => (firstIndex - VerticalOffset) * firstItem.DesiredSize.Height,
                 _ => 0
             };
 
-            _trans.Y = renderOffset;               
-			var offset = 0.0;
+            _trans.Y = renderOffset;
+            var offset = 0.0;
 
 			foreach(var visibleItem in visibleElements)
 			{
@@ -95,13 +94,13 @@ namespace LogGrokCore.Controls
 
             return finalSize;
 		}
-        
-        private void MeasureOverrideCore(Size availableSize, double verticalOffset, int count)
+
+        private void MeasureOverrideCore(Size availableSize, double verticalOffset)
         {
             var firstVisibleItemIndex = (int)Math.Floor(verticalOffset);
             var startOffset = firstVisibleItemIndex - verticalOffset;
 
-            var (newVisibleItems, itemsToRecycle) = 
+            var (newVisibleItems, itemsToRecycle) =
                 GenerateItemsDownWithRelativeOffset(
                     startOffset, firstVisibleItemIndex, availableSize.Height, _visibleItems, availableSize);
 
@@ -143,7 +142,7 @@ namespace LogGrokCore.Controls
 
                     if (itemContainerGenerator.IndexFromContainer(existingItem.Element) >= 0)
                     {
-                        currentOffset = currentOffset ?? existingItem.Height * relativeOffset;
+                        currentOffset ??= existingItem.Height * relativeOffset;
                         newItems.Add(existingItem.MoveTo(currentOffset.Value));
                         currentIndex++;
                         currentOffset += existingItem.Height;
@@ -163,7 +162,7 @@ namespace LogGrokCore.Controls
                     InsertAndMeasureItem(itm, currentIndex, _recycled.Contains(itm), isNewlyRealized);
 
                     var itemHeight = itm.DesiredSize.Height;
-                    currentOffset = currentOffset ?? itemHeight * relativeOffset;
+                    currentOffset ??= itemHeight * relativeOffset;
                     newItems.Add(new VisibleItem(itm, currentIndex, currentOffset.Value, currentOffset.Value + itemHeight));
                     currentIndex++;
                     currentOffset += itemHeight;
@@ -286,76 +285,43 @@ namespace LogGrokCore.Controls
 
         public ScrollViewer? ScrollOwner { get; set; }
 
-        public void LineDown()
-        {
-            ScrollDown(20);
-        }
+        public void LineDown() => ScrollDown(20);
 
-        public void LineLeft()
-        {
-            throw new NotImplementedException();
-        }
+        public void LineLeft() => SetHorizontalOffset(HorizontalOffset - _viewPort.Width / 2);
 
-        public void LineRight()
-        {
-            SetVerticalOffset(_offset.X + 1);
-        }
+        public void LineRight() => SetHorizontalOffset(HorizontalOffset + _viewPort.Width / 2);
 
-        public void LineUp()
-        {
-            ScrollUp(20);
-        }
+        public void LineUp() => ScrollUp(20);
 
-        public Rect MakeVisible(Visual visual, Rect rectangle)
-        {
-            // TODO
-            // throw new NotImplementedException();
-            return new Rect();
-        }
+        public Rect MakeVisible(Visual visual, Rect rectangle) => new Rect();
 
-        public void MouseWheelDown()
-        {
-            ScrollDown(20);
-        }
+        public void MouseWheelDown() => ScrollDown(ScrollUnitPixels);
 
-        public void MouseWheelLeft()
-        {
-            throw new NotImplementedException();
-        }
+        public void MouseWheelLeft() => SetHorizontalOffset(HorizontalOffset - _viewPort.Width / 2.0);
 
-        public void MouseWheelRight()
-        {
-            throw new NotImplementedException();
-        }
+        public void MouseWheelRight() => SetHorizontalOffset(HorizontalOffset + _viewPort.Width / 2.0);
 
-        public void MouseWheelUp()
-        {
-            ScrollUp(20);
-        }
+        public void MouseWheelUp() => ScrollUp(ScrollUnitPixels);
 
-        public void PageDown()
-        {
-            ScrollDown(_viewPortHeightInPixels);
-        }
+        public void PageDown() => ScrollDown(_viewPortHeightInPixels);
 
-        public void PageLeft()
-        {
-            ScrollUp(_viewPortHeightInPixels);
-        }
+        public void PageLeft() => SetHorizontalOffset(_offset.X - _viewPort.Width);
 
-        public void PageRight()
-        {
-            throw new NotImplementedException();
-        }
+        public void PageRight() => SetHorizontalOffset(_offset.X + _viewPort.Width);
 
-        public void PageUp()
-        {
-            throw new NotImplementedException();
-        }
+        public void PageUp() => ScrollUp(_viewPortHeightInPixels);
 
         public void SetHorizontalOffset(double offset)
         {
-            throw new NotImplementedException();
+            var fixedOffset =
+                offset switch
+                {
+                    _ when offset < 0 || _viewPort.Width > _extent.Width    => 0.0,
+                    _ when offset + _viewPort.Width >= _extent.Width        => _extent.Width - _viewPort.Width,
+                    _                                                       => offset
+                };
+            _offset.X = fixedOffset;
+            _trans.X = -fixedOffset;
         }
 
         public void SetVerticalOffset(double offset)
@@ -394,7 +360,7 @@ namespace LogGrokCore.Controls
 
             var itemContainerGenerator = (ItemContainerGenerator)ItemContainerGenerator;
             using var itemGenerator = new ItemGenerator(itemContainerGenerator, GeneratorDirection.Backward);
-            
+
             var firstVisibleItemValue = firstVisibleItem.Value;
             var currentOffset = firstVisibleItemValue.UpperBound;
             var currentIndex = firstVisibleItemValue.Index;
@@ -409,26 +375,25 @@ namespace LogGrokCore.Controls
                 {
                     InsertAndMeasureItem(itm, currentIndex, _recycled.Contains(itm), isNewlyRealized);
                     var itemHeight = itm.DesiredSize.Height;
-                    _visibleItems.Add(new VisibleItem(itm, currentIndex, currentOffset, currentOffset + itemHeight));
+                    _visibleItems.Add(new VisibleItem(itm, currentIndex, currentOffset - itemHeight, currentOffset));
                     currentOffset -= itemHeight;
                     continue;
                 }
 
                 builtDistance = currentOffset;
+                break;
             }
 
             _visibleItems.Sort((a, b) => a.Index - b.Index);
 
-            var itemToScroll = _visibleItems.Search(v => v.UpperBound < builtDistance
-                && GreaterOrEquals(v.LowerBound, builtDistance));
+            var itemToScroll = _visibleItems.Search(v => LessOrEquals(v.UpperBound, builtDistance)
+                && v.LowerBound > builtDistance);
 
             Debug.Assert(itemToScroll.HasValue);
             var itemToScrollValue = itemToScroll.Value;
 
-            var delta = (builtDistance - itemToScrollValue.UpperBound) / itemToScrollValue.Height;
+            var delta = (itemToScrollValue.UpperBound - builtDistance) / itemToScrollValue.Height;
             SetVerticalOffset(itemToScrollValue.Index + delta);
-
-
         }
 
         private void ScrollDown(double distance)
@@ -474,11 +439,13 @@ namespace LogGrokCore.Controls
             SetVerticalOffset(itemToScrollValue.Index + delta);
         }
 
-        private static double epsilon = 0.00001;
+        private const double Epsilon = 0.00001;
 
-        private static bool Less(double d1, double d2) => d1 + epsilon < d2;
+        private const double ScrollUnitPixels = 60;
 
-        private static bool Greater(double d1, double d2) => d1 > d2 + epsilon;
+        private static bool Less(double d1, double d2) => d1 + Epsilon < d2;
+
+        private static bool Greater(double d1, double d2) => d1 > d2 + Epsilon;
 
         private static bool GreaterOrEquals(double d1, double d2) => !Less(d1, d2);
 

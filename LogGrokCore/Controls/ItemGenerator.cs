@@ -8,16 +8,15 @@ namespace LogGrokCore.Controls
     internal class ItemGenerator : IDisposable
     {
         private readonly ItemContainerGenerator _itemContainerGenerator;
-        private readonly IDisposable _batches;
         private readonly GeneratorDirection _direction;
 
+        private IDisposable? _batches;
         private IDisposable? _generatorState;
         private int? _lastIndex;
 
         public ItemGenerator(ItemContainerGenerator itemContainerGenerator, GeneratorDirection direction)
         {
             _itemContainerGenerator = itemContainerGenerator;
-            _batches = itemContainerGenerator.GenerateBatches();
             _direction = direction;
         }
 
@@ -29,6 +28,7 @@ namespace LogGrokCore.Controls
                 return null;
             }
 
+            _batches ??= _itemContainerGenerator.GenerateBatches();
             var generator = (IItemContainerGenerator)_itemContainerGenerator;
             var supposedPrevIndex = (_direction == GeneratorDirection.Forward)
                         ? currentIndex - 1 : currentIndex + 1;
@@ -48,7 +48,7 @@ namespace LogGrokCore.Controls
         public void Dispose()
         {
             _generatorState?.Dispose();
-            _batches.Dispose();
+            _batches?.Dispose();
         }
     }
 }
