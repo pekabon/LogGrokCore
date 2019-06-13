@@ -52,7 +52,7 @@ namespace LogGrokCore.Controls
                 _ => 0
             };
 
-            _trans.Y = renderOffset;                
+            _trans.Y = renderOffset;               
 			var offset = 0.0;
 
 			foreach(var visibleItem in visibleElements)
@@ -303,7 +303,7 @@ namespace LogGrokCore.Controls
 
         public void LineUp()
         {
-            SetVerticalOffset(_offset.Y -1);
+            ScrollUp(20);
         }
 
         public Rect MakeVisible(Visual visual, Rect rectangle)
@@ -315,7 +315,7 @@ namespace LogGrokCore.Controls
 
         public void MouseWheelDown()
         {
-            ScrollDown(20); ;
+            ScrollDown(20);
         }
 
         public void MouseWheelLeft()
@@ -330,7 +330,7 @@ namespace LogGrokCore.Controls
 
         public void MouseWheelUp()
         {
-            throw new NotImplementedException();
+            ScrollUp(20);
         }
 
         public void PageDown()
@@ -340,7 +340,7 @@ namespace LogGrokCore.Controls
 
         public void PageLeft()
         {
-            throw new NotImplementedException();
+            ScrollUp(_viewPortHeightInPixels);
         }
 
         public void PageRight()
@@ -386,6 +386,49 @@ namespace LogGrokCore.Controls
 
         private void ScrollUp(double distance)
         {
+            var firstVisibleItem=
+                _visibleItems.Search(v => LessOrEquals(v.UpperBound, 0)
+                && v.LowerBound > 0);
+
+            if (firstVisibleItem == null) return;
+
+            var itemContainerGenerator = (ItemContainerGenerator)ItemContainerGenerator;
+            using var itemGenerator = new ItemGenerator(itemContainerGenerator, GeneratorDirection.Backward);
+            
+            var firstVisibleItemValue = firstVisibleItem.Value;
+            var currentOffset = firstVisibleItemValue.UpperBound;
+            var currentIndex = firstVisibleItemValue.Index;
+            var builtDistance = -distance;
+
+            while (currentOffset > -distance)
+            {
+                currentIndex--;
+                var newItem = itemGenerator.GenerateNext(currentIndex, out var isNewlyRealized);
+
+                if (newItem is UIElement itm)
+                {
+                    InsertAndMeasureItem(itm, currentIndex, _recycled.Contains(itm), isNewlyRealized);
+                    var itemHeight = itm.DesiredSize.Height;
+                    _visibleItems.Add(new VisibleItem(itm, currentIndex, currentOffset, currentOffset + itemHeight));
+                    currentOffset -= itemHeight;
+                    continue;
+                }
+
+                builtDistance = currentOffset;
+            }
+
+            _visibleItems.Sort((a, b) => a.Index - b.Index);
+
+            var itemToScroll = _visibleItems.Search(v => v.UpperBound < builtDistance
+                && GreaterOrEquals(v.LowerBound, builtDistance));
+
+            Debug.Assert(itemToScroll.HasValue);
+            var itemToScrollValue = itemToScroll.Value;
+
+            var delta = (builtDistance - itemToScrollValue.UpperBound) / itemToScrollValue.Height;
+            SetVerticalOffset(itemToScrollValue.Index + delta);
+
+
         }
 
         private void ScrollDown(double distance)
@@ -413,7 +456,6 @@ namespace LogGrokCore.Controls
                     InsertAndMeasureItem(itm, currentIndex, _recycled.Contains(itm), isNewlyRealized);
                     var itemHeight = itm.DesiredSize.Height;
                     _visibleItems.Add(new VisibleItem(itm, currentIndex, currentOffset, currentOffset + itemHeight));
-                    currentIndex++;
                     currentOffset += itemHeight;
                     continue;
                 }

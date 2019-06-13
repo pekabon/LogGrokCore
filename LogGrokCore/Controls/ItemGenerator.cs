@@ -7,7 +7,7 @@ namespace LogGrokCore.Controls
 {
     internal class ItemGenerator : IDisposable
     {
-        private readonly IItemContainerGenerator _itemContainerGenerator;
+        private readonly ItemContainerGenerator _itemContainerGenerator;
         private readonly IDisposable _batches;
         private readonly GeneratorDirection _direction;
 
@@ -23,22 +23,24 @@ namespace LogGrokCore.Controls
 
         public DependencyObject? GenerateNext(int currentIndex, out bool isNewlyRealized)
         {
-            var supposedPrevIndex = (_direction == GeneratorDirection.Forward)
-                                    ? currentIndex - 1 : currentIndex + 1;
-            if (currentIndex < 0)
+            if (currentIndex < 0 || currentIndex >= _itemContainerGenerator.Items.Count)
             {
                 isNewlyRealized = false;
                 return null;
             }
 
+            var generator = (IItemContainerGenerator)_itemContainerGenerator;
+            var supposedPrevIndex = (_direction == GeneratorDirection.Forward)
+                        ? currentIndex - 1 : currentIndex + 1;
+
             if (_generatorState == null || _lastIndex is int idx && idx != supposedPrevIndex)
             {
                 _generatorState?.Dispose();
-                var position = _itemContainerGenerator.GeneratorPositionFromIndex(currentIndex);
-                _generatorState = _itemContainerGenerator.StartAt(position, _direction, true);
+                var position = generator.GeneratorPositionFromIndex(currentIndex);
+                _generatorState = generator.StartAt(position, _direction, true);
             }
 
-            var result = _itemContainerGenerator.GenerateNext(out isNewlyRealized);
+            var result = generator.GenerateNext(out isNewlyRealized);
             if (result != null) _lastIndex = currentIndex;
             return result;
         }
