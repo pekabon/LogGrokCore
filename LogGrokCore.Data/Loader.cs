@@ -33,15 +33,15 @@ namespace LogGrokCore.Data
             int crLength = cr.Length;
 
             var buffer = ArrayPool<byte>.Shared.Rent(BufferSize);
-  
+            var bufferSize = BufferSize;
             try
             {
                 while (true)
                 {
-                    var bytesRead = stream.Read(buffer, 0, BufferSize);
+                    var bytesRead = stream.Read(buffer, 0, bufferSize);
                     var data = buffer.AsSpan();
 
-                    for (int i = 0; i < data.Length; i += crLength)
+                    for (int i = 0; i < bytesRead; i += crLength)
                     {
                         var current = data.Slice(i, crLength);
                         if (current.SequenceEqual(cr) || current.SequenceEqual(lf))
@@ -55,13 +55,30 @@ namespace LogGrokCore.Data
                             lineStart = i + position;
                         }
                     }
-                    position += bytesRead;
 
-                    if (bytesRead < BufferSize)
+                    if (bytesRead < bufferSize)
                     {
-                        _lineIndex.Finish((int)(position - lineStart));
+                        _lineIndex.Finish((int)(bytesRead - lineStart));
                         break;
                     }
+
+                    if (lineStart != 0)
+                    {
+                        position += lineStart;
+                        stream.Position = position;
+                        lineStart = 0;
+                        if (bufferSize > BufferSize)
+                        {
+                            ArrayPool<byte>.Shared.Return(buffer);
+                            buffer = ArrayPool<byte>.Shared.Rent(BufferSize);
+                            bufferSize = BufferSize;
+                        }
+                    }
+
+                    // did not found next line start, grow buffer
+                    ArrayPool<byte>.Shared.Return(buffer);
+                    buffer = ArrayPool<byte>.Shared.Rent(bufferSize * 2);
+                    bufferSize *= 2;
                 }
             }
             finally
