@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace LogGrokCore.Data
 {
-    public class LineIndex 
+    public class LineIndex : ILineIndex
     {
         public (long offset, int lenghth) GetLine(int index)
         {
@@ -33,13 +33,13 @@ namespace LogGrokCore.Data
             }
         }
 
-        internal void Add(long lineStart)
+        public void Add(long lineStart)
         {
             lock (_lineStarts)
                 _lineStarts.Add(lineStart);
         }
 
-        internal void Finish(int lastLength)
+        public void Finish(int lastLength)
         {
             _lastLineLength = lastLength;
         }
