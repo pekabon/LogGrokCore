@@ -18,22 +18,25 @@ namespace LogGrokCore.Data
         public void Load(Stream stream, ReadOnlySpan<byte> cr, ReadOnlySpan<byte> lf)
         {
             var isInCrLfs = false;
-            long position = 0;
             int crLength = cr.Length;
-            long lineStart = 0;
+
+            var bufferStartPosition = 0l;
+            var lineStartFromCurrentDataOffset = 0;
 
             var buffer = ArrayPool<byte>.Shared.Rent(_bufferSize);
             var bufferSize = _bufferSize;
             try
             {
-                _lineIndex.Add(0);
-                var dataOffset = 0;
-
+                var dataOffsetFromBufferStart = 0;
+                long streamPosition = 0;
                 while (true)
                 {
-                    var data = buffer.AsSpan(dataOffset, bufferSize);
+                    bufferStartPosition = streamPosition - dataOffsetFromBufferStart;
+                    var data = buffer.AsSpan(dataOffsetFromBufferStart,
+                        bufferSize - dataOffsetFromBufferStart);
                     var bytesRead = stream.Read(data);
-                    
+                    streamPosition += bytesRead;
+
                     while (true)
                     {
                         for (int i = 0; i < bytesRead; i += crLength)
@@ -46,24 +49,47 @@ namespace LogGrokCore.Data
                             else if (isInCrLfs)
                             {
                                 isInCrLfs = false;
-                                _lineIndex.Add(lineStart);
-                                lineStart = dataOffset + i + position;
+                                _lineIndex.Add(
+                                    bufferStartPosition
+                                    + dataOffsetFromBufferStart
+                                    + lineStartFromCurrentDataOffset);
+
+                                lineStartFromCurrentDataOffset = i;
                             }
                         }
 
-                        position += bytesRead;
-
                         if (bytesRead < data.Length)
                         {
-                            _lineIndex.Finish((int)(position - lineStart));
+                            var lineOffsetFromBufferStart =
+                                dataOffsetFromBufferStart + lineStartFromCurrentDataOffset;
+
+                            var bufferEndOffset = bytesRead + dataOffsetFromBufferStart;
+
+                            _lineIndex.Add(
+                                bufferStartPosition
+                                + dataOffsetFromBufferStart
+                                + lineStartFromCurrentDataOffset);
+
+                            _lineIndex.Finish(
+                                bufferEndOffset - lineOffsetFromBufferStart);
+
                             return;
                         }
 
-                        if (lineStart != 0)
+                        if (lineStartFromCurrentDataOffset > 0)
                         {
-                            dataOffset = (int)(lineStart - position);
+                            // found line(s) inside the buffer
+                            // copy tail of buffer to new one
+
+                            var lineOffsetFromBufferStart =
+                                dataOffsetFromBufferStart + lineStartFromCurrentDataOffset;
+
+                            dataOffsetFromBufferStart = bufferSize - lineOffsetFromBufferStart;
+                            lineStartFromCurrentDataOffset = - dataOffsetFromBufferStart;
+                            bufferStartPosition = streamPosition + lineOffsetFromBufferStart;
+
                             var bufferSpan = buffer.AsSpan();
-                            var rest = bufferSpan.Slice(dataOffset);
+                            var rest = bufferSpan.Slice(dataOffsetFromBufferStart);
 
                             if (bufferSize > _bufferSize && rest.Length < _bufferSize)
                             {
@@ -72,8 +98,8 @@ namespace LogGrokCore.Data
                                 bufferSize = _bufferSize;
                                 bufferSpan = buffer.AsSpan();
                             }
-                            rest.CopyTo(bufferSpan);
 
+                            rest.CopyTo(bufferSpan);
                             break;
                         }
 
@@ -82,9 +108,18 @@ namespace LogGrokCore.Data
                         buffer.CopyTo(newBuffer.AsSpan());
                         ArrayPool<byte>.Shared.Return(buffer);
 
-                        dataOffset = bufferSize;
-                        data = newBuffer.AsSpan(dataOffset, bufferSize);
+                        var lineOffsetFromBufferStart_ =
+                            dataOffsetFromBufferStart + lineStartFromCurrentDataOffset;
+
+                        dataOffsetFromBufferStart = bufferSize;
+
+                        lineStartFromCurrentDataOffset =
+                            lineOffsetFromBufferStart_ - dataOffsetFromBufferStart;
+
+                        data = newBuffer.AsSpan(dataOffsetFromBufferStart, bufferSize);
                         bytesRead = stream.Read(data);
+                        streamPosition += bytesRead;
+
                         bufferSize *= 2;
                         buffer = newBuffer;
                     }
