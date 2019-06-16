@@ -58,48 +58,47 @@ namespace LogGrokCore.Data
                             }
                         }
 
+                        var lineOffsetFromBufferStart =
+                            dataOffsetFromBufferStart + lineStartFromCurrentDataOffset;
+
                         if (bytesRead < data.Length)
                         {
-                            var lineOffsetFromBufferStart =
-                                dataOffsetFromBufferStart + lineStartFromCurrentDataOffset;
-
                             var bufferEndOffset = bytesRead + dataOffsetFromBufferStart;
 
                             _lineIndex.Add(
                                 bufferStartPosition
                                 + dataOffsetFromBufferStart
                                 + lineStartFromCurrentDataOffset);
-
                             _lineIndex.Finish(
                                 bufferEndOffset - lineOffsetFromBufferStart);
 
                             return;
                         }
 
-                        if (lineStartFromCurrentDataOffset > 0)
+                        if (lineOffsetFromBufferStart > 0)
                         {
                             // found line(s) inside the buffer
                             // copy tail of buffer to new one
-
-                            var lineOffsetFromBufferStart =
-                                dataOffsetFromBufferStart + lineStartFromCurrentDataOffset;
-
                             dataOffsetFromBufferStart = bufferSize - lineOffsetFromBufferStart;
                             lineStartFromCurrentDataOffset = - dataOffsetFromBufferStart;
                             bufferStartPosition = streamPosition + lineOffsetFromBufferStart;
 
                             var bufferSpan = buffer.AsSpan();
-                            var rest = bufferSpan.Slice(dataOffsetFromBufferStart);
+                            var rest = bufferSpan.Slice(lineOffsetFromBufferStart);
 
-                            if (bufferSize > _bufferSize && rest.Length < _bufferSize)
+                            if (bufferSize <= _bufferSize || rest.Length >= _bufferSize)
                             {
-                                ArrayPool<byte>.Shared.Return(buffer);
+                                rest.CopyTo(bufferSpan);
+                            }
+                            else
+                            {
+                                var oldBuffer = buffer;
                                 buffer = ArrayPool<byte>.Shared.Rent(_bufferSize);
                                 bufferSize = _bufferSize;
                                 bufferSpan = buffer.AsSpan();
+                                rest.CopyTo(bufferSpan);
+                                ArrayPool<byte>.Shared.Return(oldBuffer);
                             }
-
-                            rest.CopyTo(bufferSpan);
                             break;
                         }
 

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace LogGrokCore.Data.Tests
@@ -10,84 +11,115 @@ namespace LogGrokCore.Data.Tests
     [TestClass]
     public class LoaderImpTests
     {
-        private byte[] _cr = Encoding.UTF8.GetBytes("\r");
-        private byte[] _lf = Encoding.UTF8.GetBytes("\n");
+        private readonly byte[] _cr = Encoding.UTF8.GetBytes("\r");
+        private readonly byte[] _lf = Encoding.UTF8.GetBytes("\n");
 
         private int CrlfLength => _cr.Length + _lf.Length;
         private const int BufferSize = 256;
-        
+
         [TestMethod]
         public void CheckNoCrlfsInBuffer()
         {
-            var buffer = new byte[BufferSize];
-            var lineIndex = DoLoad(buffer);
-            Assert.AreEqual(1, lineIndex.LineStarts.Count, "Count");
-            Assert.AreEqual(BufferSize, lineIndex.LastLength, "LastLength");
+            CheckLines(BufferSize);
         }
 
         [TestMethod]
         public void CheckNoCrlfsInBuffer25()
         {
-            var bufferSize = (int)(BufferSize * 2.5);
-            var buffer = new byte[bufferSize];
-            var lineIndex = DoLoad(buffer);
-            Assert.AreEqual(1, lineIndex.LineStarts.Count, "Count");
-            Assert.AreEqual(bufferSize, lineIndex.LastLength, "LastLength");
+            CheckLines((int)(BufferSize * 2.5));
         }
 
         [TestMethod]
         public void CheckCrllfsAtTheEnd()
         {
-            var buffer = new byte[BufferSize];
-            AddCrlf(buffer, buffer.Length - CrlfLength);
-            var lineIndex = DoLoad(buffer);
-            Assert.AreEqual(1, lineIndex.LineStarts.Count, "Count");
-            Assert.AreEqual(BufferSize, lineIndex.LastLength, "LastLength");
+            CheckLines(BufferSize, BufferSize - CrlfLength);
         }
 
         [TestMethod]
         public void CheckLineBetweenBuffers()
         {
-            var buffer = new Byte[BufferSize * 2];
-            AddCrlf(buffer, BufferSize / 2);
-            AddCrlf(buffer, BufferSize / 2 + BufferSize);
-            var lineIndex = DoLoad(buffer);
-            var lineStarts = lineIndex.LineStarts;
-            Assert.AreEqual(3, lineStarts.Count);
-            Assert.AreEqual(0, lineStarts[0]);
-            Assert.AreEqual(BufferSize / 2 + CrlfLength, lineStarts[1]);
-            Assert.AreEqual(BufferSize / 2 + BufferSize + CrlfLength, lineStarts[2]);
-            Assert.AreEqual(BufferSize * 2 - lineStarts[2], lineIndex.LastLength);
+            CheckLines(BufferSize * 2,
+                    BufferSize / 2,
+                    BufferSize / 2 + BufferSize);
         }
+
 
         [TestMethod]
         public void CheckLongLine()
         {
-            var bufferSize = BufferSize * 10;
-            var buffer = new byte[bufferSize];
-
-            var lineIndex = DoLoad(buffer);
-            var lineStarts = lineIndex.LineStarts;
-
-            Assert.AreEqual(1, lineStarts.Count);
-            Assert.AreEqual(bufferSize, lineIndex.LastLength);
+            CheckLines(BufferSize * 10);
         }
 
         [TestMethod]
         public void CheckCrLfOnBorder()
         {
-            var bufferSize = BufferSize * 2;
+            CheckLines(BufferSize * 2, BufferSize - CrlfLength / 2);
+        }
+
+        [TestMethod]
+        public void CheckShortLinesAfterLong()
+        {
+            var position = 0;
+            var crlfPositions = new[]
+            {
+                position = BufferSize + BufferSize / 2,
+                position += BufferSize / 3,
+                position += BufferSize / 3,
+                position += BufferSize / 4,
+                position += BufferSize / 4,
+                position += BufferSize / 4,
+                position += BufferSize / 4,
+                position += BufferSize / 4,
+                position += BufferSize / 4,
+                position += BufferSize / 4,
+                position += BufferSize / 4,
+                position += BufferSize / 4,
+                position += BufferSize / 5,
+                position += BufferSize / 5,
+                position += BufferSize / 5,
+                position += BufferSize / 5,
+                position += BufferSize / 5,
+                position += BufferSize / 5,
+                position += BufferSize / 5,
+                position += BufferSize / 5,
+                position += BufferSize / 5,
+                position += BufferSize / 5,
+                position += BufferSize / 5,
+                position += BufferSize / 5,
+                position += BufferSize / 5,
+                position += BufferSize / 5,
+                position += BufferSize / 5,
+            };
+
+            var bufferSize = (crlfPositions.Last() / BufferSize + 1) * BufferSize;
+
+            CheckLines(bufferSize, crlfPositions);
+        }
+
+        private void CheckLines(int bufferSize, params int[] crlfPositions)
+        {
+            Array.Sort(crlfPositions);
             var buffer = new byte[bufferSize];
-
-            AddCrlf(buffer, BufferSize - CrlfLength / 2);
-
+            foreach (var crlfPosition in crlfPositions)
+            {
+                AddCrlf(buffer, crlfPosition);
+            }
             var lineIndex = DoLoad(buffer);
             var lineStarts = lineIndex.LineStarts;
 
-            Assert.AreEqual(2, lineStarts.Count);
+            bool haveLastLine = !crlfPositions.Any(position => position == bufferSize - CrlfLength);
+            var supposedLineStartsCount = crlfPositions.Length + (haveLastLine ? 1 : 0);
+
+            Assert.AreEqual(supposedLineStartsCount, lineStarts.Count);
+
+            var supposedLastLineLength = bufferSize - lineStarts.Max();
+            Assert.AreEqual(supposedLastLineLength, lineIndex.LastLength);
+
             Assert.AreEqual(0, lineStarts[0]);
-            Assert.AreEqual(BufferSize + 1, lineStarts[1]);
-            Assert.AreEqual(BufferSize - 1, lineIndex.LastLength);
+            for (var idx = 0; idx < crlfPositions.Length - (haveLastLine ? 0 : 1); idx++)
+            {
+                Assert.AreEqual(crlfPositions[idx] + CrlfLength, lineStarts[idx + 1]);
+            }
         }
 
         private void AddCrlf(byte[] buffer, int position)
