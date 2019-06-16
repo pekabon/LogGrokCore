@@ -4,15 +4,22 @@ using System.IO;
 
 namespace LogGrokCore.Data
 {
+    public interface ILineDataConsumer
+    {
+        public void AddLineData(uint lineNumber, Span<byte> lineData);
+    }
+
     public class LoaderImpl
     {
         private readonly int _bufferSize;
         private readonly ILineIndex _lineIndex;
+        private readonly ILineDataConsumer _lineDataConsumer;
 
-        public LoaderImpl(int bufferSize, ILineIndex lineIndex)
+        public LoaderImpl(int bufferSize, ILineIndex lineIndex, ILineDataConsumer lineDataConsumer)
         {
             _bufferSize = bufferSize;
             _lineIndex = lineIndex;
+            _lineDataConsumer = lineDataConsumer;
         }
 
         public void Load(Stream stream, ReadOnlySpan<byte> cr, ReadOnlySpan<byte> lf)
@@ -20,11 +27,12 @@ namespace LogGrokCore.Data
             var isInCrLfs = false;
             int crLength = cr.Length;
 
-            var bufferStartPosition = 0l;
+            var bufferStartPosition = 0L;
             var lineStartFromCurrentDataOffset = 0;
 
             var buffer = ArrayPool<byte>.Shared.Rent(_bufferSize);
             var bufferSize = _bufferSize;
+            var lineNumber = 0u;
             try
             {
                 var dataOffsetFromBufferStart = 0;
@@ -49,10 +57,17 @@ namespace LogGrokCore.Data
                             else if (isInCrLfs)
                             {
                                 isInCrLfs = false;
+
+                                var lineStartInBuffer = 
+                                    dataOffsetFromBufferStart
+                                    + lineStartFromCurrentDataOffset;
+
                                 _lineIndex.Add(
-                                    bufferStartPosition
-                                    + dataOffsetFromBufferStart
-                                    + lineStartFromCurrentDataOffset);
+                                    bufferStartPosition + lineStartInBuffer);
+
+                                _lineDataConsumer.AddLineData(lineNumber,
+                                    buffer.AsSpan().Slice(
+                                        lineStartInBuffer, i + dataOffsetFromBufferStart - lineStartInBuffer));
 
                                 lineStartFromCurrentDataOffset = i;
                             }

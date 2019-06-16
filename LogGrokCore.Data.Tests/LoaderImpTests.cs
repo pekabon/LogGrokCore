@@ -131,7 +131,8 @@ namespace LogGrokCore.Data.Tests
         private LineIndexMock DoLoad(byte[] buffer)
         {
             var lineIndex = new LineIndexMock();
-            var loader = new LoaderImpl(BufferSize, lineIndex);
+            var dataConsumer = new LineDataConsumerStub();
+            var loader = new LoaderImpl(BufferSize, lineIndex, dataConsumer);
             var stream = new MemoryStream(buffer);
             loader.Load(stream, _cr.AsSpan(), _lf.AsSpan());
             return lineIndex;

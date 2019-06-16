@@ -19,7 +19,7 @@ namespace LogGrokCore.Data.Virtualization
 
         public object SyncRoot => throw new NotSupportedException();
 
-        object IList.this[int index]
+        object? IList.this[int index]
         {
             get => this[index];
             set => throw new NotSupportedException();

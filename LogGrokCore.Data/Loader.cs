@@ -8,6 +8,13 @@ using System.Threading.Tasks;
 namespace LogGrokCore.Data
 {
 
+    public class LineParser : ILineDataConsumer
+    {
+        public void AddLineData(uint lineNumber, Span<byte> lineData)
+        {
+        }
+    }
+
     public class Loader
     {
         private readonly LineIndex _lineIndex;
@@ -18,7 +25,8 @@ namespace LogGrokCore.Data
         {
             var encoding = DetectEncoding(streamFactory());
             _lineIndex = new LineIndex();
-            var loaderImpl = new LoaderImpl(BufferSize, _lineIndex);
+            var lineParser = new LineParser();
+            var loaderImpl = new LoaderImpl(BufferSize, _lineIndex, lineParser);
             _loadingTask = Task.Factory.StartNew(() => loaderImpl.Load(streamFactory(), encoding.GetBytes("\r"), encoding.GetBytes("\n")));
 
             LineProvider = new LineProvider(_lineIndex, streamFactory, encoding);
