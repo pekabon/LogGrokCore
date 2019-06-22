@@ -6,8 +6,8 @@ namespace LogGrokCore.Data.Virtualization
 
     public interface IItemProvider<T>
     {
-        public int Count { get; }
+        int Count { get; }
 
-        public IList<T> Fetch(int start, int count);
+        IList<T> Fetch(int start, int count);
     }
 }

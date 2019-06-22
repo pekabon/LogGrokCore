@@ -6,7 +6,7 @@ namespace LogGrokCore.Data
 {
     public interface ILineDataConsumer
     {
-        public void AddLineData(uint lineNumber, Span<byte> lineData);
+        bool AddLineData(Span<byte> lineData);
     }
 
     public class LoaderImpl
@@ -32,7 +32,6 @@ namespace LogGrokCore.Data
 
             var buffer = ArrayPool<byte>.Shared.Rent(_bufferSize);
             var bufferSize = _bufferSize;
-            var lineNumber = 0u;
             try
             {
                 var dataOffsetFromBufferStart = 0;
@@ -58,18 +57,21 @@ namespace LogGrokCore.Data
                             {
                                 isInCrLfs = false;
 
-                                var lineStartInBuffer = 
+                                var lineStartInBuffer =
                                     dataOffsetFromBufferStart
                                     + lineStartFromCurrentDataOffset;
 
-                                _lineIndex.Add(
-                                    bufferStartPosition + lineStartInBuffer);
-
-                                _lineDataConsumer.AddLineData(lineNumber,
+                                var isLineStart = _lineDataConsumer.AddLineData(
                                     buffer.AsSpan().Slice(
                                         lineStartInBuffer, i + dataOffsetFromBufferStart - lineStartInBuffer));
 
-                                lineStartFromCurrentDataOffset = i;
+                                if (isLineStart)
+                                {
+                                    _lineIndex.Add(
+                                        bufferStartPosition + lineStartInBuffer);
+
+                                    lineStartFromCurrentDataOffset = i;
+                                }
                             }
                         }
 

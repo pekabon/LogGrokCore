@@ -1,5 +1,4 @@
 ﻿using ReactiveUI;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
@@ -17,8 +16,8 @@ namespace LogGrokCore
 
             Lines = new GrowingCollectionAdapter<string>(_document.Lines);
                 
-            CopyPathToClipboardCommand = ReactiveCommand.Create(() => TextCopy.Clipboard.SetText(_document.FilePath));
-            OpenContainingFolderCommand = ReactiveCommand.Create(OpenContainingFolder);
+            CopyPathToClipboardCommand = new DelegateCommand(() => TextCopy.Clipboard.SetText(_document.FilePath));
+            OpenContainingFolderCommand = new DelegateCommand(OpenContainingFolder);
 
             UpdateDocumentWhileLoading();
         }

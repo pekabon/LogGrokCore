@@ -1,20 +1,10 @@
 ﻿using System;
-using System.Buffers;
 using System.IO;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace LogGrokCore.Data
 {
-
-    public class LineParser : ILineDataConsumer
-    {
-        public void AddLineData(uint lineNumber, Span<byte> lineData)
-        {
-        }
-    }
-
     public class Loader
     {
         private readonly LineIndex _lineIndex;
@@ -25,8 +15,8 @@ namespace LogGrokCore.Data
         {
             var encoding = DetectEncoding(streamFactory());
             _lineIndex = new LineIndex();
-            var lineParser = new LineParser();
-            var loaderImpl = new LoaderImpl(BufferSize, _lineIndex, lineParser);
+            var lineProcessor = new LineProcessor(encoding);
+            var loaderImpl = new LoaderImpl(BufferSize, _lineIndex, lineProcessor);
             _loadingTask = Task.Factory.StartNew(() => loaderImpl.Load(streamFactory(), encoding.GetBytes("\r"), encoding.GetBytes("\n")));
 
             LineProvider = new LineProvider(_lineIndex, streamFactory, encoding);

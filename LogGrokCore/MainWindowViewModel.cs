@@ -8,7 +8,7 @@ namespace LogGrokCore
     {
         public ObservableCollection<DocumentViewModel> Documents { get; } =
             new ObservableCollection<DocumentViewModel>();
-        public ICommand OpenFileCommand => ReactiveCommand.Create(OpenFile);
+        public ICommand OpenFileCommand => new DelegateCommand(OpenFile);
 
         public string? CurrentDocument { get; set; }
 
