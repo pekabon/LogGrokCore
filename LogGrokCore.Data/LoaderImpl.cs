@@ -70,13 +70,9 @@ namespace LogGrokCore.Data
                                 {
                                     _lineIndex.Add(
                                         bufferStartPosition + lineStartInBuffer);
-                                    lineStartFromCurrentDataOffset = i;
                                 } 
-                                else if (!haveFirstLine)
-                                {
-                                    lineStartFromCurrentDataOffset = i;
-                                }
 
+                                lineStartFromCurrentDataOffset = i;
                                 haveFirstLine = haveFirstLine || isLineStart;
                             }
                         }

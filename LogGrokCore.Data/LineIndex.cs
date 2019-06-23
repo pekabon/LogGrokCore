@@ -11,11 +11,11 @@ namespace LogGrokCore.Data
             lock (_lineStarts)
             {
                 var lineStart = _lineStarts[index];
-                if (index < Count - 1)
+                if (index < _lineStarts.Count - 1)
                     return (lineStart, (int)(_lineStarts[index + 1] - lineStart));
-                else
+                
 #pragma warning disable CS8629 // Nullable value type may be null.
-                    return (lineStart, _lastLineLength.Value);
+                return (lineStart, _lastLineLength.Value);
 #pragma warning restore CS8629 // Nullable value type may be null.
             }
         }
@@ -25,9 +25,7 @@ namespace LogGrokCore.Data
             get
             {
                 lock (_lineStarts)
-                    //return _lastLineLength.HasValue? _lineStarts.Count: _lineStarts.Count - 1;
-                    return _lineStarts.Count;
-
+                    return _lastLineLength.HasValue? _lineStarts.Count: _lineStarts.Count - 1;
             }
         }
 
