@@ -24,15 +24,33 @@ namespace LogGrokCore.Data.Tests
         }
 
         [TestMethod]
+        public void CheckNoCrlfsAndNoLinesInBuffer()
+        {
+            CheckLines(BufferSize, true);
+        }
+        
+        [TestMethod]
         public void CheckNoCrlfsInBuffer25()
         {
             CheckLines((int)(BufferSize * 2.5));
+        }
+        
+        [TestMethod]
+        public void CheckNoCrlfsAndNoLinesInBuffer25()
+        {
+            CheckLines((int)(BufferSize * 2.5), true);
         }
 
         [TestMethod]
         public void CheckCrllfsAtTheEnd()
         {
             CheckLines(BufferSize, BufferSize - CrlfLength);
+        }
+        
+        [TestMethod]
+        public void CheckCrllfsAtTheEndWithHeader()
+        {
+            CheckLines(BufferSize, true, BufferSize - CrlfLength);
         }
 
         [TestMethod]
@@ -43,11 +61,24 @@ namespace LogGrokCore.Data.Tests
                     BufferSize / 2 + BufferSize);
         }
 
+        [TestMethod]
+        public void CheckLineBetweenBuffersWithHeader()
+        {
+            CheckLines(BufferSize * 2, true,
+                BufferSize / 2,
+                BufferSize / 2 + BufferSize);
+        }
 
         [TestMethod]
         public void CheckLongLine()
         {
             CheckLines(BufferSize * 10);
+        }
+        
+        [TestMethod]
+        public void CheckLongHeader()
+        {
+            CheckLines(BufferSize * 10, true);
         }
 
         [TestMethod]
@@ -55,9 +86,30 @@ namespace LogGrokCore.Data.Tests
         {
             CheckLines(BufferSize * 2, BufferSize - CrlfLength / 2);
         }
+        
+        [TestMethod]
+        public void CheckCrLfOnBorderWithHeader()
+        {
+            CheckLines(BufferSize * 2, true, BufferSize - CrlfLength / 2);
+        }
 
         [TestMethod]
         public void CheckShortLinesAfterLong()
+        {
+            var (crlfPositions, bufferSize) = CreateShortLinesAfterLong();
+
+            CheckLines(bufferSize, crlfPositions);
+        }
+        
+        [TestMethod]
+        public void CheckShortLinesAfterLongWithHeader()
+        {
+            var (crlfPositions, bufferSize) = CreateShortLinesAfterLong();
+
+            CheckLines(bufferSize, true, crlfPositions);
+        }
+
+        private static (int[] crlfPositions, int bufferSize) CreateShortLinesAfterLong()
         {
             var position = 0;
             var crlfPositions = new[]
@@ -92,11 +144,15 @@ namespace LogGrokCore.Data.Tests
             };
 
             var bufferSize = (crlfPositions.Last() / BufferSize + 1) * BufferSize;
-
-            CheckLines(bufferSize, crlfPositions);
+            return (crlfPositions, bufferSize);
         }
 
         private void CheckLines(int bufferSize, params int[] crlfPositions)
+        {
+            CheckLines(bufferSize, false, crlfPositions);
+        }
+
+        private void CheckLines(int bufferSize, bool haveHeader, params int[] crlfPositions)
         {
             Array.Sort(crlfPositions);
             var buffer = new byte[bufferSize];
@@ -104,21 +160,41 @@ namespace LogGrokCore.Data.Tests
             {
                 AddCrlf(buffer, crlfPosition);
             }
+
+            if (haveHeader)
+            {
+                buffer[0] = 1;
+            }
+            
             var lineIndex = DoLoad(buffer);
             var lineStarts = lineIndex.LineStarts;
 
             bool haveLastLine = !crlfPositions.Any(position => position == bufferSize - CrlfLength);
-            var supposedLineStartsCount = crlfPositions.Length + (haveLastLine ? 1 : 0);
+            var supposedLineStartsCount = crlfPositions.Length + (haveLastLine ? 1 : 0) - (haveHeader ? 1 : 0);
 
             Assert.AreEqual(supposedLineStartsCount, lineStarts.Count);
 
+            if (supposedLineStartsCount == 0)
+                return;
+            
             var supposedLastLineLength = bufferSize - lineStarts.Max();
             Assert.AreEqual(supposedLastLineLength, lineIndex.LastLength);
 
-            Assert.AreEqual(0, lineStarts[0]);
-            for (var idx = 0; idx < crlfPositions.Length - (haveLastLine ? 0 : 1); idx++)
+            if (!haveHeader)
             {
-                Assert.AreEqual(crlfPositions[idx] + CrlfLength, lineStarts[idx + 1]);
+                Assert.AreEqual(0, lineStarts[0]);
+                for (var idx = 0; idx < crlfPositions.Length - (haveLastLine ? 0 : 1); idx++)
+                {
+                    Assert.AreEqual(crlfPositions[idx] + CrlfLength, lineStarts[idx + 1]);
+                }
+            }
+            else
+            {
+                Assert.AreEqual(crlfPositions[0] + CrlfLength, lineStarts[0]);
+                for (var idx = 1; idx < crlfPositions.Length - (haveLastLine ? 0 : 1); idx++)
+                {
+                    Assert.AreEqual(crlfPositions[idx] + CrlfLength, lineStarts[idx]);
+                }
             }
         }
 

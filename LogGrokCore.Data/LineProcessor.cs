@@ -6,8 +6,10 @@ namespace LogGrokCore.Data
 {
     public class LineProcessor : ILineDataConsumer
     {
-        private readonly Regex _regex = 
-            new Regex(@"^(?'Time'\d{2}\:\d{2}\:\d{2}\.\d{3})\t(?'Thread'0x[0-9a-fA-F]+)\t(?'Severity'\w+)\t(?'Message'.*)", RegexOptions.Compiled);
+        private readonly Regex _regex =
+            new Regex(
+                @"^(?'Time'\d{2}\:\d{2}\:\d{2}\.\d{3})\t(?'Thread'0x[0-9a-fA-F]+)\t(?'Severity'\w+)\t(?'Message'.*)",
+                RegexOptions.Compiled);
 
         private const int InitialBufferSize = 512 * 1024;
         private StringPool _stringPool;
@@ -20,7 +22,7 @@ namespace LogGrokCore.Data
         private readonly Encoding _encoding;
         private readonly TablBasedLineParser _parser;
         private const int ComponentCount = 2;
-        
+
         public LineProcessor(Encoding encoding)
         {
             _encoding = encoding;
@@ -28,22 +30,23 @@ namespace LogGrokCore.Data
             _currentString = _stringPool.Rent(InitialBufferSize);
             _previousLineString = _currentString;
 
-            _parser =  new TablBasedLineParser(_regex, ComponentCount);
+            _parser = new TablBasedLineParser(_regex, ComponentCount);
         }
 
         public unsafe bool AddLineData(Span<byte> lineData)
         {
-            var metaSizeChars = LineMetaInformationNode.GetSizeChars(ComponentCount); // line size + two components (start & length for each)
+            var metaSizeChars =
+                LineMetaInformationNode
+                    .GetSizeChars(ComponentCount); // line size + two components (start & length for each)
 
-            _encoding.GetMaxCharCount(lineData.Length);
-            var necessarySpaceChars = metaSizeChars + _encoding.GetMaxCharCount(lineData.Length) ;
+            var necessarySpaceChars = metaSizeChars + _encoding.GetMaxCharCount(lineData.Length);
 
             if (_currentString.Length - _currentOffset < necessarySpaceChars)
             {
                 _currentString = _stringPool.Rent((necessarySpaceChars / InitialBufferSize + 1) * InitialBufferSize);
                 _currentOffset = 0;
             }
-            
+
             bool TryGetPreviousNode(out LineMetaInformationNode node)
             {
                 if (_previousOffset >= 0)
@@ -54,13 +57,15 @@ namespace LogGrokCore.Data
                         return true;
                     }
                 }
+
                 node = default;
                 return false;
             }
 
             fixed (char* stringPointer = _currentString.AsSpan(_currentOffset))
             {
-                var decodedStringSpan = new Span<char>(stringPointer + metaSizeChars, _currentString.Length - _currentOffset);
+                var decodedStringSpan =
+                    new Span<char>(stringPointer + metaSizeChars, _currentString.Length - _currentOffset);
                 var stringLength = _encoding.GetChars(lineData, decodedStringSpan);
                 var stringFrom = _currentOffset + metaSizeChars;
 
@@ -73,7 +78,7 @@ namespace LogGrokCore.Data
                     {
                         prevNode.LineMetaInformation.LineLength += stringLength;
                     }
-                    return false;
+                   return false;
                 }
 
                 _previousOffset = _currentOffset;
@@ -87,7 +92,7 @@ namespace LogGrokCore.Data
                 {
                     _previousOffset = -1;
                     _previousLineString = _currentString;
-                    
+
                     // TODO send previous line to processing;
                 }
             }
@@ -98,7 +103,7 @@ namespace LogGrokCore.Data
         private void FinishLineSet(int necessarySpace)
         {
             var lineSet = new LineSet(_currentString, ComponentCount);
-            _currentString = 
+            _currentString =
                 necessarySpace <= InitialBufferSize
                     ? _stringPool.Rent(InitialBufferSize)
                     : _stringPool.Rent((necessarySpace / InitialBufferSize + 1) * InitialBufferSize);

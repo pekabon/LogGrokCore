@@ -1,6 +1,5 @@
 ﻿namespace LogGrokCore.Data
 {
-
     public interface ILineIndex
     {
         int Count { get; }

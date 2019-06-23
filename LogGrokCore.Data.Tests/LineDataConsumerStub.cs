@@ -7,7 +7,7 @@ namespace LogGrokCore.Data.Tests
     {
         public bool AddLineData(Span<byte> lineData)
         {
-            return true;
+            return lineData[0] == 0;
         }
     }
 }

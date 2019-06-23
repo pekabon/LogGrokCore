@@ -1,6 +1,4 @@
-﻿using LogGrokCore.Data.Virtualization;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace LogGrokCore.Data
@@ -47,5 +45,4 @@ namespace LogGrokCore.Data
         private readonly List<long> _lineStarts = new List<long>();
         private int? _lastLineLength;
     }
-
 }
