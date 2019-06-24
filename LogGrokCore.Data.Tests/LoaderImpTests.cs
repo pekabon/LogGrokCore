@@ -1,13 +1,12 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace LogGrokCore.Data.Tests
 {
-
     [TestClass]
     public class LoaderImpTests
     {
@@ -111,7 +110,7 @@ namespace LogGrokCore.Data.Tests
 
         private static (int[] crlfPositions, int bufferSize) CreateShortLinesAfterLong()
         {
-            var position = 0;
+            int position;
             var crlfPositions = new[]
             {
                 position = BufferSize + BufferSize / 2,
@@ -140,7 +139,7 @@ namespace LogGrokCore.Data.Tests
                 position += BufferSize / 5,
                 position += BufferSize / 5,
                 position += BufferSize / 5,
-                position += BufferSize / 5,
+                position + BufferSize / 5
             };
 
             var bufferSize = (crlfPositions.Last() / BufferSize + 1) * BufferSize;
@@ -210,7 +209,8 @@ namespace LogGrokCore.Data.Tests
             var dataConsumer = new LineDataConsumerStub();
             var loader = new LoaderImpl(BufferSize, lineIndex, dataConsumer);
             var stream = new MemoryStream(buffer);
-            loader.Load(stream, _cr.AsSpan(), _lf.AsSpan());
+            var token = new CancellationToken();
+            loader.Load(stream, _cr.AsSpan(), _lf.AsSpan(), token);
             return lineIndex;
         }
     }

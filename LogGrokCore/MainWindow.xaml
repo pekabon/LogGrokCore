@@ -6,12 +6,13 @@
         xmlns:avalonDock="http://schemas.xceed.com/wpf/xaml/avalondock"
         xmlns:localBehaviors="clr-namespace:LogGrokCore.AvalonDock"
         xmlns:localControls="clr-namespace:LogGrokCore.Controls"
+        xmlns:local="clr-namespace:LogGrokCore"
         xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
         mc:Ignorable="d"
         Title="LOGGROK" Height="450" Width="800">
     <mahapps:MetroWindow.Resources>
         <ResourceDictionary>
-            <DataTemplate x:Key="DocumentTemplate">
+            <DataTemplate x:Key="DocumentTemplate" DataType="local:DocumentViewModel">
                 <ListView ItemsSource="{Binding Lines}"
                           FontFamily="Consolas"
                           ScrollViewer.VerticalScrollBarVisibility="Visible"

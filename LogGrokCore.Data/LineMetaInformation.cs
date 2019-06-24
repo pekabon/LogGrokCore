@@ -6,7 +6,6 @@ namespace LogGrokCore.Data
     {
         private readonly Span<int> _placeholder;
         private readonly int _componentCount;
-
         public static unsafe LineMetaInformation Get(char* pointer, int componentCount)
         {
             return new LineMetaInformation(new Span<int>(pointer, GetSizeInts(componentCount)), componentCount);
@@ -29,6 +28,9 @@ namespace LogGrokCore.Data
         public static int GetSizeInts(int componentCount) => 1 + componentCount * 2;
         public static int GetSizeChars(int componentCount) => GetSizeInts(componentCount) * sizeof(int) / sizeof(char);
 
-        public int TotalSize => GetSizeChars(_componentCount) + AllComponentsLength;
+        public int TotalSizeWithPayloadChars => GetSizeChars(_componentCount) + AllComponentsLength;
+
+        public int TotalSizeInts => GetSizeInts(_componentCount);
+
     }
 }

@@ -38,7 +38,9 @@ namespace LogGrokCore.Data
         private Func<int, StringPoolBucket> _bucketFactory = size => new StringPoolBucket(size);
         public string Rent(int size)
         {
-            var bucket = _buckets.GetOrAdd(size, _bucketFactory(size));
+            var pooledStringSize = size < 32 ?  32 : Pow2Roundup(size);
+           
+            var bucket = _buckets.GetOrAdd(size, _bucketFactory(pooledStringSize ));
             return bucket.Rent();
         }
 
@@ -49,6 +51,19 @@ namespace LogGrokCore.Data
                 bucket.Return(returned);
             }
             throw new InvalidOperationException();
+        }
+        
+        private static int Pow2Roundup (int x)
+        {
+            if (x < 0)
+                return 0;
+            --x;
+            x |= x >> 1;
+            x |= x >> 2;
+            x |= x >> 4;
+            x |= x >> 8;
+            x |= x >> 16;
+            return x+1;
         }
     }
 }

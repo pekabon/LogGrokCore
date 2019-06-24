@@ -27,14 +27,8 @@ namespace LogGrokCore.Data
             NextNodeOffset = -1;
         }
 
-        public int TotalSizeCharsAligned => Align(1 + LineMetaInformation.TotalSize);
+        public int TotalSizeCharsAligned => Align.Get(1 + LineMetaInformation.TotalSizeWithPayloadChars, Alignment);
 
         private const int Alignment = 2;
-
-        private static int Align(int value)
-        {
-            var modulo = value % Alignment;
-            return modulo == 0 ? value : value + Alignment - modulo;
-        }
     }
 }

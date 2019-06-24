@@ -1,36 +1,37 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LogGrokCore.Data
 {
-    public class Loader
+    public class Loader : IDisposable
     {
-        private readonly LineIndex _lineIndex;
         private readonly Task _loadingTask;
+        private readonly CancellationTokenSource _cancellationTokenSource;
         private const int BufferSize = 1024*1024;
 
-        public Loader(Func<Stream> streamFactory)
+        public Loader(LogMetaInformation metaInformation, 
+            Func<Stream> streamFactory, 
+            LineIndex lineIndex,
+            ILineDataConsumer lineProcessor)
         {
-            var encoding = DetectEncoding(streamFactory());
-            _lineIndex = new LineIndex();
-            var lineProcessor = new LineProcessor(encoding);
-            var loaderImpl = new LoaderImpl(BufferSize, _lineIndex, lineProcessor);
-            _loadingTask = Task.Factory.StartNew(() => loaderImpl.Load(streamFactory(), encoding.GetBytes("\r"), encoding.GetBytes("\n")));
-
-            LineProvider = new LineProvider(_lineIndex, streamFactory, encoding);
+            var encoding = metaInformation.Encoding;
+            var loaderImpl = new LoaderImpl(BufferSize, lineIndex, lineProcessor);
+            _cancellationTokenSource = new CancellationTokenSource();
+            _loadingTask = Task.Factory.StartNew(
+                () => loaderImpl.Load(streamFactory(), encoding.GetBytes("\r"), encoding.GetBytes("\n"),
+                    _cancellationTokenSource.Token));
         }
-
-        public LineProvider LineProvider { get; }
 
         public bool IsLoading => !_loadingTask.IsCompleted;
 
-        private Encoding DetectEncoding(Stream stream)
+        public void Dispose()
         {
-            using var reader = new StreamReader(stream);
-            _ = reader.ReadLine();
-            return reader.CurrentEncoding;
+            _cancellationTokenSource.Cancel();
+            _loadingTask.Wait();
+            _loadingTask?.Dispose();
         }
     }
 }

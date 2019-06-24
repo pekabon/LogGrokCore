@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.IO;
+using System.Threading;
 
 namespace LogGrokCore.Data
 {
@@ -22,7 +23,7 @@ namespace LogGrokCore.Data
             _lineDataConsumer = lineDataConsumer;
         }
 
-        public void Load(Stream stream, ReadOnlySpan<byte> cr, ReadOnlySpan<byte> lf)
+        public void Load(Stream stream, ReadOnlySpan<byte> cr, ReadOnlySpan<byte> lf, CancellationToken cancellationToken)
         {
             var isInCrLfs = false;
             int crLength = cr.Length;
@@ -37,7 +38,7 @@ namespace LogGrokCore.Data
                 var haveFirstLine = false;
                 var dataOffsetFromBufferStart = 0;
                 long streamPosition = 0;
-                while (true)
+                while (!cancellationToken.IsCancellationRequested)
                 {
                     bufferStartPosition = streamPosition - dataOffsetFromBufferStart;
                     var data = buffer.AsSpan(dataOffsetFromBufferStart,

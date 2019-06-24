@@ -3,15 +3,15 @@ using System.Text.RegularExpressions;
 
 namespace LogGrokCore.Data
 {
-    public class TablBasedLineParser
+    public class TabBasedLineParser : ILineParser
     {
-        private Regex _regex;
-        private int _componentCount;
+        private readonly Regex _regex;
+        private readonly int _componentCount;
 
-        public TablBasedLineParser(Regex regex, int componentCount)
+        public TabBasedLineParser(LogMetaInformation logMetaInformation)
         {
-            _regex = regex;
-            _componentCount = componentCount;
+            _regex = logMetaInformation.LineRegex;
+            _componentCount = logMetaInformation.ComponentCount;
         }
 
         public bool Parse(string input, int beginning, int length, in LineMetaInformation lineMeta)
