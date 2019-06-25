@@ -8,6 +8,7 @@
         xmlns:localControls="clr-namespace:LogGrokCore.Controls"
         xmlns:local="clr-namespace:LogGrokCore"
         xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
+        d:DataContext="{d:DesignInstance Type=local:MainWindowViewModel, IsDesignTimeCreatable=False}"
         mc:Ignorable="d"
         Title="LOGGROK" Height="450" Width="800">
     <mahapps:MetroWindow.Resources>

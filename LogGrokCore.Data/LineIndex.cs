@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace LogGrokCore.Data
@@ -25,7 +26,12 @@ namespace LogGrokCore.Data
             get
             {
                 lock (_lineStarts)
-                    return _lastLineLength.HasValue? _lineStarts.Count: _lineStarts.Count - 1;
+                    return (_lastLineLength, _lineStarts.Count) switch
+                        {
+                            (_, 0) => 0,
+                            (null, var count) => count - 1,    
+                            var (_, count) => count
+                        };
             }
         }
 

@@ -38,11 +38,11 @@ namespace LogGrokCore.Data
         private readonly LineIndex _lineIndex;
         private readonly Encoding _encoding;
 
-        public LineProvider(LineIndex lineIndex, Func<Stream> streamFactory, Encoding encoding)
+        public LineProvider(LineIndex lineIndex, LogMetaInformation meta)
         {
-            _streamFactory = streamFactory;
+            _streamFactory = meta.StreamFactory;
             _lineIndex = lineIndex;
-            _encoding = encoding;
+            _encoding = meta.Encoding;
         }
 
         public int Count => _lineIndex.Count;

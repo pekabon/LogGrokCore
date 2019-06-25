@@ -13,7 +13,6 @@ namespace LogGrokCore.Data
         private const int BufferSize = 1024*1024;
 
         public Loader(LogMetaInformation metaInformation, 
-            Func<Stream> streamFactory, 
             LineIndex lineIndex,
             ILineDataConsumer lineProcessor)
         {
@@ -21,7 +20,7 @@ namespace LogGrokCore.Data
             var loaderImpl = new LoaderImpl(BufferSize, lineIndex, lineProcessor);
             _cancellationTokenSource = new CancellationTokenSource();
             _loadingTask = Task.Factory.StartNew(
-                () => loaderImpl.Load(streamFactory(), encoding.GetBytes("\r"), encoding.GetBytes("\n"),
+                () => loaderImpl.Load(metaInformation.StreamFactory(), encoding.GetBytes("\r"), encoding.GetBytes("\n"),
                     _cancellationTokenSource.Token));
         }
 

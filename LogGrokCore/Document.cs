@@ -13,7 +13,7 @@ namespace LogGrokCore
 
         public bool IsLoading => _loader.IsLoading;
 
-        public Document(LogMetaInformation metaInformation, Loader loader, LineProvider lineProvider)
+        public Document(LogMetaInformation metaInformation, Loader loader, IItemProvider<string> lineProvider)
         {
             FilePath = metaInformation.FileName;
             _loader = loader;
