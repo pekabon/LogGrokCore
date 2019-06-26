@@ -239,7 +239,7 @@ namespace LogGrokCore.Controls
         {
             (int, double) GetCountAndWidth(ListView l)
             {
-                var width = l.View is GridView gridView ?
+                var width = l.View is System.Windows.Controls.GridView gridView ?
                     gridView.Columns.Sum(c => c.ActualWidth) : _viewPort.Width;
                 return (l.Items.Count, width);
             }

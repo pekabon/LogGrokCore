@@ -8,12 +8,14 @@ namespace LogGrokCore.Data
     public class LogMetaInformation
     {
         private readonly Lazy<Encoding> _encoding;
+        public string[] FieldNames { get; }
 
         public LogMetaInformation(string fileName, Regex lineRegex, int componentCount)
         {
             FileName = fileName;
             LineRegex = lineRegex;
             ComponentCount = componentCount;
+            FieldNames = new[] {"Time", "Thread", "Text"};
             StreamFactory = () => OpenFile(fileName);
             _encoding = new Lazy<Encoding>(() => DetectEncoding(StreamFactory()));
         }

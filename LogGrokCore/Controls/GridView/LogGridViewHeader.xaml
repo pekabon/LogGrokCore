@@ -1,0 +1,13 @@
+﻿<UserControl x:Class="LogGrokCore.Controls.GridView.LogGridViewHeader"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:metro="clr-namespace:MahApps.Metro.Converters;assembly=MahApps.Metro">
+    <UserControl.Resources>
+        <metro:ToUpperConverter x:Key="ToUpperConverter" />
+    </UserControl.Resources>
+    <DockPanel>
+        <TextBlock VerticalAlignment="Center"
+                   Text="{Binding Converter={StaticResource ToUpperConverter}}"
+                   TextBlock.FontWeight="SemiBold" />
+    </DockPanel>
+</UserControl>

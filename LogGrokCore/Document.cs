@@ -1,4 +1,5 @@
-﻿using LogGrokCore.Data;
+﻿using System.Windows.Shapes;
+using LogGrokCore.Data;
 using LogGrokCore.Data.Virtualization;
 
 namespace LogGrokCore
@@ -9,7 +10,7 @@ namespace LogGrokCore
         
         public string FilePath { get; }
 
-        public VirtualList<string> Lines { get; }
+        public IItemProvider<string> LineProvider { get; }
 
         public bool IsLoading => _loader.IsLoading;
 
@@ -17,7 +18,7 @@ namespace LogGrokCore
         {
             FilePath = metaInformation.FileName;
             _loader = loader;
-            Lines = new VirtualList<string>(lineProvider);
+            LineProvider = lineProvider;
         }
     }
-}
+    }

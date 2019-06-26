@@ -1,0 +1,4 @@
+﻿<GridViewColumn x:Class="LogGrokCore.Controls.GridView.LogGridViewColumn"
+                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                Width="Auto" />

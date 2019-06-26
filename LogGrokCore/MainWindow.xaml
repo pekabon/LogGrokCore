@@ -16,6 +16,7 @@
             <DataTemplate x:Key="DocumentTemplate" DataType="local:DocumentViewModel">
                 <ListView ItemsSource="{Binding Lines}"
                           FontFamily="Consolas"
+                          View="{Binding CustomView}"
                           ScrollViewer.VerticalScrollBarVisibility="Visible"
                           ScrollViewer.CanContentScroll="True"
                           VirtualizingStackPanel.IsVirtualizing="True"

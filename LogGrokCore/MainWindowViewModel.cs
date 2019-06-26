@@ -14,7 +14,7 @@ namespace LogGrokCore
 
         private void OpenFile()
         {
-            var dialog = new OpenFileDialog()
+            var dialog = new OpenFileDialog
             {
                 DefaultExt = "log",
                 Filter = "All Files|*.*|Log files(*.log)|*.log|Text files(*.txt)|*.txt",

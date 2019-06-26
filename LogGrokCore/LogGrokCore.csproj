@@ -19,6 +19,11 @@
     <OutputPath>..\bin\Release\</OutputPath>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="Controls\GridView\LogGridViewCell.xaml" />
+    <None Remove="Controls\GridView\LogGridViewHeader.xaml" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="MahApps.Metro" Version="2.0.0-alpha0391" />
