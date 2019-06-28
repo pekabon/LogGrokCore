@@ -4,25 +4,32 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Input;
+using LogGrokCore.Data;
 using LogGrokCore.Data.Virtualization;
 
 namespace LogGrokCore
 {
     internal class DocumentViewModel : ReactiveObject
     {
-        private readonly Document _document;
-        private GridViewFactory _viewFactory;
-
-        public DocumentViewModel(Document document, GridViewFactory viewFactory)
+        private readonly GridViewFactory _viewFactory;
+        private readonly Loader _loader;
+        private readonly string _filePath;
+        
+        public DocumentViewModel(
+            LogFile logFile, 
+            IItemProvider<string> lineProvider,
+            Loader loader,
+            GridViewFactory viewFactory)
         {
-            _document = document;
-            Title = Path.GetFileName(document.FilePath);
+            _loader = loader;
+            _filePath = logFile.FilePath;
+            Title = Path.GetFileName(_filePath);
 
             var lineCollection =
-                new VirtualList<string, LineViewModel>(document.LineProvider, s => new LineViewModel(s));
+                new VirtualList<string, LineViewModel>(lineProvider, s => new LineViewModel(s));
             Lines = new GrowingCollectionAdapter<LineViewModel>(lineCollection);
                 
-            CopyPathToClipboardCommand = new DelegateCommand(() => TextCopy.Clipboard.SetText(_document.FilePath));
+            CopyPathToClipboardCommand = new DelegateCommand(() => TextCopy.Clipboard.SetText(_filePath));
             OpenContainingFolderCommand = new DelegateCommand(OpenContainingFolder);
 
             _viewFactory = viewFactory;
@@ -40,7 +47,7 @@ namespace LogGrokCore
         private async void UpdateDocumentWhileLoading()
         {
             var delay = 10;
-            while (_document.IsLoading)
+            while (_loader.IsLoading)
             {
                 await Task.Delay(delay);
                 if (delay < 1000)
@@ -51,7 +58,7 @@ namespace LogGrokCore
         }
         private void OpenContainingFolder()
         {
-            var filePath = _document.FilePath;
+            var filePath = _filePath;
 
             var cmdLine = File.Exists(filePath)
                 ? $"/select, {filePath}"

@@ -24,15 +24,16 @@ namespace LogGrokCore
                         (Rules.AutoResolveConcreteTypeRule()));
 
             _container.Register<Loader>();
-            _container.Register<Document>();
             _container.Register<DocumentViewModel>();
             _container.Register<LineIndex>();
             _container.Register<IItemProvider<string>, LineProvider>();
             _container.Register<ILineParser, TabBasedLineParser>();
             _container.Register<ILineDataConsumer, LineProcessor>();
             _container.RegisterDelegate(
+                r => new LogFile(fileName));
+            _container.RegisterDelegate(
                 r => new LogMetaInformation(
-                    fileName, regex, 2));
+                    regex, 2));
         }
 
         public DocumentViewModel GetDocumentViewModel() => _container.Resolve<DocumentViewModel>(); 

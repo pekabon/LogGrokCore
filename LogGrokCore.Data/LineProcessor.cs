@@ -17,9 +17,9 @@ namespace LogGrokCore.Data
         private readonly ILineParser _parser;
         private readonly int _componentCount;
 
-        public LineProcessor(LogMetaInformation metaInformation, ILineParser parser)
+        public LineProcessor(LogFile logFile, LogMetaInformation metaInformation, ILineParser parser)
         {
-            _encoding = metaInformation.Encoding;
+            _encoding = logFile.Encoding;
             _componentCount = metaInformation.ComponentCount;
             _stringPool = new StringPool();
             _currentString = _stringPool.Rent(InitialBufferSize);

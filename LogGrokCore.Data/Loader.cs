@@ -12,15 +12,17 @@ namespace LogGrokCore.Data
         private readonly CancellationTokenSource _cancellationTokenSource;
         private const int BufferSize = 1024*1024;
 
-        public Loader(LogMetaInformation metaInformation, 
+        public Loader(
+            LogFile logFile,
             LineIndex lineIndex,
             ILineDataConsumer lineProcessor)
         {
-            var encoding = metaInformation.Encoding;
+            var encoding = logFile.Encoding;
             var loaderImpl = new LoaderImpl(BufferSize, lineIndex, lineProcessor);
             _cancellationTokenSource = new CancellationTokenSource();
             _loadingTask = Task.Factory.StartNew(
-                () => loaderImpl.Load(metaInformation.StreamFactory(), encoding.GetBytes("\r"), encoding.GetBytes("\n"),
+                () => loaderImpl.Load(logFile.OpenForSequentialRead(), 
+                    encoding.GetBytes("\r"), encoding.GetBytes("\n"),
                     _cancellationTokenSource.Token));
         }
 

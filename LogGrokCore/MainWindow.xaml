@@ -29,8 +29,8 @@
                 </ListView>
              </DataTemplate>
             <localBehaviors:MenuItemCollection x:Key="AdditionalDocumentMenuItems">
-                <MenuItem Header="Copy Full Path" Command="{Binding Model.Content.CopyPathToClipboardCommand}"></MenuItem>
-                <MenuItem Header="Open Containing Folder" Command="{Binding Model.Content.OpenContainingFolderCommand}"></MenuItem>
+                <MenuItem Header="Copy Full Path" Command="{Binding Model.Content.CopyPathToClipboardCommand}" />
+                <MenuItem Header="Open Containing Folder" Command="{Binding Model.Content.OpenContainingFolderCommand}" />
             </localBehaviors:MenuItemCollection>
         </ResourceDictionary>
     </mahapps:MetroWindow.Resources>
