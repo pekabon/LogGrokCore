@@ -18,6 +18,7 @@ namespace LogGrokCore
         public DocumentViewModel(
             LogFile logFile, 
             IItemProvider<string> lineProvider,
+            ILineParser lineParser,
             Loader loader,
             GridViewFactory viewFactory)
         {
@@ -26,7 +27,8 @@ namespace LogGrokCore
             Title = Path.GetFileName(_filePath);
 
             var lineCollection =
-                new VirtualList<string, LineViewModel>(lineProvider, s => new LineViewModel(s));
+                new VirtualList<string, LineViewModel>(lineProvider, 
+                    (str, index) => new LineViewModel(index, str, lineParser));
             Lines = new GrowingCollectionAdapter<LineViewModel>(lineCollection);
                 
             CopyPathToClipboardCommand = new DelegateCommand(() => TextCopy.Clipboard.SetText(_filePath));

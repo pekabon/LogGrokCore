@@ -67,7 +67,7 @@ namespace LogGrokCore.Data
                 var node = LineMetaInformationNode.Get(stringPointer, _componentCount);
                 var lineMetaInformation = node.LineMetaInformation;
 
-                if (!_parser.Parse(_currentString, stringFrom, stringLength, lineMetaInformation))
+                if (!_parser.TryParse(_currentString, stringFrom, stringLength, lineMetaInformation))
                 {
                     if (TryGetPreviousNode(out var prevNode))
                     {

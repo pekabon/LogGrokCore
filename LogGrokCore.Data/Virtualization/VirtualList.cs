@@ -14,23 +14,24 @@ namespace LogGrokCore.Data.Virtualization
                 get
                 {
                     if (EqualityComparer<T>.Default.Equals(_value, default(T)))
-                        _value = _converter(_source);
+                        _value = _converter(_source, _index);
                     return _value;
                 }
             }
 
             private T _value;
+            private readonly int _index;
             
             private readonly TSource _source;
 
-            private Converter<TSource, T> _converter;
+            private Func<TSource, int, T> _converter;
             
-            
-            public PageItem(TSource source, Converter<TSource, T> converter)
+            public PageItem(TSource source, int index, Func<TSource, int, T> converter)
             {
                 _source = source;
                 _converter = converter;
                 _value = default;
+                _index = index;
             }
         }
 
@@ -63,7 +64,7 @@ namespace LogGrokCore.Data.Virtualization
             set => throw new NotSupportedException();
         }
 
-        public VirtualList(IItemProvider<TSource> itemProvider, Converter<TSource, T> converter)
+        public VirtualList(IItemProvider<TSource> itemProvider, Func<TSource, int, T> converter)
         {
             _itemProvider = itemProvider;
             _converter = converter;
@@ -122,8 +123,10 @@ namespace LogGrokCore.Data.Virtualization
                 
                 var newLines = _itemProvider
                     .Fetch(pageStart + page.Count, Math.Min(PageSize, Count - pageStart));
-                foreach (var line in newLines)
-                    page.Add(new PageItem(line, _converter));
+                
+                for (var idx = 0; idx < newLines.Count; idx++)
+                    page.Add(
+                        new PageItem(newLines[idx], pageStart + idx, _converter));
 
                 return (index - pageStart, page);
             }
@@ -131,18 +134,18 @@ namespace LogGrokCore.Data.Virtualization
             var data = _itemProvider.Fetch(pageStart, Math.Min(PageSize, Count - pageStart));
 
             var tempPage = new List<PageItem>(PageSize);
-            Convert(data, tempPage);
+            Convert(data, pageStart, tempPage);
 
             _pageCache[pageIndex] = (tempPage, ++ _pageCounter);
             CleanupCache();
             return (index - pageStart, tempPage);
         }
 
-        private void Convert(IList<TSource> source, List<PageItem> items)
+        private void Convert(IList<TSource> source, int pageStart, List<PageItem> items)
         {
             for (var i = 0; i < source.Count; i++)
             {
-                items.Add(new PageItem(source[i], _converter));
+                items.Add(new PageItem(source[i], pageStart + i, _converter));
             }
         }
 
@@ -157,7 +160,7 @@ namespace LogGrokCore.Data.Virtualization
 
         private const int PageSize = 100;
         private const int MaxCacheSize = 10;
-        private readonly Converter<TSource, T> _converter;
+        private readonly Func<TSource, int, T> _converter;
         private readonly Dictionary<int, (IList<PageItem>, int)> _pageCache = new Dictionary<int, (IList<PageItem>, int)>();
         private int _pageCounter;
     }

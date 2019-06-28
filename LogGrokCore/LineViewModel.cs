@@ -1,10 +1,26 @@
+using LogGrokCore.Data;
+
 namespace LogGrokCore
 {
     public class LineViewModel
     {
-        private string _sourceString;
+        private readonly string _sourceString;
+        private readonly ParseResult _parseResult;
+        
+        public LineViewModel(int index, string sourceString, ILineParser parser)
+        {
+            Index = index;
+            _sourceString = sourceString;
+            _parseResult = parser.Parse(sourceString);
+        }
 
-        public LineViewModel(string sourceString) => _sourceString = sourceString;
+        public int Index { get; }
+    
+        public string GetValue(int index)
+        {
+            var lineMeta = _parseResult.Get();
+            return _sourceString.Substring(lineMeta.ComponentStart(index), lineMeta.ComponentLength(index));
+        }
 
         public string GetValue(string valueName)
         {
