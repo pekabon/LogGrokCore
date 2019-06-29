@@ -3,12 +3,12 @@ using System.Text.RegularExpressions;
 
 namespace LogGrokCore.Data
 {
-    public class TabBasedLineParser : ILineParser
+    public class RegexBasedLineParser : ILineParser
     {
         private readonly Regex _regex;
         private readonly int _componentCount;
 
-        public TabBasedLineParser(LogMetaInformation logMetaInformation)
+        public RegexBasedLineParser(LogMetaInformation logMetaInformation)
         {
             _regex = logMetaInformation.LineRegex;
             _componentCount = logMetaInformation.ComponentCount;
@@ -29,26 +29,13 @@ namespace LogGrokCore.Data
             if (!match.Success)
                 return false;
 
-            lineMeta.LineLength = length;
-
-            var componentStart = 0;
-            var stringSpan = input.AsSpan(beginning, length);
-            
-            for (var idx = 0; idx < _componentCount - 1; idx++)
+            var groups = match.Groups;
+            for (var idx = 1; idx <= _componentCount; idx++)
             {
-                var currentSpan = stringSpan.Slice(componentStart);
-                var tabIndex = currentSpan.IndexOf('\t');
-                
-                lineMeta.ComponentStart(idx) = componentStart;
-                lineMeta.ComponentLength(idx) = tabIndex;
-                if (tabIndex < 0)
-                    Console.Write("");
-                
-                componentStart += tabIndex + 1;
+                lineMeta.ComponentStart(idx - 1) = groups[idx].Index;
+                lineMeta.ComponentLength(idx - 1) = groups[idx].Length;
             }
 
-            lineMeta.ComponentStart(_componentCount - 1) = componentStart;
-            lineMeta.ComponentLength(_componentCount - 1) = length - componentStart;
             return true;
         }
     }

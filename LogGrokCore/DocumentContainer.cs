@@ -14,7 +14,7 @@ namespace LogGrokCore
         {
             var regex =
                 new Regex(
-                    @"^(?'Time'\d{2}\:\d{2}\:\d{2}\.\d{3})\t(?'Thread'0x[0-9a-fA-F]+)\t(?'Severity'\w+)\t(?'Component'\w+)\t(?'Message'.*)",
+                    @"^(?'Time'\d{2}\:\d{2}\:\d{2}\.\d{3})\t(?'Thread'0x[0-9a-fA-F]+)\t(?'Severity'\w+)\t(?'Component'\w+)?\t(?'Message'.*)",
                     RegexOptions.Compiled);
 
             _container = new Container(rules =>
@@ -27,7 +27,7 @@ namespace LogGrokCore
             _container.Register<DocumentViewModel>();
             _container.Register<LineIndex>();
             _container.Register<IItemProvider<string>, LineProvider>();
-            _container.Register<ILineParser, TabBasedLineParser>();
+            _container.Register<ILineParser, RegexBasedLineParser>();
             _container.Register<ILineDataConsumer, LineProcessor>();
             _container.RegisterDelegate(r => new LogFile(fileName));
             _container.RegisterDelegate(r => new LogMetaInformation(regex));

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using LogGrokCore.Data;
 
 namespace LogGrokCore
@@ -20,13 +21,6 @@ namespace LogGrokCore
         {
             var lineMeta = _parseResult.Get();
             return _sourceString.Substring(lineMeta.ComponentStart(index), lineMeta.ComponentLength(index));
-        }
-
-        public string GetValue(string valueName)
-        {
-            if (valueName == "Text")
-                return _sourceString;
-            return valueName;
         }
     }
 }
