@@ -101,7 +101,7 @@ namespace LogGrokCore.Data.Virtualization
 
         public int Add(object value) => throw new NotSupportedException();
 
-        public bool Contains(object value) => throw new NotSupportedException();
+        public bool Contains(object value) => false;
 
         public int IndexOf(object value) => 0;
         
@@ -126,7 +126,7 @@ namespace LogGrokCore.Data.Virtualization
                 
                 for (var idx = 0; idx < newLines.Count; idx++)
                     page.Add(
-                        new PageItem(newLines[idx], pageStart + idx, _converter));
+                        new PageItem(newLines[idx], pageStart + page.Count + idx, _converter));
 
                 return (index - pageStart, page);
             }
