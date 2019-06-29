@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using LogGrokCore.Data;
 
 namespace LogGrokCore
