@@ -28,7 +28,7 @@
   <ItemGroup>
     <PackageReference Include="MahApps.Metro" Version="2.0.0-alpha0391" />
     <PackageReference Include="MiqM.Xceed.Wpf.Toolkit.NETCore" Version="3.4.0.1" />
-    <PackageReference Include="ReactiveUI.WPF" Version="10.0.1-preview.4" />
+    <PackageReference Include="ReactiveUI.WPF" Version="10.0.1-preview.6" />
     <PackageReference Include="Splat.DryIoc" Version="8.0.0-dotnet3-preview.8" />
     <PackageReference Include="TextCopy" Version="1.5.2" />
   </ItemGroup>
