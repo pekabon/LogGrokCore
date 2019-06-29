@@ -6,14 +6,14 @@ namespace LogGrokCore.Data
     {
         public string[] FieldNames { get; }
 
-        public LogMetaInformation(Regex lineRegex)
+        public LogMetaInformation(string lineRegex)
         {
             LineRegex = lineRegex;
             FieldNames = new[] {"Time", "Thread", "Severity", "Component", "Text"};
             ComponentCount = FieldNames.Length;
         }
 
-        public Regex LineRegex { get; }
+        public string LineRegex { get; }
 
         public int ComponentCount { get; }
     }

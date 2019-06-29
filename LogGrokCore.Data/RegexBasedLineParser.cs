@@ -10,7 +10,7 @@ namespace LogGrokCore.Data
 
         public RegexBasedLineParser(LogMetaInformation logMetaInformation)
         {
-            _regex = logMetaInformation.LineRegex;
+            _regex = new Regex(logMetaInformation.LineRegex, RegexOptions.Compiled);
             _componentCount = logMetaInformation.ComponentCount;
         }
 
