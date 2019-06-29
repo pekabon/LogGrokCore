@@ -46,11 +46,10 @@ namespace LogGrokCore.Data
 
         public void Return(string returned)
         {
-            if (_buckets.TryGetValue(returned.Length, out var bucket))
-            {
-                bucket.Return(returned);
-            }
-            throw new InvalidOperationException();
+            if (!_buckets.TryGetValue(returned.Length, out var bucket)) 
+                throw new InvalidOperationException();
+            
+            bucket.Return(returned);
         }
         
         private static int Pow2Roundup (int x)

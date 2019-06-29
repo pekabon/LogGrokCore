@@ -38,6 +38,8 @@ namespace LogGrokCore.Data
 
             if (_currentString.Length - _currentOffset < necessarySpaceChars)
             {
+                // TODO send data for further processing
+                _stringPool.Return(_currentString);
                 _currentString = _stringPool.Rent((necessarySpaceChars / InitialBufferSize + 1) * InitialBufferSize);
                 _currentOffset = 0;
             }
@@ -89,6 +91,7 @@ namespace LogGrokCore.Data
                     _previousOffset = -1;
                     _previousLineString = _currentString;
 
+                    //FinishLineSet(necessarySpaceChars);
                     // TODO send previous line to processing;
                 }
             }
@@ -98,12 +101,13 @@ namespace LogGrokCore.Data
 
         private void FinishLineSet(int necessarySpace)
         {
+            _stringPool.Return(_currentString);
 //            var lineSet = new LineSet(_currentString, _componentCount);
-//            _currentString =
-//                necessarySpace <= InitialBufferSize
-//                    ? _stringPool.Rent(InitialBufferSize)
-//                    : _stringPool.Rent((necessarySpace / InitialBufferSize + 1) * InitialBufferSize);
-//            _currentOffset = 0;
+            _currentString =
+                necessarySpace <= InitialBufferSize
+                    ? _stringPool.Rent(InitialBufferSize)
+                    : _stringPool.Rent((necessarySpace / InitialBufferSize + 1) * InitialBufferSize);
+            _currentOffset = 0;
         }
     }
 }
