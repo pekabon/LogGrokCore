@@ -13,10 +13,14 @@
         Title="LOGGROK" Height="450" Width="800">
     <mahapps:MetroWindow.Resources>
         <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Styles/ListViewItemStyle.xaml" />
+            </ResourceDictionary.MergedDictionaries>
             <DataTemplate x:Key="DocumentTemplate" DataType="local:DocumentViewModel">
                 <ListView ItemsSource="{Binding Lines}"
                           FontFamily="Consolas"
                           View="{Binding CustomView}"
+                          ItemContainerStyle="{StaticResource ItemStyle}"
                           ScrollViewer.VerticalScrollBarVisibility="Visible"
                           ScrollViewer.CanContentScroll="True"
                           VirtualizingStackPanel.IsVirtualizing="True"
