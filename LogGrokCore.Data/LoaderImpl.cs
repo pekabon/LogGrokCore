@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Buffers;
 using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace LogGrokCore.Data
@@ -26,18 +28,20 @@ namespace LogGrokCore.Data
         public void Load(Stream stream, ReadOnlySpan<byte> cr, ReadOnlySpan<byte> lf, CancellationToken cancellationToken)
         {
             var isInCrLfs = false;
-            int crLength = cr.Length;
+            var crLength = cr.Length;
 
-            var bufferStartPosition = 0L;
             var lineStartFromCurrentDataOffset = 0;
 
             var buffer = ArrayPool<byte>.Shared.Rent(_bufferSize);
             var bufferSize = _bufferSize;
+            var (rPattern, nPattern, minusPattern, andPattern) = GetPatterns(cr, lf);
+            
             try
             {
                 var haveFirstLine = false;
                 var dataOffsetFromBufferStart = 0;
                 long streamPosition = 0;
+                long bufferStartPosition;
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     bufferStartPosition = streamPosition - dataOffsetFromBufferStart;
@@ -48,8 +52,35 @@ namespace LogGrokCore.Data
 
                     while (true)
                     {
-                        for (var i = 0; i < bytesRead; i += crLength)
+                        var i = 0;
+                        while (i < bytesRead)
                         {
+                            if (!isInCrLfs
+                                && (dataOffsetFromBufferStart + i) % sizeof(ulong) == 0
+                                && i < bufferSize - dataOffsetFromBufferStart - sizeof(ulong))
+                            {
+                                var longs = MemoryMarshal.Cast<byte, ulong>(data.Slice(i));
+
+                                foreach (var longValue in longs)
+                                {
+                                    bool CheckValuePresence(ulong sourceData, ulong valuePattern)
+                                    {
+                                        var masked = sourceData ^ valuePattern;
+                                        return ((masked - minusPattern) & ~masked & andPattern) != 0;
+                                    }
+
+                                    if (CheckValuePresence(longValue, rPattern) ||
+                                        CheckValuePresence(longValue, nPattern))
+                                    {
+                                        break;
+                                    }
+                                    
+                                    i += sizeof(ulong);
+                                }
+                            }
+
+                            if (i >= bytesRead) break;
+                            
                             var current = data.Slice(i, crLength);
                             if (current.SequenceEqual(cr) || current.SequenceEqual(lf))
                             {
@@ -62,21 +93,20 @@ namespace LogGrokCore.Data
                                 var lineStartInBuffer =
                                     dataOffsetFromBufferStart
                                     + lineStartFromCurrentDataOffset;
-
                                 var isLineStart = _lineDataConsumer.AddLineData(
                                     buffer.AsSpan().Slice(
                                         lineStartInBuffer, i + dataOffsetFromBufferStart - lineStartInBuffer));
-
                                 if (isLineStart)
                                 {
                                     _lineIndex.Add(
                                         bufferStartPosition + lineStartInBuffer);
                                 } 
-
                                 lineStartFromCurrentDataOffset = i;
                                 haveFirstLine = haveFirstLine || isLineStart;
                             }
+                            i += crLength;
                         }
+                        
 
                         var lineOffsetFromBufferStart =
                             dataOffsetFromBufferStart + lineStartFromCurrentDataOffset;
@@ -159,6 +189,36 @@ namespace LogGrokCore.Data
             {
                 ArrayPool<byte>.Shared.Return(buffer);
             }
+        }
+
+        private (ulong rPattern, ulong nPattern, ulong minusPattern, ulong andPattern) 
+            GetPatterns(ReadOnlySpan<byte> r, ReadOnlySpan<byte> n)
+        {
+            ulong ToLongBe(byte[] value)
+            {
+                return BitConverter.ToUInt64(value.Reverse().ToArray(), value.Length - sizeof(ulong));
+            }
+            
+            var patternLength = r.Length;
+            
+            var rPattern = new byte[8];
+            var nPattern = new byte[8];
+            var minusPattern = new byte[8];
+            var andPattern = new byte[8];
+            
+            for (var idx = 0; idx < 8; idx += patternLength)
+            {
+                r.CopyTo(rPattern.AsSpan(idx));
+                n.CopyTo(nPattern.AsSpan(idx));
+                minusPattern[idx + patternLength - 1] = 0x01;
+                andPattern[idx] = 0x80;
+            }
+
+            return (BitConverter.ToUInt64(rPattern, 0), 
+                    BitConverter.ToUInt64(nPattern, 0), 
+                    ToLongBe(minusPattern),
+                    ToLongBe(andPattern));
+
         }
 
     }
