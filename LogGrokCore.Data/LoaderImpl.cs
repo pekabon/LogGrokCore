@@ -7,11 +7,6 @@ using System.Threading;
 
 namespace LogGrokCore.Data
 {
-    public interface ILineDataConsumer
-    {
-        bool AddLineData(Span<byte> lineData);
-    }
-
     public class LoaderImpl
     {
         private readonly int _bufferSize;
@@ -93,7 +88,9 @@ namespace LogGrokCore.Data
                                 var lineStartInBuffer =
                                     dataOffsetFromBufferStart
                                     + lineStartFromCurrentDataOffset;
+                             
                                 var isLineStart = _lineDataConsumer.AddLineData(
+                                    bufferStartPosition + lineStartInBuffer,
                                     buffer.AsSpan().Slice(
                                         lineStartInBuffer, i + dataOffsetFromBufferStart - lineStartInBuffer));
                                 if (isLineStart)
@@ -107,7 +104,6 @@ namespace LogGrokCore.Data
                             i += crLength;
                         }
                         
-
                         var lineOffsetFromBufferStart =
                             dataOffsetFromBufferStart + lineStartFromCurrentDataOffset;
 
@@ -172,6 +168,7 @@ namespace LogGrokCore.Data
                     if (!haveFirstLine)
                     {
                         haveLastLine = _lineDataConsumer.AddLineData(
+                            bufferStartPosition + lastLineOffsetFromBufferStart,
                             buffer.AsSpan().Slice(
                                 lastLineOffsetFromBufferStart,
                                 bufferEndOffset - lastLineOffsetFromBufferStart));
@@ -218,8 +215,6 @@ namespace LogGrokCore.Data
                     BitConverter.ToUInt64(nPattern, 0), 
                     ToLongBe(minusPattern),
                     ToLongBe(andPattern));
-
         }
-
     }
 }

@@ -20,6 +20,7 @@ namespace LogGrokCore.Data
             var encoding = logFile.Encoding;
             var loaderImpl = new LoaderImpl(BufferSize, lineIndex, lineProcessor);
             _cancellationTokenSource = new CancellationTokenSource();
+            
             _loadingTask = Task.Factory.StartNew(
                 () => loaderImpl.Load(logFile.OpenForSequentialRead(), 
                     encoding.GetBytes("\r"), encoding.GetBytes("\n"),

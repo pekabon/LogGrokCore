@@ -18,7 +18,8 @@ namespace LogGrokCore
     
         public string GetValue(int index)
         {
-            var lineMeta = _parseResult.Get();
+            var lineMeta = _parseResult.Get().ParsedLineComponents;
+            
             return _sourceString.Substring(lineMeta.ComponentStart(index), lineMeta.ComponentLength(index));
         }
     }

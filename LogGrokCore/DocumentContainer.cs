@@ -6,6 +6,12 @@ using LogGrokCore.Data.Virtualization;
 
 namespace LogGrokCore
 {
+    public enum ParserType
+    {
+        Full,
+        OnlyIndexed
+    }
+
     internal class DocumentContainer : IDisposable
     {
         private readonly Container _container;
@@ -21,14 +27,28 @@ namespace LogGrokCore
                         (Rules.AutoResolveConcreteTypeRule()));
 
             _container.Register<Loader>();
-            _container.Register<DocumentViewModel>();
+            
             _container.Register<LineIndex>();
             _container.Register<IItemProvider<string>, LineProvider>();
-            _container.Register<ILineParser, RegexBasedLineParser>(Reuse.Transient);
-            _container.Register<ILineDataConsumer, LineProcessor>();
+
+            _container.RegisterDelegate<ILineParser>(
+                r => new RegexBasedLineParser(r.Resolve<LogMetaInformation>(), true), 
+                serviceKey: ParserType.OnlyIndexed);
+
+            _container.RegisterDelegate<ILineParser>(
+                r => new RegexBasedLineParser(r.Resolve<LogMetaInformation>()), 
+                serviceKey: ParserType.Full);
+            
+            _container.Register<ILineDataConsumer, LineProcessor>(
+                made: Parameters.Of.Type<ILineParser>(serviceKey: ParserType.OnlyIndexed));
+            
+            _container.Register<DocumentViewModel>(
+                made: Parameters.Of.Type<ILineParser>(serviceKey: ParserType.Full));
+
+            _container.Register<StringPool>(Reuse.Singleton);
             
             _container.RegisterDelegate(r => new LogFile(fileName));
-            _container.RegisterDelegate(r => new LogMetaInformation(regex));
+            _container.RegisterDelegate(r => new LogMetaInformation(regex, new[] {1, 2, 3}));
         }
 
         public DocumentViewModel GetDocumentViewModel() => _container.Resolve<DocumentViewModel>(); 

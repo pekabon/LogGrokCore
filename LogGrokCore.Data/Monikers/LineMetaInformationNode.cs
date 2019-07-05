@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Text.RegularExpressions;
 
-namespace LogGrokCore.Data
+namespace LogGrokCore.Data.Monikers
 {
     public readonly ref struct LineMetaInformationNode
     {
@@ -27,7 +26,7 @@ namespace LogGrokCore.Data
             NextNodeOffset = -1;
         }
 
-        public int TotalSizeCharsAligned => Align.Get(1 + LineMetaInformation.TotalSizeWithPayloadChars, Alignment);
+        public int TotalSizeCharsAligned => Align.Get(2 + LineMetaInformation.TotalSizeWithPayloadChars, Alignment);
 
         private const int Alignment = 2;
     }

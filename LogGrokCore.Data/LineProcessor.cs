@@ -1,5 +1,7 @@
 using System;
+using System.Diagnostics;
 using System.Text;
+using LogGrokCore.Data.Monikers;
 
 namespace LogGrokCore.Data
 {
@@ -8,40 +10,53 @@ namespace LogGrokCore.Data
      private const int InitialBufferSize = 512 * 1024;
         private readonly StringPool _stringPool;
 
-        private string _currentString;
-        private string _previousLineString;
-
+        private string? _currentString;
+        private string? _previousLineString;
+        private long _bufferOffset;
         private int _currentOffset;
         private int _previousOffset = -1;
         private readonly Encoding _encoding;
         private readonly ILineParser _parser;
         private readonly int _componentCount;
+        private readonly ParsedBufferConsumer _parsedBufferConsumer;
 
-        public LineProcessor(LogFile logFile, LogMetaInformation metaInformation, ILineParser parser)
+        public LineProcessor(LogFile logFile, 
+            LogMetaInformation metaInformation, 
+            ILineParser parser, 
+            ParsedBufferConsumer parsedBufferConsumer,
+            StringPool stringPool)
         {
             _encoding = logFile.Encoding;
-            _componentCount = metaInformation.ComponentCount;
-            _stringPool = new StringPool();
-            _currentString = _stringPool.Rent(InitialBufferSize);
-            _previousLineString = _currentString;
+            _componentCount = metaInformation.IndexedFieldNumbers.Length;
+            _parsedBufferConsumer = parsedBufferConsumer;
+            _stringPool = stringPool;
             
             _parser = parser;
         }
 
-        public unsafe bool AddLineData(Span<byte> lineData)
+        public unsafe bool AddLineData(long lineOffset, Span<byte> lineData)
         {
             var metaSizeChars =
                 LineMetaInformationNode
                     .GetSizeChars(_componentCount); // line size + two components (start & length for each)
 
             var necessarySpaceChars = metaSizeChars + _encoding.GetMaxCharCount(lineData.Length);
-
-            if (_currentString.Length - _currentOffset < necessarySpaceChars)
+            
+            if (_currentString == null)
             {
-                // TODO send data for further processing
-                _stringPool.Return(_currentString);
-                _currentString = _stringPool.Rent((necessarySpaceChars / InitialBufferSize + 1) * InitialBufferSize);
+                _currentString = 
+                    _stringPool.Rent((necessarySpaceChars / InitialBufferSize + 1) * InitialBufferSize);
+                _previousLineString = _currentString;
+                _bufferOffset = lineOffset;
+            } 
+            else if (_currentString.Length - _currentOffset < necessarySpaceChars)
+            {
+                // send data for further processing
+                _parsedBufferConsumer.AddParsedBuffer(_currentString);
+                _currentString = 
+                    _stringPool.Rent((necessarySpaceChars / InitialBufferSize + 1) * InitialBufferSize);
                 _currentOffset = 0;
+                _bufferOffset = lineOffset;
             }
 
             bool TryGetPreviousNode(out LineMetaInformationNode node)
@@ -54,7 +69,6 @@ namespace LogGrokCore.Data
                         return true;
                     }
                 }
-
                 node = default;
                 return false;
             }
@@ -68,19 +82,24 @@ namespace LogGrokCore.Data
 
                 var node = LineMetaInformationNode.Get(stringPointer, _componentCount);
                 var lineMetaInformation = node.LineMetaInformation;
-
-                if (!_parser.TryParse(_currentString, stringFrom, stringLength, lineMetaInformation))
+                
+                if (!_parser.TryParse(_currentString, stringFrom, stringLength, lineMetaInformation.ParsedLineComponents))
                 {
                     if (TryGetPreviousNode(out var prevNode))
                     {
                         prevNode.LineMetaInformation.LineLength += stringLength;
                     }
-                    
+                    else
+                    {
+                        _bufferOffset = lineOffset;
+                    }
                     return false;
                 }
 
                 _previousOffset = _currentOffset;
                 _currentOffset += node.TotalSizeCharsAligned;
+
+                Debug.Assert(_currentOffset <= _currentString.Length);
 
                 if (_previousLineString == _currentString && TryGetPreviousNode(out var previousNode))
                 {
@@ -90,24 +109,10 @@ namespace LogGrokCore.Data
                 {
                     _previousOffset = -1;
                     _previousLineString = _currentString;
-
-                    //FinishLineSet(necessarySpaceChars);
-                    // TODO send previous line to processing;
                 }
             }
 
             return true;
-        }
-
-        private void FinishLineSet(int necessarySpace)
-        {
-            _stringPool.Return(_currentString);
-//            var lineSet = new LineSet(_currentString, _componentCount);
-            _currentString =
-                necessarySpace <= InitialBufferSize
-                    ? _stringPool.Rent(InitialBufferSize)
-                    : _stringPool.Rent((necessarySpace / InitialBufferSize + 1) * InitialBufferSize);
-            _currentOffset = 0;
         }
     }
 }
