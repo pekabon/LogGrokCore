@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 
 namespace LogGrokCore.Data.Index
 {
+    
     public class Indexer
     {
         private ConcurrentDictionary<IndexKey, int> _indices =
@@ -9,12 +10,15 @@ namespace LogGrokCore.Data.Index
 
         public void Add(IndexKey key)
         {
-            _indices.GetOrAdd(key, indexedKey =>
-            {
-                indexedKey.MakeCopy();
-                return 1;
-            });
+            _indices.AddOrUpdate(key,
+                indexedKey =>
+                {
+                    indexedKey.MakeCopy();
+                    return 1;
+                },
+                (_, count) => count + 1);
         }
+        
         
     }
 }

@@ -6,7 +6,11 @@ namespace LogGrokCore.Data.Monikers
     {
         private readonly Span<int> _placeholder;
 
-        public ref int NextNodeOffset => ref _placeholder[0];
+        public int NextNodeOffset
+        {
+            get => _placeholder[0];
+            set => _placeholder[0] = value;
+        }
 
         public LineMetaInformation LineMetaInformation { get; }
 
@@ -23,7 +27,6 @@ namespace LogGrokCore.Data.Monikers
         {
             _placeholder = placeholder;
             LineMetaInformation = new LineMetaInformation(placeholder.Slice(1), componentCount);
-            NextNodeOffset = -1;
         }
 
         public int TotalSizeCharsAligned => Align.Get(2 + LineMetaInformation.TotalSizeWithPayloadChars, Alignment);

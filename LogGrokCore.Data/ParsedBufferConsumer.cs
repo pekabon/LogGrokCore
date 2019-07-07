@@ -27,7 +27,12 @@ namespace LogGrokCore.Data
         {
             _queue.Add(parsedBuffer);
         }
-        
+
+        public void CompleteAdding()
+        {
+            _queue.CompleteAdding();
+        }
+
         private unsafe void ConsumeBuffers()
         {
             foreach (var buffer in _queue.GetConsumingEnumerable())
@@ -36,20 +41,19 @@ namespace LogGrokCore.Data
                 var bufferOffset = 0;
                 fixed (char* start = buffer)
                 {
-                    var node = new LineMetaInformationNode(new Span<int>(start,
-                        buffer.Length * sizeof(int) / sizeof(char)), componentsCount);
-                    
                     while(true)
                     {
+                        var node = new LineMetaInformationNode(new Span<int>(start + bufferOffset,
+                            buffer.Length * sizeof(int) / sizeof(char)), componentsCount);
+
                         var indexKey = new IndexKey(buffer, bufferOffset, componentsCount);
                         var s = indexKey.ToString();
                         _indexer.Add(indexKey);
                      
-                        var nextOffset = node.NextNodeOffset;
+                        var  nextOffset = node.NextNodeOffset;
                         if (nextOffset < 0)
                             break;
-                        bufferOffset += nextOffset;
-
+                        bufferOffset = nextOffset;
                     }
                 }
                 _stringPool.Return(buffer);

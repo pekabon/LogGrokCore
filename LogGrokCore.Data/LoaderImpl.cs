@@ -185,6 +185,7 @@ namespace LogGrokCore.Data
             finally
             {
                 ArrayPool<byte>.Shared.Return(buffer);
+                _lineDataConsumer.CompleteAdding();
             }
         }
 

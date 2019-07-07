@@ -34,6 +34,11 @@ namespace LogGrokCore.Data
             _parser = parser;
         }
 
+        public void CompleteAdding()
+        {
+            _parsedBufferConsumer.CompleteAdding();
+        }
+
         public unsafe bool AddLineData(long lineOffset, Span<byte> lineData)
         {
             var metaSizeChars =
@@ -51,26 +56,13 @@ namespace LogGrokCore.Data
             } 
             else if (_currentString.Length - _currentOffset < necessarySpaceChars)
             {
+                
                 // send data for further processing
                 _parsedBufferConsumer.AddParsedBuffer(_currentString);
                 _currentString = 
                     _stringPool.Rent((necessarySpaceChars / InitialBufferSize + 1) * InitialBufferSize);
                 _currentOffset = 0;
                 _bufferOffset = lineOffset;
-            }
-
-            bool TryGetPreviousNode(out LineMetaInformationNode node)
-            {
-                if (_previousOffset >= 0)
-                {
-                    fixed (char* previousMetadataPointer = _previousLineString.AsSpan(_previousOffset))
-                    {
-                        node = LineMetaInformationNode.Get(previousMetadataPointer, _componentCount);
-                        return true;
-                    }
-                }
-                node = default;
-                return false;
             }
 
             fixed (char* stringPointer = _currentString.AsSpan(_currentOffset))
@@ -81,11 +73,12 @@ namespace LogGrokCore.Data
                 var stringFrom = _currentOffset + metaSizeChars;
 
                 var node = LineMetaInformationNode.Get(stringPointer, _componentCount);
+                node.NextNodeOffset = -1;
                 var lineMetaInformation = node.LineMetaInformation;
                 
                 if (!_parser.TryParse(_currentString, stringFrom, stringLength, lineMetaInformation.ParsedLineComponents))
                 {
-                    if (TryGetPreviousNode(out var prevNode))
+                    if (TryGetPreviousNode(_previousOffset, out var prevNode))
                     {
                         prevNode.LineMetaInformation.LineLength += stringLength;
                     }
@@ -96,23 +89,41 @@ namespace LogGrokCore.Data
                     return false;
                 }
 
-                _previousOffset = _currentOffset;
-                _currentOffset += node.TotalSizeCharsAligned;
-
                 Debug.Assert(_currentOffset <= _currentString.Length);
 
-                if (_previousLineString == _currentString && TryGetPreviousNode(out var previousNode))
+                
+                
+                if (_previousLineString == _currentString)
                 {
-                    previousNode.NextNodeOffset = _currentOffset;
+                    if (TryGetPreviousNode(_previousOffset, out var previousNode))
+                        previousNode.NextNodeOffset = _currentOffset;
+                    
+                    _previousOffset = _currentOffset;
+                    _currentOffset += node.TotalSizeCharsAligned;
                 }
                 else
                 {
                     _previousOffset = -1;
                     _previousLineString = _currentString;
+                    
                 }
             }
 
             return true;
+            
+            bool TryGetPreviousNode(int previousOffset, out LineMetaInformationNode node)
+            {
+                if (previousOffset >= 0)
+                {
+                    fixed (char* previousMetadataPointer = _previousLineString.AsSpan(previousOffset))
+                    {
+                        node = LineMetaInformationNode.Get(previousMetadataPointer, _componentCount);
+                        return true;
+                    }
+                }
+                node = default;
+                return false;
+            }
         }
     }
 }

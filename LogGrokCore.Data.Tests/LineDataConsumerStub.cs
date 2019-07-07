@@ -9,5 +9,9 @@ namespace LogGrokCore.Data.Tests
         {
             return lineData[0] == 0;
         }
+
+        public void CompleteAdding()
+        {
+        }
     }
 }
