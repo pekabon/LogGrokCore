@@ -53,8 +53,8 @@ namespace LogGrokCore.Data.Index
                 
                 chunksCount = _chunks.Count;
                 lastChunk = _currentChunk;
-                lastChunkCount = _currentIndexInChunk + 1;
-                lastChunkMaxValue = lastChunk[_currentIndexInChunk];
+                lastChunkCount = _currentIndexInChunk;
+                lastChunkMaxValue = lastChunk[_currentIndexInChunk - 1];
             }
             finally
             {
