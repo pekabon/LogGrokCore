@@ -6,7 +6,7 @@ using LogGrokCore.Data.Monikers;
 
 namespace LogGrokCore.Data
 {
-    public class ParsedBufferConsumer
+    public sealed class ParsedBufferConsumer
     {
         private readonly BlockingCollection<string> _queue
             = new BlockingCollection<string>(4);
@@ -35,6 +35,7 @@ namespace LogGrokCore.Data
 
         private unsafe void ConsumeBuffers()
         {
+            var lineCounter = 0;
             foreach (var buffer in _queue.GetConsumingEnumerable())
             {
                 var componentsCount = _logMetaInformation.IndexedFieldNumbers.Length;
@@ -47,8 +48,7 @@ namespace LogGrokCore.Data
                             buffer.Length * sizeof(int) / sizeof(char)), componentsCount);
 
                         var indexKey = new IndexKey(buffer, bufferOffset, componentsCount);
-                        var s = indexKey.ToString();
-                        _indexer.Add(indexKey);
+                        _indexer.Add(indexKey, lineCounter++);
                      
                         var  nextOffset = node.NextNodeOffset;
                         if (nextOffset < 0)
