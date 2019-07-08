@@ -27,11 +27,13 @@ namespace LogGrokCore.Data.Index
         {
         }
 
+        public bool IsEmpty => _currentChunk == null;
+        
         public void Add(int value)
         {
             if (_currentChunk == null || _currentIndexInChunk + 1 > _currentChunk.Length)
             {
-                CreateNextChunk(value);
+                CreateNextChunk();
             }
 
             _currentChunk![_currentIndexInChunk] = value;
@@ -113,7 +115,7 @@ namespace LogGrokCore.Data.Index
             return (chunkIndex, foundIndex >= 0 ? foundIndex : ~foundIndex);
         }
 
-        private void CreateNextChunk(int key)
+        private void CreateNextChunk()
         {
             _chunksLock.EnterWriteLock();
             try

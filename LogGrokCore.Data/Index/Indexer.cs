@@ -5,20 +5,29 @@ namespace LogGrokCore.Data.Index
     
     public class Indexer
     {
-        private ConcurrentDictionary<IndexKey, int> _indices =
-            new ConcurrentDictionary<IndexKey, int>(1, 16384);
+        private readonly ConcurrentDictionary<IndexKey, Index> _indices =
+            new ConcurrentDictionary<IndexKey, Index>(1, 16384);
 
-        public void Add(IndexKey key)
+        public void Add(IndexKey key, int lineNumber)
         {
-            _indices.AddOrUpdate(key,
+            var index = _indices.GetOrAdd(key,
                 indexedKey =>
                 {
                     indexedKey.MakeCopy();
-                    return 1;
-                },
-                (_, count) => count + 1);
+                    return new Index();
+                });
+
+            var justAdded = index.IsEmpty;   
+            index.Add(lineNumber);    
+            
+            if (justAdded)
+            {
+                UpdateComponents(key);
+            }
         }
-        
-        
+
+        private void UpdateComponents(IndexKey key)
+        {
+        }
     }
 }
