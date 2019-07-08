@@ -29,8 +29,11 @@ namespace LogGrokCore.Data.Index
             }
         }
 
-        public bool Equals(IndexKey other)
+        public bool Equals(IndexKey? other)
         {
+            if (other == null)
+                return false;
+            
             var dataSpan = GetDataSpan();
             var meta = GetComponentsMeta();
 
