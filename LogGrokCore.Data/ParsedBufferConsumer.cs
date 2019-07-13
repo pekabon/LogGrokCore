@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using LogGrokCore.Data.Index;
@@ -8,24 +7,33 @@ namespace LogGrokCore.Data
 {
     public sealed class ParsedBufferConsumer
     {
-        private readonly BlockingCollection<string> _queue
-            = new BlockingCollection<string>(4);
+        private readonly BlockingCollection<(long startOffset, int lineCount, string buffer)> _queue
+            = new BlockingCollection<(long, int, string)>(4);
 
-        private readonly StringPool _stringPool;
+        private readonly LineIndex _lineIndex;
         private readonly Indexer _indexer;
         private readonly LogMetaInformation _logMetaInformation;
+        private readonly StringPool _stringPool;
+        private readonly long _fileSize;
 
-        public ParsedBufferConsumer(Indexer indexer, LogMetaInformation logMetaInformation, StringPool stringPool)
+        public ParsedBufferConsumer(
+            LineIndex lineIndex,
+            Indexer indexer,
+            LogMetaInformation logMetaInformation,
+            LogFile logFile,
+            StringPool stringPool)
         {
+            _lineIndex = lineIndex;
             _indexer = indexer;
             _logMetaInformation = logMetaInformation;
             _stringPool = stringPool;
+            _fileSize = logFile.FileSize;
             Task.Factory.StartNew(ConsumeBuffers);
         }
 
-        public void AddParsedBuffer(string parsedBuffer)
+        public void AddParsedBuffer(long bufferStartOffset, int lineCount, string parsedBuffer)
         {
-            _queue.Add(parsedBuffer);
+            _queue.Add((bufferStartOffset, lineCount, parsedBuffer));
         }
 
         public void CompleteAdding()
@@ -35,29 +43,30 @@ namespace LogGrokCore.Data
 
         private unsafe void ConsumeBuffers()
         {
-            var lineCounter = 0;
-            foreach (var buffer in _queue.GetConsumingEnumerable())
+            long lastLineOffset = 0;
+
+            var componentsCount = _logMetaInformation.IndexedFieldNumbers.Length;
+            foreach (var (bufferStartOffset, lineCount, buffer) in _queue.GetConsumingEnumerable())
             {
-                var componentsCount = _logMetaInformation.IndexedFieldNumbers.Length;
-                var bufferOffset = 0;
+                var metaOffset = 0;
                 fixed (char* start = buffer)
                 {
-                    while(true)
+                    for (int idx = 0; idx < lineCount; idx++)
                     {
-                        var node = new LineMetaInformationNode(new Span<int>(start + bufferOffset,
-                            buffer.Length * sizeof(int) / sizeof(char)), componentsCount);
+                        var lineMetaInformation = LineMetaInformation.Get(start + metaOffset, componentsCount);
+                        var lineNum = _lineIndex.Add(bufferStartOffset + 
+                                                     lineMetaInformation.LineOffsetFromBufferStart);
 
-                        var indexKey = new IndexKey(buffer, bufferOffset, componentsCount);
-                        _indexer.Add(indexKey, lineCounter++);
-                     
-                        var  nextOffset = node.NextNodeOffset;
-                        if (nextOffset < 0)
-                            break;
-                        bufferOffset = nextOffset;
+                        var indexKey = new IndexKey(buffer, metaOffset, componentsCount);
+                        _indexer.Add(indexKey, lineNum);
+                        metaOffset += lineMetaInformation.TotalSizeWithPayloadCharsAligned;
                     }
+
                 }
                 _stringPool.Return(buffer);
-            }            
+            }
+
+            _lineIndex.Finish((int) (_fileSize - lastLineOffset));
         }
     }
 }

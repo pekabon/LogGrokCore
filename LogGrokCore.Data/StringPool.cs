@@ -1,14 +1,8 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections.Concurrent;
-using System.IO;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace LogGrokCore.Data
 {
-
     public class StringPool
     {
         private class StringPoolBucket
@@ -39,8 +33,7 @@ namespace LogGrokCore.Data
         public string Rent(int size)
         {
             var pooledStringSize = size < 32 ?  32 : Pow2Roundup(size);
-           
-            var bucket = _buckets.GetOrAdd(size, _bucketFactory(pooledStringSize ));
+            var bucket = _buckets.GetOrAdd(pooledStringSize, _bucketFactory(pooledStringSize ));
             return bucket.Rent();
         }
 

@@ -12,7 +12,7 @@ namespace LogGrokCore
     internal class DocumentViewModel : ReactiveObject
     {
         private readonly GridViewFactory _viewFactory;
-        private readonly Loader _loader;
+        private readonly LineIndex _lineIndex;
         private readonly string _filePath;
         
         public DocumentViewModel(
@@ -20,9 +20,10 @@ namespace LogGrokCore
             IItemProvider<string> lineProvider,
             ILineParser lineParser,
             Loader loader,
+            LineIndex lineIndex,
             GridViewFactory viewFactory)
         {
-            _loader = loader;
+            _lineIndex = lineIndex;
             _filePath = logFile.FilePath;
             Title = Path.GetFileName(_filePath);
 
@@ -49,7 +50,7 @@ namespace LogGrokCore
         private async void UpdateDocumentWhileLoading()
         {
             var delay = 10;
-            while (_loader.IsLoading)
+            while (!_lineIndex.IsFinished)
             {
                 await Task.Delay(delay);
                 if (delay < 1000)

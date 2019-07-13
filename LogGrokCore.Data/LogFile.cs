@@ -11,11 +11,14 @@ namespace LogGrokCore.Data
         public LogFile(string filePath)
         {
             FilePath = filePath;
+            FileSize = OpenFile(FilePath).Length;
             _encoding= new Lazy<Encoding>(DetectEncoding);
         }
 
         public string FilePath { get;  }
-        
+
+        public long FileSize { get; }
+
         public Encoding Encoding => _encoding.Value;
 
         public Stream OpenForSequentialRead() => OpenFile(FilePath);

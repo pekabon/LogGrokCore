@@ -13,7 +13,9 @@ namespace LogGrokCore.Data.Monikers
 
         public ReadOnlySpan<char> GetComponent(ReadOnlySpan<char> input, int index)
         {
-            return input.Slice(ComponentStart(index), ComponentLength(index));
+            var componentStart = ComponentStart(index);
+            var componentLength = ComponentLength(index);
+            return input.Slice(componentStart, componentLength);
         }
         
         public ref int ComponentStart(int index) => ref _placeholder[index * 2];
@@ -22,8 +24,8 @@ namespace LogGrokCore.Data.Monikers
 
         public int GetAllCompnentsLength(int componentCount)
         {
-            int lastComponentStart = ComponentStart(componentCount - 1);
-            int lastComponentLength = ComponentLength(componentCount - 1);
+            var lastComponentStart = ComponentStart(componentCount - 1);
+            var lastComponentLength = ComponentLength(componentCount - 1);
             return lastComponentStart + lastComponentLength;
         }
     }

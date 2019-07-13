@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using LogGrokCore.Data.Monikers;
@@ -39,10 +40,18 @@ namespace LogGrokCore.Data
             var groups = match.Groups;
 
             var index = 0;
+            var lastComponentStart = 0;
             foreach (var fieldToStore in _fieldsToStore)
             {
-                parsedLineComponents.ComponentStart(index) = groups[fieldToStore+1].Index - beginning;
-                parsedLineComponents.ComponentLength(index) = groups[fieldToStore+1].Length;
+                var componentLength = groups[fieldToStore+1].Length;
+                lastComponentStart =
+                    componentLength != 0 ? groups[fieldToStore + 1].Index - beginning : lastComponentStart;
+                
+                Debug.Assert(lastComponentStart >= 0);
+                Debug.Assert(componentLength >= 0);
+
+                parsedLineComponents.ComponentStart(index) = lastComponentStart;
+                parsedLineComponents.ComponentLength(index) = componentLength;
                 index++;
             }
 

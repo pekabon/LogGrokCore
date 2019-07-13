@@ -18,8 +18,10 @@ namespace LogGrokCore.Data
             ILineDataConsumer lineProcessor)
         {
             var encoding = logFile.Encoding;
-            var loaderImpl = new LoaderImpl(BufferSize, lineIndex, lineProcessor);
+            var loaderImpl = new LoaderImpl(BufferSize, lineProcessor);
             _cancellationTokenSource = new CancellationTokenSource();
+
+            
             
             _loadingTask = Task.Factory.StartNew(
                 () => loaderImpl.Load(logFile.OpenForSequentialRead(), 

@@ -1,9 +1,9 @@
+using System;
 using System.Collections.Concurrent;
 
 namespace LogGrokCore.Data.Index
 {
-    
-    public class Indexer
+    public class Indexer : IDisposable
     {
         private readonly ConcurrentDictionary<IndexKey, Index> _indices =
             new ConcurrentDictionary<IndexKey, Index>(1, 16384);
@@ -28,6 +28,15 @@ namespace LogGrokCore.Data.Index
 
         private void UpdateComponents(IndexKey key)
         {
+        }
+
+        public void Dispose()
+        {
+            foreach (var index in _indices.Values)
+            {
+                index.Dispose();
+            }
+            _indices.Clear();
         }
     }
 }

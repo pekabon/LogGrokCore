@@ -6,15 +6,17 @@ using System.Text;
 
 namespace LogGrokCore.Data.Tests
 {
-    internal class LineIndexMock : ILineIndex
+    public class LineIndexMock : ILineIndex
     {
         public int Count => throw new System.NotImplementedException();
         public List<long> LineStarts { get; } = new List<long>();
         public int LastLength { get; private set; }
 
-        public void Add(long lineStart)
+        public int Add(long lineStart)
         {
+            var lineNum = LineStarts.Count;
             LineStarts.Add(lineStart);
+            return lineNum;
         }
 
         public void Finish(int lastLength)

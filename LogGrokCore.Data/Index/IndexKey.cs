@@ -22,8 +22,8 @@ namespace LogGrokCore.Data.Index
             var bufferSpan = _buffer.AsSpan(_start);
             fixed (char* start = bufferSpan)
             {
-                var meta =  LineMetaInformationNode.Get(start, _componentCount);
-                var size = meta.TotalSizeCharsAligned;
+                var meta =  LineMetaInformation.Get(start, _componentCount);
+                var size = meta.TotalSizeWithPayloadCharsAligned;
                 _buffer = new string(start, 0, size);
                 _start = 0;
             }
@@ -95,13 +95,13 @@ namespace LogGrokCore.Data.Index
             var bufferSpan = _buffer.AsSpan(_start);
             fixed (char* start = bufferSpan)
             {
-                return LineMetaInformationNode.Get(start, _componentCount).LineMetaInformation.ParsedLineComponents;
+                return LineMetaInformation.Get(start, _componentCount).ParsedLineComponents;
             }
         }
 
         private ReadOnlySpan<char> GetDataSpan()
         {
-            var dataSpan = _buffer.AsSpan(_start + LineMetaInformationNode.GetSizeChars(_componentCount));
+            var dataSpan = _buffer.AsSpan(_start + LineMetaInformation.GetSizeChars(_componentCount));
             return dataSpan;
         }
     }

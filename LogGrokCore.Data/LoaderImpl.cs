@@ -10,13 +10,11 @@ namespace LogGrokCore.Data
     public class LoaderImpl
     {
         private readonly int _bufferSize;
-        private readonly ILineIndex _lineIndex;
         private readonly ILineDataConsumer _lineDataConsumer;
 
-        public LoaderImpl(int bufferSize, ILineIndex lineIndex, ILineDataConsumer lineDataConsumer)
+        public LoaderImpl(int bufferSize, ILineDataConsumer lineDataConsumer)
         {
             _bufferSize = bufferSize;
-            _lineIndex = lineIndex;
             _lineDataConsumer = lineDataConsumer;
         }
 
@@ -93,11 +91,6 @@ namespace LogGrokCore.Data
                                     bufferStartPosition + lineStartInBuffer,
                                     buffer.AsSpan().Slice(
                                         lineStartInBuffer, i + dataOffsetFromBufferStart - lineStartInBuffer));
-                                if (isLineStart)
-                                {
-                                    _lineIndex.Add(
-                                        bufferStartPosition + lineStartInBuffer);
-                                } 
                                 lineStartFromCurrentDataOffset = i;
                                 haveFirstLine = haveFirstLine || isLineStart;
                             }
@@ -164,21 +157,11 @@ namespace LogGrokCore.Data
             
                 void FinishProcessing(int lastLineOffsetFromBufferStart, int bufferEndOffset)
                 {
-                    var haveLastLine = true;
-                    if (!haveFirstLine)
-                    {
-                        haveLastLine = _lineDataConsumer.AddLineData(
-                            bufferStartPosition + lastLineOffsetFromBufferStart,
-                            buffer.AsSpan().Slice(
-                                lastLineOffsetFromBufferStart,
-                                bufferEndOffset - lastLineOffsetFromBufferStart));
-                    }
-
-                    if (!haveLastLine) return;
-                    _lineIndex.Add(
-                        bufferStartPosition + lastLineOffsetFromBufferStart);
-                    _lineIndex.Finish(
-                        bufferEndOffset - lastLineOffsetFromBufferStart);
+                    _ = _lineDataConsumer.AddLineData(
+                        bufferStartPosition + lastLineOffsetFromBufferStart,
+                        buffer.AsSpan().Slice(
+                            lastLineOffsetFromBufferStart,
+                            bufferEndOffset - lastLineOffsetFromBufferStart));
                 }
             }
 

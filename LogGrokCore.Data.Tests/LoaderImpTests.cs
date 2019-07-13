@@ -175,9 +175,6 @@ namespace LogGrokCore.Data.Tests
 
             if (supposedLineStartsCount == 0)
                 return;
-            
-            var supposedLastLineLength = bufferSize - lineStarts.Max();
-            Assert.AreEqual(supposedLastLineLength, lineIndex.LastLength);
 
             if (!haveHeader)
             {
@@ -206,8 +203,8 @@ namespace LogGrokCore.Data.Tests
         private LineIndexMock DoLoad(byte[] buffer)
         {
             var lineIndex = new LineIndexMock();
-            var dataConsumer = new LineDataConsumerStub();
-            var loader = new LoaderImpl(BufferSize, lineIndex, dataConsumer);
+            var dataConsumer = new LineDataConsumerMock(lineIndex);
+            var loader = new LoaderImpl(BufferSize, dataConsumer);
             var stream = new MemoryStream(buffer);
             var token = new CancellationToken();
             loader.Load(stream, _cr.AsSpan(), _lf.AsSpan(), token);

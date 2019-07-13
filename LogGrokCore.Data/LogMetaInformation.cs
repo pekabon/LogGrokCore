@@ -1,5 +1,3 @@
-using System.Text.RegularExpressions;
-
 namespace LogGrokCore.Data
 {
     public class LogMetaInformation
