@@ -1,7 +1,6 @@
 ﻿using DryIoc;
 using LogGrokCore.Data;
 using System;
-using System.Text.RegularExpressions;
 using LogGrokCore.Data.Virtualization;
 
 namespace LogGrokCore
@@ -19,7 +18,7 @@ namespace LogGrokCore
         public DocumentContainer(string fileName)
         {
             var regex =
-                @"^(?'Time'\d{2}\:\d{2}\:\d{2}\.\d{3})\t(?'Thread'0x[0-9a-fA-F]+)\t(?'Severity'\w+)\t(?'Component'\w+)?\t(?'Message'.*)";
+                @"^(?'Time'\d{2}\:\d{2}\:\d{2}\.\d{3})\t(?'Thread'0x[0-9a-fA-F]+)\t(?'Severity'\w+)\t(?'Component'[\w\.]+)?\t?(?'Message'.*)";
             _container = new Container(rules =>
                 rules
                     .WithDefaultReuse(Reuse.Singleton)
