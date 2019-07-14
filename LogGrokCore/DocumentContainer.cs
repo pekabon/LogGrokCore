@@ -47,6 +47,9 @@ namespace LogGrokCore
             _container.Register<DocumentViewModel>(
                 made: Parameters.Of.Type<ILineParser>(serviceKey: ParserType.Full));
 
+            _container.Register<LogModelFacade>(
+                made: Parameters.Of.Type<ILineParser>(serviceKey: ParserType.Full));
+            
             _container.Register<StringPool>(Reuse.Singleton);
             
             _container.RegisterDelegate(r => new LogFile(fileName));

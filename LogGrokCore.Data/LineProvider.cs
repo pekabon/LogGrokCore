@@ -7,31 +7,6 @@ using System.Text;
 
 namespace LogGrokCore.Data
 {
-    public class LineSet : IDisposable
-    {
-        public LineSet(ILineParser parser, int sourceByteCount, Encoding encoding)
-        {
-            var maxCount = encoding.GetMaxCharCount(sourceByteCount);
-            _bufferString = StringPool.Rent(maxCount + maxCount / 4);
-            _parser = parser;
-        }
-
-        public void Add(Span<byte> lineData)
-        {
-            
-        }
-
-        private static readonly StringPool StringPool = new StringPool();
-        private string _bufferString;
-        
-        private ILineParser _parser;
-
-        public void Dispose()
-        {
-            StringPool.Return(_bufferString);
-        }
-    }
-
     public class LineProvider : IItemProvider<string>
     {
         private readonly Func<Stream> _streamFactory;

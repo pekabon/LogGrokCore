@@ -20,7 +20,7 @@ namespace LogGrokCore
         {
             var lineMeta = _parseResult.Get().ParsedLineComponents;
             
-            return _sourceString.Substring(lineMeta.ComponentStart(index), lineMeta.ComponentLength(index));
+            return _sourceString.Substring(lineMeta.ComponentStart(index), lineMeta.ComponentLength(index)).TrimEnd();
         }
     }
 }

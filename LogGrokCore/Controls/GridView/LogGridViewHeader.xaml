@@ -8,6 +8,7 @@
     <DockPanel>
         <TextBlock VerticalAlignment="Center"
                    Text="{Binding Converter={StaticResource ToUpperConverter}}"
-                   TextBlock.FontWeight="SemiBold" />
+                   FontWeight="SemiBold" MinWidth="36"
+                   Width="Auto"/>
     </DockPanel>
 </UserControl>
