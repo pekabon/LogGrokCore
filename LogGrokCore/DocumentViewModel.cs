@@ -17,6 +17,7 @@ namespace LogGrokCore
         private double _progress;
         private readonly LogModelFacade _logModelFacade;
         private bool _isLoading;
+        private bool _isCurrentDocument;
 
         public DocumentViewModel(
             LogModelFacade logModelFacade,
@@ -25,15 +26,17 @@ namespace LogGrokCore
             _logModelFacade = logModelFacade;
 
             Title = Path.GetFileName(_logModelFacade.FilePath);
-
+            
+            
             var lineProvider = _logModelFacade.LineProvider;
             var lineParser = _logModelFacade.LineParser;
             var lineCollection =
-                new VirtualList<string, LineViewModel>(lineProvider, 
+                new VirtualList<string, LineViewModel>(lineProvider,
                     (str, index) => new LineViewModel(index, str, lineParser));
             Lines = new GrowingCollectionAdapter<LineViewModel>(lineCollection);
-                
-            CopyPathToClipboardCommand = new DelegateCommand(() => TextCopy.Clipboard.SetText(_logModelFacade.FilePath));
+
+            CopyPathToClipboardCommand =
+                new DelegateCommand(() => TextCopy.Clipboard.SetText(_logModelFacade.FilePath));
             OpenContainingFolderCommand = new DelegateCommand(OpenContainingFolder);
 
             _viewFactory = viewFactory;
@@ -46,7 +49,7 @@ namespace LogGrokCore
             get => _progress;
             set => SetAndRaiseIfChanged(ref _progress, value);
         }
-        
+
         public bool IsLoading
         {
             get => _isLoading;
@@ -61,6 +64,12 @@ namespace LogGrokCore
 
         public GrowingCollectionAdapter<LineViewModel> Lines { get; }
 
+        public bool IsCurrentDocument
+        {
+            get => _isCurrentDocument;
+            set => SetAndRaiseIfChanged(ref _isCurrentDocument, value);
+        }
+
         private async void UpdateDocumentWhileLoading()
         {
             var delay = 10;
@@ -72,6 +81,7 @@ namespace LogGrokCore
                     delay *= 2;
                 Lines.UpdateCount();
             }
+
             Lines.UpdateCount();
             IsLoading = false;
         }
@@ -100,7 +110,7 @@ namespace LogGrokCore
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private void SetAndRaiseIfChanged<T>(ref T field, T value, [CallerMemberName] string? propertyName = null) 
+        private void SetAndRaiseIfChanged<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
         {
             if (Equals(field, value)) return;
             field = value;

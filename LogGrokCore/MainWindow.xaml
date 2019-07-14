@@ -8,6 +8,7 @@
                      xmlns:localControls="clr-namespace:LogGrokCore.Controls"
                      xmlns:local="clr-namespace:LogGrokCore"
                      xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
+                     xmlns:th="clr-namespace:Xceed.Wpf.AvalonDock.Themes;assembly=Xceed.Wpf.AvalonDock.Themes.Metro"
                      d:DataContext="{d:DesignInstance Type=local:MainWindowViewModel, IsDesignTimeCreatable=False}"
                      mc:Ignorable="d"
                      Title="LOGGROK" Height="450" Width="800">
@@ -18,6 +19,8 @@
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/themes/light.blue.xaml" />
                 <ResourceDictionary Source="Styles/ListViewItemStyle.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            <th:MetroTheme x:Key="MetroTheme" />
+            <localControls:StringShortenerConvereter x:Key="StringShortenerConvereter"/>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
             <DataTemplate x:Key="DocumentTemplate" DataType="local:DocumentViewModel">
                 <Grid>
@@ -68,8 +71,8 @@
         <KeyBinding Command="{Binding OpenFileCommand}" Gesture="CTRL+O" />
     </mahapps:MetroWindow.InputBindings>
     <Grid>
-        <avalonDock:DockingManager x:Name="DockingManager"
-                                   Grid.Row="1"
+        <avalonDock:DockingManager  x:Name="DockingManager"
+                                   Theme="{StaticResource MetroTheme}"
                                    localBehaviors:BindingBehavior.CurrentDocument="{Binding CurrentDocument}"
                                    localBehaviors:BindingBehavior.DocumentViewTemplate="{StaticResource DocumentTemplate}"
                                    localBehaviors:BindingBehavior.DocumentsSource="{Binding Documents}"
@@ -77,9 +80,18 @@
 
             <avalonDock:DockingManager.LayoutItemContainerStyle>
                 <Style TargetType="{x:Type avalonDock:LayoutItem}">
-                    <Setter Property="Title" Value="{Binding Model.Content.Title}" />
                     <Setter Property="ToolTip" Value="{Binding Model.Content.Title}" />
-                </Style>
+                    <Setter Property="Title" Value="{Binding Model.Content.Title}" />
+                    <Style.Triggers> 
+                        <DataTrigger Binding="{Binding Model.Content.IsCurrentDocument}" Value="True"> 
+                            <Setter Property="Title" Value="{Binding Model.Content.Title}" /> 
+                        </DataTrigger> 
+                        <DataTrigger Binding="{Binding Model.Content.IsCurrentDocument}" Value="False"> 
+                            <Setter Property="Title" Value="{Binding Model.Content.Title, 
+                            Converter={StaticResource StringShortenerConvereter}, ConverterParameter=25}" /> 
+                        </DataTrigger> 
+                    </Style.Triggers>
+                </Style> 
             </avalonDock:DockingManager.LayoutItemContainerStyle>
             <avalonDock:LayoutRoot>
                 <avalonDock:LayoutPanel Orientation="Vertical">

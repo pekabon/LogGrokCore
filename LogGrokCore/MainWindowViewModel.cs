@@ -6,11 +6,26 @@ namespace LogGrokCore
 {
     internal class MainWindowViewModel
     {
+        private DocumentViewModel? _currentDocument;
+
         public ObservableCollection<DocumentViewModel> Documents { get; } =
             new ObservableCollection<DocumentViewModel>();
         public ICommand OpenFileCommand => new DelegateCommand(OpenFile);
 
-        public string? CurrentDocument { get; set; }
+        public DocumentViewModel CurrentDocument
+        {
+            get => _currentDocument;
+            set
+            {
+                if (_currentDocument == value) return;
+                
+                if (_currentDocument != null)
+                    _currentDocument.IsCurrentDocument = false;
+                _currentDocument = value;
+                if (_currentDocument != null)
+                    _currentDocument.IsCurrentDocument = true;
+            }
+        }
 
         private void OpenFile()
         {
@@ -44,6 +59,5 @@ namespace LogGrokCore
                 container.Dispose();
             };
         }
-
     }
 }
