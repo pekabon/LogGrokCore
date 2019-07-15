@@ -43,7 +43,7 @@ namespace LogGrokCore.Data
 
         private unsafe void ConsumeBuffers()
         {
-            long lastLineOffset = 0;
+            long lineOffsetFromBufferStart = 0;
 
             var componentsCount = _logMetaInformation.IndexedFieldNumbers.Length;
             foreach (var (bufferStartOffset, lineCount, buffer) in _queue.GetConsumingEnumerable())
@@ -54,19 +54,19 @@ namespace LogGrokCore.Data
                     for (int idx = 0; idx < lineCount; idx++)
                     {
                         var lineMetaInformation = LineMetaInformation.Get(start + metaOffset, componentsCount);
-                        var lineNum = _lineIndex.Add(bufferStartOffset + 
-                                                     lineMetaInformation.LineOffsetFromBufferStart);
+                        lineOffsetFromBufferStart = bufferStartOffset + 
+                                                        lineMetaInformation.LineOffsetFromBufferStart;
+                        var lineNum = _lineIndex.Add(lineOffsetFromBufferStart);
 
                         var indexKey = new IndexKey(buffer, metaOffset, componentsCount);
                         _indexer.Add(indexKey, lineNum);
                         metaOffset += lineMetaInformation.TotalSizeWithPayloadCharsAligned;
                     }
-
                 }
                 _stringPool.Return(buffer);
             }
 
-            _lineIndex.Finish((int) (_fileSize - lastLineOffset));
+            _lineIndex.Finish((int) (_fileSize - lineOffsetFromBufferStart));
         }
     }
 }
