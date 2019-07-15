@@ -4,7 +4,7 @@ using Microsoft.Win32;
 
 namespace LogGrokCore
 {
-    internal class MainWindowViewModel
+    internal class MainWindowViewModel : ViewModelBase
     {
         private DocumentViewModel? _currentDocument;
 
@@ -19,11 +19,16 @@ namespace LogGrokCore
             {
                 if (_currentDocument == value) return;
                 
+                
                 if (_currentDocument != null)
                     _currentDocument.IsCurrentDocument = false;
+                
                 _currentDocument = value;
+                
                 if (_currentDocument != null)
                     _currentDocument.IsCurrentDocument = true;
+                
+                InvokePropertyChanged();
             }
         }
 
@@ -58,6 +63,7 @@ namespace LogGrokCore
                     return;
                 container.Dispose();
             };
+            CurrentDocument = viewModel;
         }
     }
 }

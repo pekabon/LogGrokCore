@@ -1,8 +1,5 @@
-﻿using System;
-using System.ComponentModel;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -11,7 +8,7 @@ using LogGrokCore.Data.Virtualization;
 
 namespace LogGrokCore
 {
-    internal class DocumentViewModel : INotifyPropertyChanged
+    internal class DocumentViewModel : ViewModelBase
     {
         private readonly GridViewFactory _viewFactory;
         private double _progress;
@@ -106,15 +103,6 @@ namespace LogGrokCore
                 : $"/select, {Directory.GetParent(filePath).FullName}";
 
             _ = Process.Start("explorer.exe", cmdLine);
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private void SetAndRaiseIfChanged<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-        {
-            if (Equals(field, value)) return;
-            field = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }
