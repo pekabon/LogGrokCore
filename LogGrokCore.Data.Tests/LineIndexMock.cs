@@ -1,14 +1,11 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace LogGrokCore.Data.Tests
 {
     public class LineIndexMock : ILineIndex
     {
-        public int Count => throw new System.NotImplementedException();
+        public int Count => throw new NotImplementedException();
         public List<long> LineStarts { get; } = new List<long>();
         public int LastLength { get; private set; }
 
@@ -24,9 +21,9 @@ namespace LogGrokCore.Data.Tests
             LastLength = lastLength;
         }
 
-        public (long offset, int lenghth) GetLine(int index)
+        public (long offset, int length) GetLine(int index)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
     }
 }

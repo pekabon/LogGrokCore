@@ -37,7 +37,7 @@
                     <ListView Grid.Row="1" ItemsSource="{Binding Lines}"
                               FontFamily="Consolas"
                               View="{Binding CustomView}"
-                              ItemContainerStyle="{StaticResource ItemStyle}"
+                              ItemContainerStyle="{StaticResource ItemContainerStyle}"
                               ScrollViewer.VerticalScrollBarVisibility="Visible"
                               ScrollViewer.CanContentScroll="True"
                               VirtualizingStackPanel.IsVirtualizing="True"

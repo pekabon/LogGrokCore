@@ -11,7 +11,7 @@ namespace LogGrokCore.Data
         public LogFile(string filePath)
         {
             FilePath = filePath;
-            FileSize = OpenFile(FilePath).Length;
+            FileSize = OpenFileForSequentialRead(FilePath).Length;
             _encoding= new Lazy<Encoding>(DetectEncoding);
         }
 
@@ -21,8 +21,10 @@ namespace LogGrokCore.Data
 
         public Encoding Encoding => _encoding.Value;
 
-        public Stream OpenForSequentialRead() => OpenFile(FilePath);
+        public Stream OpenForSequentialRead() => OpenFileForSequentialRead(FilePath);
 
+        public Stream Open() => OpenFile(FilePath);
+        
         private Encoding DetectEncoding()
         {
             using var reader = new StreamReader(OpenForSequentialRead());
@@ -30,7 +32,7 @@ namespace LogGrokCore.Data
             return reader.CurrentEncoding;
         }
         
-        private static Stream OpenFile(string fileName)
+        private static Stream OpenFileForSequentialRead(string fileName)
         {
             const int bufferSize = 64 * 1024;
             return new FileStream(fileName,
@@ -39,6 +41,14 @@ namespace LogGrokCore.Data
                 FileShare.ReadWrite,
                 bufferSize,
                 FileOptions.SequentialScan);
+        }
+
+        private static Stream OpenFile(string fileName)
+        {
+            return new FileStream(fileName,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite);
         }
     }
 }

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.IO;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,14 +12,11 @@ namespace LogGrokCore.Data
 
         public Loader(
             LogFile logFile,
-            LineIndex lineIndex,
             ILineDataConsumer lineProcessor)
         {
             var encoding = logFile.Encoding;
             var loaderImpl = new LoaderImpl(BufferSize, lineProcessor);
             _cancellationTokenSource = new CancellationTokenSource();
-
-            
             
             _loadingTask = Task.Factory.StartNew(
                 () => loaderImpl.Load(logFile.OpenForSequentialRead(), 

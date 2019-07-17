@@ -2,7 +2,7 @@ using LogGrokCore.Data;
 
 namespace LogGrokCore
 {
-    public class LineViewModel
+    public class LineViewModel : ItemViewModel
     {
         private readonly string _sourceString;
         private readonly ParseResult _parseResult;
@@ -13,7 +13,7 @@ namespace LogGrokCore
             _sourceString = sourceString;
             _parseResult = parser.Parse(sourceString);
         }
-
+        
         public int Index { get; }
     
         public string GetValue(int index)

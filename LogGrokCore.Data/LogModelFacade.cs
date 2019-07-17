@@ -30,7 +30,6 @@ namespace LogGrokCore.Data
         
         private LineIndex LineIndex { get; }
 
-        
         public double LoadProgress
         {
             get

@@ -5,7 +5,7 @@ namespace LogGrokCore.Data
 {
     public class LineIndex : ILineIndex
     {
-        public (long offset, int lenghth) GetLine(int index)
+        public (long offset, int length) GetLine(int index)
         {
             Debug.Assert(index < Count);
             lock (_lineStarts)

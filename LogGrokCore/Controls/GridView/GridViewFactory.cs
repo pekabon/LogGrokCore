@@ -1,5 +1,4 @@
 using System;
-using System.Drawing.Text;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -9,16 +8,6 @@ using LogGrokCore.Data;
 
 namespace LogGrokCore
 {
-    public class HeaderViewModel
-    {
-        public HeaderViewModel(string name)
-        {
-            Name = name;
-        }
-
-        public string Name { get; }
-    }
-
     public class GridViewFactory
     {
         private readonly LogMetaInformation _meta;

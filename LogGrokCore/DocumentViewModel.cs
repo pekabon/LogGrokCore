@@ -18,19 +18,20 @@ namespace LogGrokCore
 
         public DocumentViewModel(
             LogModelFacade logModelFacade,
-            GridViewFactory viewFactory)
+            GridViewFactory viewFactory,
+            HeaderProvider headerProvider)
         {
             _logModelFacade = logModelFacade;
 
             Title = Path.GetFileName(_logModelFacade.FilePath);
             
-            
             var lineProvider = _logModelFacade.LineProvider;
             var lineParser = _logModelFacade.LineParser;
+            
             var lineCollection =
-                new VirtualList<string, LineViewModel>(lineProvider,
+                new VirtualList<string, ItemViewModel>(lineProvider,
                     (str, index) => new LineViewModel(index, str, lineParser));
-            Lines = new GrowingCollectionAdapter<LineViewModel>(lineCollection);
+            Lines = new GrowingLogLinesCollection(headerProvider, lineCollection);
 
             CopyPathToClipboardCommand =
                 new DelegateCommand(() => TextCopy.Clipboard.SetText(_logModelFacade.FilePath));
@@ -59,7 +60,7 @@ namespace LogGrokCore
         public ICommand OpenContainingFolderCommand { get; }
         public string Title { get; }
 
-        public GrowingCollectionAdapter<LineViewModel> Lines { get; }
+        public GrowingLogLinesCollection Lines { get; }
 
         public bool IsCurrentDocument
         {

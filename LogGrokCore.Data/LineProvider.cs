@@ -1,7 +1,6 @@
 ﻿using LogGrokCore.Data.Virtualization;
 using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -22,9 +21,10 @@ namespace LogGrokCore.Data
 
         public int Count => _lineIndex.Count;
 
-        public IList<string> Fetch(int start, int count)
+        public void Fetch(int start, Span<string> values)
         {
             var (startOffset, _) = _lineIndex.GetLine(start);
+            var count = values.Length;
             var (lastLineOffset, lastLineLength) = _lineIndex.GetLine(start + count - 1);
 
             var size = (int)(lastLineOffset + lastLineLength - startOffset);
@@ -37,14 +37,12 @@ namespace LogGrokCore.Data
             stream.Seek(startOffset, SeekOrigin.Begin);
             stream.Read(span);
             
-            var result = new List<string>(count);
             for (var i = start; i < start + count; i++)
             {
                 var (offset, len) = _lineIndex.GetLine(i);
                 var lineSpan = span.Slice((int)(offset - startOffset), len);
-                result.Add(_encoding.GetString(lineSpan).TrimEnd());
+                values[i - start] = _encoding.GetString(lineSpan).TrimEnd();
             }
-            return result;
         }
     }
 }

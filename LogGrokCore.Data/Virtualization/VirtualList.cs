@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -120,32 +121,33 @@ namespace LogGrokCore.Data.Virtualization
             {
                 var (page, _) = pageWithGeneration;
                 if (index - pageStart < page.Count) return (index - pageStart, page);
-                
-                var newLines = _itemProvider
-                    .Fetch(pageStart + page.Count, Math.Min(PageSize, Count - pageStart));
-                
-                for (var idx = 0; idx < newLines.Count; idx++)
-                    page.Add(
-                        new PageItem(newLines[idx], pageStart + page.Count + idx, _converter));
-
+                var count = Math.Min(PageSize, Count - pageStart);
+                FetchAndConvert(pageStart + page.Count, count, page);
                 return (index - pageStart, page);
             }
 
-            var data = _itemProvider.Fetch(pageStart, Math.Min(PageSize, Count - pageStart));
-
             var tempPage = new List<PageItem>(PageSize);
-            Convert(data, pageStart, tempPage);
 
+            FetchAndConvert(pageStart, Math.Min(PageSize, Count - pageStart), tempPage);
             _pageCache[pageIndex] = (tempPage, ++ _pageCounter);
             CleanupCache();
             return (index - pageStart, tempPage);
-        }
-
-        private void Convert(IList<TSource> source, int pageStart, List<PageItem> items)
-        {
-            for (var i = 0; i < source.Count; i++)
+            
+            void FetchAndConvert(int start, int count, IList<PageItem> pageToAdd)
             {
-                items.Add(new PageItem(source[i], pageStart + i, _converter));
+                var arrayPool = ArrayPool<TSource>.Shared;
+                var newLines = arrayPool.Rent(count);
+                try
+                {
+                    _itemProvider.Fetch(start, newLines.AsSpan(0, count));
+                    for (var idx = 0; idx < count; idx++)
+                        pageToAdd.Add(
+                            new PageItem(newLines[idx], start + idx, _converter));
+                }
+                finally
+                {
+                    arrayPool.Return(newLines, true);
+                }
             }
         }
 
