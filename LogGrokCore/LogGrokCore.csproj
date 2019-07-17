@@ -30,6 +30,7 @@
     <PackageReference Include="MiqM.Xceed.Wpf.Toolkit.NETCore" Version="3.4.0.1" />
     <PackageReference Include="ReactiveUI.WPF" Version="10.0.1-preview.6" />
     <PackageReference Include="Splat.DryIoc" Version="8.0.0-dotnet3-preview.8" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="4.6.0-preview6.19303.8" />
     <PackageReference Include="TextCopy" Version="1.5.2" />
   </ItemGroup>
 

@@ -1,20 +1,20 @@
-﻿using Splat;
-using System.Windows;
+﻿using System.Text;
 using DryIoc;
 using Splat.DryIoc;
 
 namespace LogGrokCore
 {
-    public partial class App : Application
+    public partial class App
     {
         public App()
         {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             var container = new Container();
             container.UseDryIocDependencyResolver();
             RegisterDependencies(container);
         }
 
-        private void RegisterDependencies(Container container)
+        private static void RegisterDependencies(IRegistrator container)
         {
             container.Register<MainWindowViewModel>();
         }
