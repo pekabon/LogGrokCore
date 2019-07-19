@@ -3,11 +3,11 @@ using System.Windows;
 
 namespace LogGrokCore.Controls.GridView
 {
-    public partial class LogGridViewCell
+    public class LogGridViewCell : SelectableTextBlock.SelectableTextBlock
     {
         public LogGridViewCell()
         {
-            InitializeComponent();
+            //InitializeComponent();    
             DataContextChanged += (o, e) => UpdateValue();
         }
 

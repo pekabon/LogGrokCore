@@ -43,10 +43,10 @@
             </Setter.Value>
         </Setter>
         <Style.Triggers>
-            <DataTrigger Binding="{Binding  Converter={StaticResource ObjectToTypeConverter}}"
-                         Value="{x:Type logGrokCore:LineViewModel}">
-                <Setter Property="Template" Value="{StaticResource LogLineControlTemplate}" />
-            </DataTrigger>
+            <!-- <DataTrigger Binding="{Binding  Converter={StaticResource ObjectToTypeConverter}}" -->
+            <!--              Value="{x:Type logGrokCore:LineViewModel}"> -->
+            <!--     <Setter Property="Template" Value="{StaticResource LogLineControlTemplate}" /> -->
+            <!-- </DataTrigger> -->
             <DataTrigger Binding="{Binding  Converter={StaticResource ObjectToTypeConverter}}"
                          Value="{x:Type logGrokCore:LogHeaderViewModel}">
                 <Setter Property="Template" Value="{StaticResource LogHeaderControlTemplate}" />

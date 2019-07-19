@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -7,42 +10,79 @@ namespace LogGrokCore.Controls
 {
     internal class ItemGenerator : IDisposable
     {
-        private readonly ItemContainerGenerator _itemContainerGenerator;
+        private readonly ItemContainerGenerator? _itemContainerGenerator;
         private readonly GeneratorDirection _direction;
 
         private IDisposable? _batches;
         private IDisposable? _generatorState;
         private int? _lastIndex;
 
-        public ItemGenerator(ItemContainerGenerator itemContainerGenerator, GeneratorDirection direction)
+        private Style _itemContainerStyle;
+        private IList _sourceCollection;
+        private Queue<ListViewItem> _recycled = new Queue<ListViewItem>();
+        private Dictionary<ListViewItem, int> _containerIndices = new Dictionary<ListViewItem, int>();
+        public ItemGenerator(
+            Style itemContainerStyle,
+            IList sourceCollection)
         {
-            _itemContainerGenerator = itemContainerGenerator;
-            _direction = direction;
+            _itemContainerStyle = itemContainerStyle;
+            _sourceCollection = sourceCollection;
         }
 
-        public DependencyObject? GenerateNext(int currentIndex, out bool isNewlyRealized)
+        public void Recycle(ListViewItem item)
         {
-            if (currentIndex < 0 || currentIndex >= _itemContainerGenerator.Items.Count)
+            item.Visibility = Visibility.Collapsed;
+            _recycled.Enqueue(item);
+            _containerIndices.Remove(item);
+        }
+
+        public ListViewItem CreateContainerForItem(object item, out bool isNewlyRealized)
+        {
+            if (_recycled.TryDequeue(out var recycledContainer))
+            {
+                //                recycledContainer.DataContext = item;
+                //                recycledContainer.Content = item;
+                if (recycledContainer.Content?.GetType() != item.GetType())
+                    recycledContainer.ApplyTemplate();
+
+                recycledContainer.Visibility = Visibility.Visible;
+                isNewlyRealized = false;
+                return recycledContainer;
+            }
+
+            var container = new ListViewItem
+            {
+//                Content = item, 
+//                DataContext = item, 
+//                Style = _itemContainerStyle
+            };
+            isNewlyRealized = true;
+            return container;
+        }
+
+        
+        public ListViewItem? GenerateNext(int currentIndex, out bool isNewlyRealized)
+        {
+            if (currentIndex >= _sourceCollection.Count || currentIndex < 0)
             {
                 isNewlyRealized = false;
                 return null;
             }
 
-            _batches ??= _itemContainerGenerator.GenerateBatches();
-            var generator = (IItemContainerGenerator)_itemContainerGenerator;
-            var supposedPrevIndex = (_direction == GeneratorDirection.Forward)
-                        ? currentIndex - 1 : currentIndex + 1;
+            var item = _sourceCollection[currentIndex];
+            var container = CreateContainerForItem(item, out isNewlyRealized);
+            _containerIndices[container] = currentIndex;
+            return container;
+        }
 
-            if (_generatorState == null || _lastIndex is int idx && idx != supposedPrevIndex)
+        public int GetIndexFromContainer(ListViewItem container)
+        {
+            if (_containerIndices.TryGetValue(container, out var index))
             {
-                _generatorState?.Dispose();
-                var position = generator.GeneratorPositionFromIndex(currentIndex);
-                _generatorState = generator.StartAt(position, _direction, true);
+                return index;
             }
 
-            var result = generator.GenerateNext(out isNewlyRealized);
-            if (result != null) _lastIndex = currentIndex;
-            return result;
+            return -1;
         }
 
         public void Dispose()

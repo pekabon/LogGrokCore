@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace LogGrokCore.Controls
 {
     internal readonly struct VisibleItem : IEquatable<VisibleItem>
     {
-        public VisibleItem(UIElement element, int index, double upperBound, double lowerBound)
+        public VisibleItem(ListViewItem element, int index, double upperBound, double lowerBound)
         {
             Element = element;
             Index = index;
@@ -15,7 +16,7 @@ namespace LogGrokCore.Controls
             Debug.Assert(Height > 0);
         }
 
-        public readonly UIElement Element;
+        public readonly ListViewItem Element;
         
         public readonly int Index;
         
