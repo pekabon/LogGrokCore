@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using LogGrokCore.Data.Monikers;
 
 namespace LogGrokCore.Data.Index
@@ -27,6 +28,14 @@ namespace LogGrokCore.Data.Index
                 _buffer = new string(start, 0, size);
                 _start = 0;
             }
+        }
+
+        public ReadOnlySpan<char> GetComponent(int index)
+        {
+            Debug.Assert(index < _componentCount);
+            var dataSpan = GetDataSpan();
+            var meta = GetComponentsMeta();
+            return meta.GetComponent(dataSpan, index);
         }
 
         public bool Equals(IndexKey other)

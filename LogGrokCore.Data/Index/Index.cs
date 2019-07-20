@@ -12,7 +12,6 @@ namespace LogGrokCore.Data.Index
         private int _chunkSize;
         private int[]? _currentChunk;
         private int _currentIndexInChunk;
-        
         private readonly ReaderWriterLockSlim _chunksLock = new ReaderWriterLockSlim();
         
         private readonly List<(int, int[])> _chunks = new List<(int, int[])>(16);
@@ -38,9 +37,11 @@ namespace LogGrokCore.Data.Index
 
             _currentChunk![_currentIndexInChunk] = value;
             _currentIndexInChunk++;
+            Count++;
         }
 
-        
+        public int Count { get; private set; }
+
         public IEnumerable<int> EnumerateFrom(int from)
         {
             int chunksCount;

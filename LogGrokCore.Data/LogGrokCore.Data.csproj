@@ -17,4 +17,8 @@
     <OutputPath>..\bin\Debug\</OutputPath>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="OptimizedPriorityQueue" Version="4.2.0" />
+  </ItemGroup>
+
 </Project>
