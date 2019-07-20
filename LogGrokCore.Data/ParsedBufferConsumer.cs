@@ -46,7 +46,10 @@ namespace LogGrokCore.Data
             long lineOffsetFromBufferStart = 0;
 
             var componentsCount = _logMetaInformation.IndexedFieldNumbers.Length;
+            
+#pragma warning disable CS8619
             foreach (var (bufferStartOffset, lineCount, buffer) in _queue.GetConsumingEnumerable())
+#pragma warning restore CS8619
             {
                 var metaOffset = 0;
                 fixed (char* start = buffer)

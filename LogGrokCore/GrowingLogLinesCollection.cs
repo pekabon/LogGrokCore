@@ -21,8 +21,8 @@ namespace LogGrokCore
         {
             _sourceCollection = sourceCollection;
             _headerProvider = headerProvider;
-            _headerViewModel = new Lazy<LogHeaderViewModel>(() => 
-                _headerProvider.Header == null?  null : new LogHeaderViewModel(_headerProvider.Header));
+            _headerViewModel = new Lazy<LogHeaderViewModel?>(() => 
+                _headerProvider.Header == null ?  null : new LogHeaderViewModel(_headerProvider.Header));
             _logLinesCount = sourceCollection.Count;
         }
 

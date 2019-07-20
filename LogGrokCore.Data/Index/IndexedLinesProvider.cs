@@ -21,7 +21,9 @@ namespace LogGrokCore.Data.Index
 
             bool IsKeyExcluded(IndexKey key)
             {
+#pragma warning disable CS8619
                 foreach (var (componentIndex, componentValues) in excludedComponents)
+#pragma warning restore CS8619
                 {
                     var keyComponent = key.GetComponent(componentIndex);
                     foreach (var componentValue in componentValues)

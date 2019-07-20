@@ -10,7 +10,7 @@ namespace LogGrokCore.Data
             LineIndex lineIndex,
             LogFile logFile)
         {
-            _header = new Lazy<string>(() => TryGetHeader(lineIndex, logFile, out var header) ? header : null);
+            _header = new Lazy<string?>(() => TryGetHeader(lineIndex, logFile, out var header) ? header : null);
         }
 
         public string? Header => _header.Value;

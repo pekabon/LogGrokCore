@@ -12,7 +12,7 @@ namespace LogGrokCore
             new ObservableCollection<DocumentViewModel>();
         public ICommand OpenFileCommand => new DelegateCommand(OpenFile);
 
-        public DocumentViewModel CurrentDocument
+        public DocumentViewModel? CurrentDocument
         {
             get => _currentDocument;
             set

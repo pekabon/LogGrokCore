@@ -138,7 +138,9 @@ namespace LogGrokCore.Data.Index
 
         public void Dispose()
         {
+#pragma warning disable CS8619
             foreach (var (_, chunk) in _chunks)
+#pragma warning restore CS8619
             {
                 ArrayPool<int>.Shared.Return(chunk);
             }

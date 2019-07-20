@@ -6,36 +6,29 @@ using System.Linq;
 
 namespace LogGrokCore.Data.Virtualization
 {
-    public class VirtualList<TSource, T> : IList<T>, IList
+    public class VirtualList<TSource, T> : IList<T>, IList where T : class 
 	{
         private struct PageItem
         {
-            public T Value
-            {
-                get
-                {
-                    if (EqualityComparer<T>.Default.Equals(_value, default(T)))
-                        _value = _converter(_source, _index);
-                    return _value;
-                }
-            }
-
-            private T _value;
+            private T? _value;
+            
             private readonly int _index;
             
             private readonly TSource _source;
 
-            private Func<TSource, int, T> _converter;
+            private readonly Func<TSource, int, T> _converter;
             
             public PageItem(TSource source, int index, Func<TSource, int, T> converter)
             {
                 _source = source;
                 _converter = converter;
-                _value = default;
+                _value = null;
                 _index = index;
             }
+            
+            public T Value => _value ??= _converter(_source, _index);
         }
-
+        
         private readonly IItemProvider<TSource> _itemProvider;
 
         public int Count => _itemProvider.Count;

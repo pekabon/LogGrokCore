@@ -23,10 +23,14 @@ namespace LogGrokCore.Data.Index
             MakeCountsSnapshot(indices);
         }
         
-        private void MakeCountsSnapshot(IDictionary<IndexKey,Index> indices)
+        private void MakeCountsSnapshot(IDictionary<IndexKey, Index> indices)
         {
             var snapshotList = new List<(IndexKey, int)>(indices.Count);
+            
+
+#pragma warning disable CS8619
             foreach (var (key, value) in indices)
+#pragma warning restore CS8619
             {
                 snapshotList.Add((key, value.Count));
             }
