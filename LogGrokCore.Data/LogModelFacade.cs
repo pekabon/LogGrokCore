@@ -12,7 +12,8 @@ namespace LogGrokCore.Data
             Loader loader,
             LineIndex lineIndex,
             LineProvider lineProvider,
-            ILineParser lineParser)
+            ILineParser lineParser,
+            LogMetaInformation metaInformation)
         {
             FilePath = logFile.FilePath;
             _fileSize = logFile.FileSize;
@@ -20,7 +21,10 @@ namespace LogGrokCore.Data
             _loader = loader;
             LineProvider = lineProvider;
             LineParser = lineParser;
+            MetaInformation = metaInformation;
         }
+
+        public LogMetaInformation MetaInformation { get; }
 
         public ILineParser LineParser { get; }
         

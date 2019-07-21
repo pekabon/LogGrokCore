@@ -34,8 +34,11 @@
                         Value="{Binding Progress}"
                         Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
                     </mahapps:MetroProgressBar>
-                    <ListView Grid.Row="1" ItemsSource="{Binding Lines}"
+                    <localControls:ListView Grid.Row="1" ItemsSource="{Binding Lines}"
                               FontFamily="Consolas"
+                              SelectionMode="Extended"
+                              ReadonlySelectedItems="{Binding SelectedItems,
+                                                            Mode=OneWayToSource}"
                               View="{Binding CustomView}"
                               ItemContainerStyle="{StaticResource ItemContainerStyle}"
                               ScrollViewer.VerticalScrollBarVisibility="Visible"
@@ -44,10 +47,25 @@
                               VirtualizingStackPanel.VirtualizationMode="Recycling">
                         <ListView.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <localControls:VirtualizingStackPanel />
+                                <localControls:VirtualizingStackPanel>
+                                    <localControls:VirtualizingStackPanel.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Exclude"
+                                                      Visibility="{Binding CanFilter, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <MenuItem.ItemsSource>
+                                                    <MultiBinding Converter="{localControls:MetaInfoToMenuItemsConverter}">
+                                                        <Binding Path="MetaInformation" />
+                                                        <Binding Path="ExcludeCommand" />
+                                                        <Binding Path="SelectedItems" />
+                                                    </MultiBinding>
+                                                </MenuItem.ItemsSource>
+                                            </MenuItem>
+                                        </ContextMenu>
+                                    </localControls:VirtualizingStackPanel.ContextMenu> 
+                                </localControls:VirtualizingStackPanel>
                             </ItemsPanelTemplate>
                         </ListView.ItemsPanel>
-                    </ListView>
+                    </localControls:ListView>
                 </Grid>
             </DataTemplate>
             <localBehaviors:MenuItemCollection x:Key="AdditionalDocumentMenuItems">

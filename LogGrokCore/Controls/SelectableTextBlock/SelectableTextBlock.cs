@@ -15,11 +15,11 @@ namespace LogGrokCore.Controls.SelectableTextBlock
                 new FrameworkPropertyMetadata((object?)null));
         }
 
-        private readonly TextEditorWrapper _editor;
+        private readonly TextEditorWrapper? _editor;
 
         public SelectableTextBlock()
         {
-            _editor = TextEditorWrapper.CreateFor(this);
+            //_editor = TextEditorWrapper.CreateFor(this);
         }
     }
 }

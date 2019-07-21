@@ -1,5 +1,7 @@
-﻿using System.Diagnostics;
+﻿using System.Collections;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -15,6 +17,7 @@ namespace LogGrokCore
         private readonly LogModelFacade _logModelFacade;
         private bool _isLoading;
         private bool _isCurrentDocument;
+        private IEnumerable? _selectedItems;
 
         public DocumentViewModel(
             LogModelFacade logModelFacade,
@@ -36,10 +39,30 @@ namespace LogGrokCore
             CopyPathToClipboardCommand =
                 new DelegateCommand(() => TextCopy.Clipboard.SetText(_logModelFacade.FilePath));
             OpenContainingFolderCommand = new DelegateCommand(OpenContainingFolder);
+            ExcludeCommand = new DelegateCommand(() => { });
 
             _viewFactory = viewFactory;
             UpdateDocumentWhileLoading();
             UpdateProgress();
+        }
+
+        public bool CanFilter => true;
+
+        public LogMetaInformation MetaInformation => _logModelFacade.MetaInformation;
+
+        public ICommand ExcludeCommand { get; }
+
+        public IEnumerable? SelectedItems
+        {
+            get => _selectedItems;
+            set
+            {
+                if (_selectedItems == null && value == null) return;
+                if (_selectedItems != null && value != null && 
+                    _selectedItems.Cast<object>().SequenceEqual(value.Cast<object>())) return;
+                _selectedItems = value;
+                InvokePropertyChanged();
+            }
         }
 
         public double Progress
