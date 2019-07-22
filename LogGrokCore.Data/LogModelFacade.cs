@@ -1,3 +1,4 @@
+using LogGrokCore.Data.Index;
 using LogGrokCore.Data.Virtualization;
 
 namespace LogGrokCore.Data
@@ -13,6 +14,7 @@ namespace LogGrokCore.Data
             LineIndex lineIndex,
             LineProvider lineProvider,
             ILineParser lineParser,
+            Indexer indexer,
             LogMetaInformation metaInformation)
         {
             FilePath = logFile.FilePath;
@@ -21,10 +23,13 @@ namespace LogGrokCore.Data
             _loader = loader;
             LineProvider = lineProvider;
             LineParser = lineParser;
+            Indexer = indexer;
             MetaInformation = metaInformation;
         }
 
         public LogMetaInformation MetaInformation { get; }
+
+        public Indexer Indexer { get; }
 
         public ILineParser LineParser { get; }
         

@@ -16,12 +16,13 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/themes/light.blue.xaml" />
+                <ResourceDictionary
+                    Source="pack://application:,,,/MahApps.Metro;component/styles/themes/light.blue.xaml" />
                 <ResourceDictionary Source="Styles/ListViewItemStyle.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <th:MetroTheme x:Key="MetroTheme" />
-            <localControls:StringShortenerConvereter x:Key="StringShortenerConvereter"/>
-            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            <localControls:StringShortenerConvereter x:Key="StringShortenerConvereter" />
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <DataTemplate x:Key="DocumentTemplate" DataType="local:DocumentViewModel">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -32,19 +33,18 @@
                         Height="3"
                         HorizontalAlignment="Stretch"
                         Value="{Binding Progress}"
-                        Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    </mahapps:MetroProgressBar>
+                        Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     <localControls:ListView Grid.Row="1" ItemsSource="{Binding Lines}"
-                              FontFamily="Consolas"
-                              SelectionMode="Extended"
-                              ReadonlySelectedItems="{Binding SelectedItems,
+                                            FontFamily="Consolas"
+                                            SelectionMode="Extended"
+                                            ReadonlySelectedItems="{Binding SelectedItems,
                                                             Mode=OneWayToSource}"
-                              View="{Binding CustomView}"
-                              ItemContainerStyle="{StaticResource ItemContainerStyle}"
-                              ScrollViewer.VerticalScrollBarVisibility="Visible"
-                              ScrollViewer.CanContentScroll="True"
-                              VirtualizingStackPanel.IsVirtualizing="True"
-                              VirtualizingStackPanel.VirtualizationMode="Recycling">
+                                            View="{Binding CustomView}"
+                                            ItemContainerStyle="{StaticResource ItemContainerStyle}"
+                                            ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                            ScrollViewer.CanContentScroll="True"
+                                            VirtualizingStackPanel.IsVirtualizing="True"
+                                            VirtualizingStackPanel.VirtualizationMode="Recycling">
                         <ListView.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <localControls:VirtualizingStackPanel>
@@ -53,7 +53,8 @@
                                             <MenuItem Header="Exclude"
                                                       Visibility="{Binding CanFilter, Converter={StaticResource BooleanToVisibilityConverter}}">
                                                 <MenuItem.ItemsSource>
-                                                    <MultiBinding Converter="{localControls:MetaInfoToMenuItemsConverter}">
+                                                    <MultiBinding
+                                                        Converter="{localControls:MetaInfoToMenuItemsConverter}">
                                                         <Binding Path="MetaInformation" />
                                                         <Binding Path="ExcludeCommand" />
                                                         <Binding Path="SelectedItems" />
@@ -61,7 +62,7 @@
                                                 </MenuItem.ItemsSource>
                                             </MenuItem>
                                         </ContextMenu>
-                                    </localControls:VirtualizingStackPanel.ContextMenu> 
+                                    </localControls:VirtualizingStackPanel.ContextMenu>
                                 </localControls:VirtualizingStackPanel>
                             </ItemsPanelTemplate>
                         </ListView.ItemsPanel>
@@ -89,7 +90,7 @@
         <KeyBinding Command="{Binding OpenFileCommand}" Gesture="CTRL+O" />
     </mahapps:MetroWindow.InputBindings>
     <Grid>
-        <avalonDock:DockingManager  x:Name="DockingManager"
+        <avalonDock:DockingManager x:Name="DockingManager"
                                    Theme="{StaticResource MetroTheme}"
                                    localBehaviors:BindingBehavior.CurrentDocument="{Binding CurrentDocument}"
                                    localBehaviors:BindingBehavior.DocumentViewTemplate="{StaticResource DocumentTemplate}"
@@ -100,16 +101,17 @@
                 <Style TargetType="{x:Type avalonDock:LayoutItem}">
                     <Setter Property="ToolTip" Value="{Binding Model.Content.Title}" />
                     <Setter Property="Title" Value="{Binding Model.Content.Title}" />
-                    <Style.Triggers> 
-                        <DataTrigger Binding="{Binding Model.Content.IsCurrentDocument}" Value="True"> 
-                            <Setter Property="Title" Value="{Binding Model.Content.Title}" /> 
-                        </DataTrigger> 
-                        <DataTrigger Binding="{Binding Model.Content.IsCurrentDocument}" Value="False"> 
-                            <Setter Property="Title" Value="{Binding Model.Content.Title, 
-                            Converter={StaticResource StringShortenerConvereter}, ConverterParameter=25}" /> 
-                        </DataTrigger> 
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Model.Content.IsCurrentDocument}" Value="True">
+                            <Setter Property="Title" Value="{Binding Model.Content.Title}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Model.Content.IsCurrentDocument}" Value="False">
+                            <Setter Property="Title"
+                                    Value="{Binding Model.Content.Title, 
+                            Converter={StaticResource StringShortenerConvereter}, ConverterParameter=25}" />
+                        </DataTrigger>
                     </Style.Triggers>
-                </Style> 
+                </Style>
             </avalonDock:DockingManager.LayoutItemContainerStyle>
             <avalonDock:LayoutRoot>
                 <avalonDock:LayoutPanel Orientation="Vertical">

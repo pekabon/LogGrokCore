@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -6,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Input;
 using LogGrokCore.Data;
+using LogGrokCore.Data.Index;
 using LogGrokCore.Data.Virtualization;
 
 namespace LogGrokCore
@@ -18,9 +21,11 @@ namespace LogGrokCore
         private bool _isLoading;
         private bool _isCurrentDocument;
         private IEnumerable? _selectedItems;
+        private LineViewModelCollectionProvider _lineViewModelCollectionProvider;
 
         public DocumentViewModel(
             LogModelFacade logModelFacade,
+            LineViewModelCollectionProvider lineViewModelCollectionProvider,
             GridViewFactory viewFactory,
             HeaderProvider headerProvider)
         {
@@ -30,6 +35,8 @@ namespace LogGrokCore
             
             var lineProvider = _logModelFacade.LineProvider;
             var lineParser = _logModelFacade.LineParser;
+
+            _lineViewModelCollectionProvider = lineViewModelCollectionProvider;
             
             var lineCollection =
                 new VirtualList<string, ItemViewModel>(lineProvider,
@@ -39,8 +46,11 @@ namespace LogGrokCore
             CopyPathToClipboardCommand =
                 new DelegateCommand(() => TextCopy.Clipboard.SetText(_logModelFacade.FilePath));
             OpenContainingFolderCommand = new DelegateCommand(OpenContainingFolder);
-            ExcludeCommand = new DelegateCommand(() => { });
-
+            ExcludeCommand =
+                DelegateCommand.Create(
+                    (int componentIndex) =>
+                        SetExclusions(componentIndex, GetComponentsInSelectedLines(componentIndex)));
+    
             _viewFactory = viewFactory;
             UpdateDocumentWhileLoading();
             UpdateProgress();
@@ -77,13 +87,19 @@ namespace LogGrokCore
             set => SetAndRaiseIfChanged(ref _isLoading, value);
         }
 
+        private void SetExclusions(int componentIndex, IEnumerable<string> componentValues)
+        {
+            _lineViewModelCollectionProvider.SetExlusions(componentIndex, componentValues);
+            Lines = _lineViewModelCollectionProvider.GetLogLinesCollection();
+        }
+
         public ViewBase CustomView => _viewFactory.CreateView();
 
         public ICommand CopyPathToClipboardCommand { get; }
         public ICommand OpenContainingFolderCommand { get; }
         public string Title { get; }
 
-        public GrowingLogLinesCollection Lines { get; }
+        public GrowingLogLinesCollection Lines { get; private set;}
 
         public bool IsCurrentDocument
         {
@@ -91,6 +107,12 @@ namespace LogGrokCore
             set => SetAndRaiseIfChanged(ref _isCurrentDocument, value);
         }
 
+        private IEnumerable<string> GetComponentsInSelectedLines(int componentIndex)
+        {
+            var lineViewModels = SelectedItems?.OfType<LineViewModel>() ?? Enumerable.Empty<LineViewModel>();
+            return lineViewModels.Select(line => line[componentIndex]).Distinct();
+        }
+        
         private async void UpdateDocumentWhileLoading()
         {
             var delay = 10;

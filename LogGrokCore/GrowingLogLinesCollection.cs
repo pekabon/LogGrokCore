@@ -7,7 +7,7 @@ using LogGrokCore.Data;
 
 namespace LogGrokCore
 {
-    class GrowingLogLinesCollection: IList<ItemViewModel>, IList, INotifyCollectionChanged, INotifyPropertyChanged
+    public class GrowingLogLinesCollection: IList<ItemViewModel>, IList, INotifyCollectionChanged, INotifyPropertyChanged
     {
         private IList<ItemViewModel> _sourceCollection;
 

@@ -8,5 +8,5 @@ namespace LogGrokCore
         {
             yield return t;
         }
-    }
+   }
 }
