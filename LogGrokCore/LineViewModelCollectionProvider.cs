@@ -2,6 +2,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
+using ImTools;
 using LogGrokCore.Data;
 using LogGrokCore.Data.Index;
 using LogGrokCore.Data.Virtualization;
@@ -12,10 +13,10 @@ namespace LogGrokCore
     {
         private readonly Indexer _indexer;
         private readonly Dictionary<int, List<string>> _exclusions = new Dictionary<int, List<string>>();
-        private readonly LineIndex _lineIndex;
         private readonly IItemProvider<string> _lineProvider;
         private readonly ILineParser _lineParser;
         private readonly HeaderProvider _headerProvider;
+        private readonly LogMetaInformation _metaInformation;
 
         private class FilteredLineProvider: IItemProvider<string>
         {
@@ -41,32 +42,34 @@ namespace LogGrokCore
 
             private void FetchRanges(Span<int> lineNumbers, Span<string> values)
             {
-                var currentRangeStart = -1;
-                var currentRangeEnd = 0;
-                
+                var sourceRangeStart = -1;
+                var sourceRangeEnd = 0;
+                var targetRangeStart = 0;
                 foreach (var lineNumber in lineNumbers)
                 {
-                    if (currentRangeStart < 0)
+                    if (sourceRangeStart < 0)
                     {
-                        currentRangeStart = lineNumber;
-                        currentRangeEnd = currentRangeStart;
+                        sourceRangeStart = lineNumber;
+                        sourceRangeEnd = sourceRangeStart;
                     }
-                    else if (lineNumber == currentRangeEnd + 1)
+                    else if (lineNumber == sourceRangeEnd + 1)
                     {
-                        currentRangeEnd = lineNumber;
+                        sourceRangeEnd = lineNumber;
                     }
                     else
                     {
-                        _lineProvider.Fetch(currentRangeStart,
-                            values.Slice(currentRangeStart, currentRangeEnd - currentRangeStart + 1));
-                        currentRangeStart = lineNumber;
-                        currentRangeEnd = currentRangeStart;
+                        var rangeLength = sourceRangeEnd - sourceRangeStart + 1;
+                        _lineProvider.Fetch(sourceRangeStart,
+                            values.Slice(targetRangeStart, rangeLength));
+                        targetRangeStart += rangeLength;
+                        sourceRangeStart = lineNumber;
+                        sourceRangeEnd = sourceRangeStart;
                     }
                 }
 
-                if (currentRangeStart >= 0)
+                if (sourceRangeStart >= 0)
                 {
-                    _lineProvider.Fetch(currentRangeStart, values.Slice(currentRangeStart, currentRangeEnd - currentRangeStart + 1));
+                    _lineProvider.Fetch(sourceRangeStart, values.Slice(targetRangeStart, sourceRangeEnd - sourceRangeStart + 1));
                 }
             }
         }
@@ -76,18 +79,18 @@ namespace LogGrokCore
             LineIndex lineIndex,
             IItemProvider<string> lineProvider,
             ILineParser lineParser,
-            HeaderProvider headerProvider)
+            HeaderProvider headerProvider,
+            LogMetaInformation metaInformation)
         {
             _indexer = indexer;
-            _lineIndex = lineIndex;
             _lineProvider = lineProvider;
             _lineParser = lineParser;
             _headerProvider = headerProvider;
+            _metaInformation = metaInformation;
         }
 
         public GrowingLogLinesCollection GetLogLinesCollection()
         {
-
             var lineProvider = GetLineProvider();
             var lineCollection =
                 new VirtualList<string, ItemViewModel>(lineProvider,
@@ -96,16 +99,24 @@ namespace LogGrokCore
             return new GrowingLogLinesCollection(_headerProvider, lineCollection);
         }
 
-        public IItemProvider<int> GetLineNumbersProvider()
+        public void AddExclusions(int component, IEnumerable<string> componentValuesToExclude)
         {
-            
-            return _indexer.GetIndexedLinesProvider(_exclusions);
+            List<string> currentExclusions;
+            if (!_exclusions.TryGetValue(GetIndexedComponent(component), out currentExclusions))
+            {
+                currentExclusions = new List<string>();
+            }
+
+            SetExclusions(component, currentExclusions.Concat(componentValuesToExclude));
         }
 
-        public void SetExlusions(int component, IEnumerable<string> componentValuesToExclude)
+        public void SetExclusions(int component, IEnumerable<string> componentValuesToExclude)
         {
-            _exclusions[component] = componentValuesToExclude.ToList();
+            var indexedComponent = GetIndexedComponent(component);
+            _exclusions[indexedComponent] = componentValuesToExclude.ToList();
         }
+        
+        private int GetIndexedComponent(int component) => _metaInformation.IndexedFieldNumbers.IndexOf(component);
         
         private IItemProvider<string> GetLineProvider()
         {

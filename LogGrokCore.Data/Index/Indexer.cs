@@ -45,5 +45,10 @@ namespace LogGrokCore.Data.Index
             }
             _indices.Clear();
         }
+
+        public void Finish()
+        {
+            _countIndex.Finish(_indices);
+        }
     }
 }

@@ -9,7 +9,7 @@ namespace LogGrokCore.Data.Index
     internal class IndexedLinesProvider : IItemProvider<int>
     {
         private readonly Indexer _indexer;
-        private readonly FilteredCountIndicesProvider<IndexKey> _countsIndexer;
+        private readonly FilteredCountIndicesProvider<IndexKey> _filteredCountIndicesProvider;
 
         public IndexedLinesProvider(
             Indexer indexer, 
@@ -37,18 +37,19 @@ namespace LogGrokCore.Data.Index
             }
 
             Predicate<IndexKey> isKeyIncluded = key => !IsKeyExcluded(key);
-            _countsIndexer =
+            _filteredCountIndicesProvider =
                 new FilteredCountIndicesProvider<IndexKey>(
                     isKeyIncluded, countIndices,
                     countIndexGranularity);
         }
 
-        public int Count => _countsIndexer.Count;
+        public int Count => _filteredCountIndicesProvider.Count;
         
         public void Fetch(int start, Span<int> values)
         {
+            
             var idx = 0;
-            foreach (var lineNumber in GetEnumerableFrom(start))
+            foreach (var lineNumber in GetEnumerableFrom(start).Take(values.Length))
             {
                 values[idx++] = lineNumber;
             }
@@ -56,11 +57,11 @@ namespace LogGrokCore.Data.Index
 
         private IEnumerable<int> GetEnumerableFrom(int start)
         {
-            var countIndicesItem = _countsIndexer.GetStartIndices(start);
+            var countIndicesItem = _filteredCountIndicesProvider.GetStartIndices(start);
             var startCount = countIndicesItem.TotalCount;
 
             var startIndices = countIndicesItem.Counts.ToDictionary(item => item.key, item => item.count);
-            var indices = _countsIndexer.GetAllKeys().Select(key =>
+            var indices = _filteredCountIndicesProvider.GetAllKeys().Select(key =>
             {
                 var index = _indexer.GetIndex(key);
                 return index.EnumerateFrom(startIndices.TryGetValue(key, out var startPosition) ? startPosition : 0);

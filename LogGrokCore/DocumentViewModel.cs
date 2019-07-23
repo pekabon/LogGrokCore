@@ -22,6 +22,7 @@ namespace LogGrokCore
         private bool _isCurrentDocument;
         private IEnumerable? _selectedItems;
         private LineViewModelCollectionProvider _lineViewModelCollectionProvider;
+        private GrowingLogLinesCollection? _lines;
 
         public DocumentViewModel(
             LogModelFacade logModelFacade,
@@ -49,7 +50,7 @@ namespace LogGrokCore
             ExcludeCommand =
                 DelegateCommand.Create(
                     (int componentIndex) =>
-                        SetExclusions(componentIndex, GetComponentsInSelectedLines(componentIndex)));
+                        AddExclusions(componentIndex, GetComponentsInSelectedLines(componentIndex)));
     
             _viewFactory = viewFactory;
             UpdateDocumentWhileLoading();
@@ -87,9 +88,9 @@ namespace LogGrokCore
             set => SetAndRaiseIfChanged(ref _isLoading, value);
         }
 
-        private void SetExclusions(int componentIndex, IEnumerable<string> componentValues)
+        private void AddExclusions(int componentIndex, IEnumerable<string> componentValues)
         {
-            _lineViewModelCollectionProvider.SetExlusions(componentIndex, componentValues);
+                _lineViewModelCollectionProvider.AddExclusions(componentIndex, componentValues);
             Lines = _lineViewModelCollectionProvider.GetLogLinesCollection();
         }
 
@@ -99,7 +100,11 @@ namespace LogGrokCore
         public ICommand OpenContainingFolderCommand { get; }
         public string Title { get; }
 
-        public GrowingLogLinesCollection Lines { get; private set;}
+        public GrowingLogLinesCollection? Lines
+        {
+            get => _lines;
+            private set => SetAndRaiseIfChanged(ref _lines, value);
+        }
 
         public bool IsCurrentDocument
         {
@@ -122,10 +127,10 @@ namespace LogGrokCore
                 await Task.Delay(delay);
                 if (delay < 500)
                     delay *= 2;
-                Lines.UpdateCount();
+                Lines?.UpdateCount();
             }
 
-            Lines.UpdateCount();
+            Lines?.UpdateCount();
             IsLoading = false;
         }
 

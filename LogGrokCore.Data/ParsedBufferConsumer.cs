@@ -70,6 +70,7 @@ namespace LogGrokCore.Data
             }
 
             _lineIndex.Finish((int) (_fileSize - lineOffsetFromBufferStart));
+            _indexer.Finish();
         }
     }
 }

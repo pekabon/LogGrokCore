@@ -1,6 +1,7 @@
 ﻿using DryIoc;
 using LogGrokCore.Data;
 using System;
+using LogGrokCore.Data.Index;
 using LogGrokCore.Data.Virtualization;
 
 namespace LogGrokCore
@@ -54,6 +55,7 @@ namespace LogGrokCore
             _container.RegisterDelegate(r => new LogFile(fileName));
             _container.RegisterDelegate(r => new LogMetaInformation(regex, new[] {1, 2, 3}));
             
+            _container.Register<Indexer>(Reuse.Singleton);
             _container.Register<LineViewModelCollectionProvider>(Reuse.Singleton, 
                 made: Parameters.Of.Type<ILineParser>(serviceKey: ParserType.Full));
         }

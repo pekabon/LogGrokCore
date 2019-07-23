@@ -42,18 +42,30 @@ namespace LogGrokCore.Data
             var groups = match.Groups;
 
             var index = 0;
+            
             var lastComponentStart = 0;
+            var lastComponentLength = 0;
+
             foreach (var fieldToStore in _fieldsToStore)
             {
                 var componentLength = groups[fieldToStore + 1].Length;
-                lastComponentStart =
-                    componentLength != 0 ? groups[fieldToStore + 1].Index - beginning : lastComponentStart;
 
+                if (componentLength != 0)
+                {
+                    lastComponentStart = groups[fieldToStore + 1].Index - beginning;
+                    lastComponentLength = componentLength;
+                }
+                else
+                {
+                    lastComponentStart += lastComponentLength;
+                    lastComponentLength = 0;
+                }
+                
                 Debug.Assert(lastComponentStart >= 0);
                 Debug.Assert(componentLength >= 0);
 
                 parsedLineComponents.ComponentStart(index) = lastComponentStart;
-                parsedLineComponents.ComponentLength(index) = componentLength;
+                parsedLineComponents.ComponentLength(index) = lastComponentLength;
                 index++;
             }
 
