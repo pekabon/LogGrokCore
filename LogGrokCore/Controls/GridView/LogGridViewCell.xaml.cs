@@ -13,7 +13,7 @@ namespace LogGrokCore.Controls.GridView
 
         public static DependencyProperty ValueGetterProperty = 
             DependencyProperty.Register(nameof(ValueGetter), 
-                typeof(Func<LineViewModel, string>?), 
+                typeof(Func<LineViewModel, string>), 
                 typeof(LogGridViewCell),
                 new PropertyMetadata(OnValueGetterChanged));
 

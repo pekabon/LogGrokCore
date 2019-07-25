@@ -10,13 +10,13 @@ namespace LogGrokCore.AvalonDock
 {
     public class ObservableCollectionFactoryLink<TTarget> where TTarget : class
     {
-        public IList SourceCollection { get; private set; }
+        public IList SourceCollection { get; }
 
-        public ObservableCollection<TTarget> TargetCollection { get; private set; }
+        public ObservableCollection<TTarget> TargetCollection { get; }
 
-        public Func<object, TTarget> Factory { get; private set; }
+        public Func<object, TTarget> Factory { get; }
         
-        private Dictionary<object, TTarget> _sourceToTargetMapping = new Dictionary<object, TTarget>();
+        private readonly Dictionary<object, TTarget> _sourceToTargetMapping = new Dictionary<object, TTarget>();
         
         public ObservableCollectionFactoryLink(IList source, ObservableCollection<TTarget> target, 
             Func<object,TTarget> factory)
@@ -82,19 +82,14 @@ namespace LogGrokCore.AvalonDock
         public object? SourceFromTarget(TTarget target)
         {
             var result = _sourceToTargetMapping.FirstOrDefault(kv => ReferenceEquals(kv.Value, target));
-
-            if (result.Equals(default(KeyValuePair<object, TTarget>)))
-                return null;
-            else
-                return result.Key;
+            return result.Equals(default(KeyValuePair<object, TTarget>)) ? null : result.Key;
         }
 
-        public TTarget? TargetFromSource(object source)
+        public TTarget TargetFromSource(object source)
         {
             if (source == null || !_sourceToTargetMapping.ContainsKey(source))
                 return null;
-            else
-                return _sourceToTargetMapping[source];
+            return _sourceToTargetMapping[source];
         }
     }
 }
