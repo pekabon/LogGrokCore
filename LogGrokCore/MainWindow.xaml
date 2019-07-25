@@ -23,6 +23,25 @@
             <th:MetroTheme x:Key="MetroTheme" />
             <localControls:StringShortenerConvereter x:Key="StringShortenerConvereter" />
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <Style x:Key="FilterContextMenuItem" 
+                   TargetType="MenuItem" 
+                   BasedOn="{StaticResource MetroMenuItem}"
+                   d:DataContext="{d:DesignInstance Type=local:DocumentViewModel, IsDesignTimeCreatable=False}">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=ItemsSource}"
+                                 Value="{x:Null}">
+                        <DataTrigger.Setters>
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger.Setters>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding CanFilter, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                 Value="False">
+                        <DataTrigger.Setters>
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger.Setters>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
             <DataTemplate x:Key="DocumentTemplate" DataType="local:DocumentViewModel">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -50,8 +69,7 @@
                                 <localControls:VirtualizingStackPanel>
                                     <localControls:VirtualizingStackPanel.ContextMenu>
                                         <ContextMenu>
-                                            <MenuItem Header="Exclude"
-                                                      Visibility="{Binding CanFilter, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <MenuItem Header="Exclude" Style="{StaticResource FilterContextMenuItem}">
                                                 <MenuItem.ItemsSource>
                                                     <MultiBinding
                                                         Converter="{localControls:MetaInfoToMenuItemsConverter}">
@@ -61,6 +79,19 @@
                                                     </MultiBinding>
                                                 </MenuItem.ItemsSource>
                                             </MenuItem>
+                                            <MenuItem Header="Exclude All But" Style="{StaticResource FilterContextMenuItem}">
+                                                <MenuItem.ItemsSource>
+                                                    <MultiBinding
+                                                        Converter="{localControls:MetaInfoToMenuItemsConverter}">
+                                                        <Binding Path="MetaInformation" />
+                                                        <Binding Path="ExcludeAllButCommand" />
+                                                        <Binding Path="SelectedItems" />
+                                                    </MultiBinding>
+                                                </MenuItem.ItemsSource>
+                                            </MenuItem>
+                                            <MenuItem Header="Clear filters" 
+                                                      Visibility="{Binding HaveFilter, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                      Command="{Binding ClearExclusionsCommand}"/>
                                         </ContextMenu>
                                     </localControls:VirtualizingStackPanel.ContextMenu>
                                 </localControls:VirtualizingStackPanel>

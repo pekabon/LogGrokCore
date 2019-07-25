@@ -17,7 +17,7 @@ namespace LogGrokCore
         private readonly ILineParser _lineParser;
         private readonly HeaderProvider _headerProvider;
         private readonly LogMetaInformation _metaInformation;
-
+        
         private class FilteredLineProvider: IItemProvider<string>
         {
             private readonly IItemProvider<int> _lineNumbersProvider;
@@ -99,21 +99,41 @@ namespace LogGrokCore
             return new GrowingLogLinesCollection(_headerProvider, lineCollection);
         }
 
+        public bool HaveExclusions => _exclusions.Count > 0;
+
+        public event Action ExclusionsChanged;
+
         public void AddExclusions(int component, IEnumerable<string> componentValuesToExclude)
         {
+            var indexedComponent = GetIndexedComponent(component);
+
             List<string> currentExclusions;
-            if (!_exclusions.TryGetValue(GetIndexedComponent(component), out currentExclusions))
+            if (!_exclusions.TryGetValue(GetIndexedComponent(indexedComponent), out currentExclusions))
             {
                 currentExclusions = new List<string>();
             }
 
-            SetExclusions(component, currentExclusions.Concat(componentValuesToExclude));
+            SetExclusions(indexedComponent, currentExclusions.Concat(componentValuesToExclude));
         }
 
-        public void SetExclusions(int component, IEnumerable<string> componentValuesToExclude)
+        public void ExcludeAllExcept(int component, IEnumerable<string> componentValuesToInclude)
         {
             var indexedComponent = GetIndexedComponent(component);
+
+            var exclusions = _indexer.GetAllComponents(indexedComponent).Except(componentValuesToInclude);
+            SetExclusions(indexedComponent , exclusions);
+        }
+
+        public void ClearAllExclusions()
+        {
+            _exclusions.Clear();
+            ExclusionsChanged?.Invoke();
+        }
+
+        private void SetExclusions(int indexedComponent, IEnumerable<string> componentValuesToExclude)
+        {
             _exclusions[indexedComponent] = componentValuesToExclude.ToList();
+            ExclusionsChanged?.Invoke();
         }
         
         private int GetIndexedComponent(int component) => _metaInformation.IndexedFieldNumbers.IndexOf(component);

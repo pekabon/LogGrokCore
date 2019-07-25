@@ -30,9 +30,14 @@ namespace LogGrokCore.Controls
             }
         }
 
-        private object ConvertCore(LogMetaInformation meta, ICommand command, IEnumerable<object> selectedItems)
+        private object? ConvertCore(LogMetaInformation meta, ICommand command, IEnumerable<object> selectedItems)
         {
             var isMultiSelection = selectedItems.Skip(1).Any();
+            if (!isMultiSelection)
+            {
+                if (selectedItems.Single() is LogHeaderViewModel)
+                    return null;
+            }
 
             MenuItem CreateMenuItem(string fieldName, int fieldIndex)
             {
@@ -56,7 +61,7 @@ namespace LogGrokCore.Controls
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
         {
-            throw new NotSupportedException();;
+            throw new NotSupportedException();
         }
     }
 }

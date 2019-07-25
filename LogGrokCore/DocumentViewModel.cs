@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -8,7 +7,6 @@ using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Input;
 using LogGrokCore.Data;
-using LogGrokCore.Data.Index;
 using LogGrokCore.Data.Virtualization;
 
 namespace LogGrokCore
@@ -21,9 +19,9 @@ namespace LogGrokCore
         private bool _isLoading;
         private bool _isCurrentDocument;
         private IEnumerable? _selectedItems;
-        private LineViewModelCollectionProvider _lineViewModelCollectionProvider;
+        private readonly LineViewModelCollectionProvider _lineViewModelCollectionProvider;
         private GrowingLogLinesCollection? _lines;
-
+        
         public DocumentViewModel(
             LogModelFacade logModelFacade,
             LineViewModelCollectionProvider lineViewModelCollectionProvider,
@@ -38,7 +36,7 @@ namespace LogGrokCore
             var lineParser = _logModelFacade.LineParser;
 
             _lineViewModelCollectionProvider = lineViewModelCollectionProvider;
-            
+            _lineViewModelCollectionProvider.ExclusionsChanged += () => { InvokePropertyChanged(nameof(HaveFilter)); };
             var lineCollection =
                 new VirtualList<string, ItemViewModel>(lineProvider,
                     (str, index) => new LineViewModel(index, str, lineParser));
@@ -47,11 +45,30 @@ namespace LogGrokCore
             CopyPathToClipboardCommand =
                 new DelegateCommand(() => TextCopy.Clipboard.SetText(_logModelFacade.FilePath));
             OpenContainingFolderCommand = new DelegateCommand(OpenContainingFolder);
-            ExcludeCommand =
-                DelegateCommand.Create(
+            
+            ExcludeCommand = DelegateCommand.Create(
                     (int componentIndex) =>
-                        AddExclusions(componentIndex, GetComponentsInSelectedLines(componentIndex)));
-    
+                    {
+                        _lineViewModelCollectionProvider.AddExclusions(componentIndex,
+                            GetComponentsInSelectedLines(componentIndex));
+                        Lines = _lineViewModelCollectionProvider.GetLogLinesCollection();
+                    });    
+            
+            ExcludeAllButCommand = DelegateCommand.Create(
+                (int componentIndex) =>
+                {
+                    _lineViewModelCollectionProvider.ExcludeAllExcept(componentIndex,
+                        GetComponentsInSelectedLines(componentIndex));
+                    Lines = _lineViewModelCollectionProvider.GetLogLinesCollection();
+                });
+            
+            ClearExclusionsCommand = new DelegateCommand(() =>
+                {
+                    _lineViewModelCollectionProvider.ClearAllExclusions();
+                    Lines = _lineViewModelCollectionProvider.GetLogLinesCollection();
+                }
+            );
+            
             _viewFactory = viewFactory;
             UpdateDocumentWhileLoading();
             UpdateProgress();
@@ -59,9 +76,16 @@ namespace LogGrokCore
 
         public bool CanFilter => true;
 
+        public bool HaveFilter => _lineViewModelCollectionProvider.HaveExclusions;
+
         public LogMetaInformation MetaInformation => _logModelFacade.MetaInformation;
 
         public ICommand ExcludeCommand { get; }
+
+        public ICommand ExcludeAllButCommand { get; }
+
+        
+        public ICommand ClearExclusionsCommand { get; }
 
         public IEnumerable? SelectedItems
         {
@@ -88,12 +112,6 @@ namespace LogGrokCore
             set => SetAndRaiseIfChanged(ref _isLoading, value);
         }
 
-        private void AddExclusions(int componentIndex, IEnumerable<string> componentValues)
-        {
-                _lineViewModelCollectionProvider.AddExclusions(componentIndex, componentValues);
-            Lines = _lineViewModelCollectionProvider.GetLogLinesCollection();
-        }
-
         public ViewBase CustomView => _viewFactory.CreateView();
 
         public ICommand CopyPathToClipboardCommand { get; }
@@ -117,7 +135,7 @@ namespace LogGrokCore
             var lineViewModels = SelectedItems?.OfType<LineViewModel>() ?? Enumerable.Empty<LineViewModel>();
             return lineViewModels.Select(line => line[componentIndex]).Distinct();
         }
-        
+
         private async void UpdateDocumentWhileLoading()
         {
             var delay = 10;
