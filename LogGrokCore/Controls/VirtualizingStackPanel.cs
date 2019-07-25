@@ -344,7 +344,7 @@ namespace LogGrokCore.Controls
             }
         }
 
-        private void OnCurrentItemChanged(object sender, EventArgs e)
+        private void OnCurrentItemChanged(object? sender, EventArgs e)
         {
             // TODO
             // throw new NotImplementedException();

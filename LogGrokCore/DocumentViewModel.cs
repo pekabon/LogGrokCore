@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -30,7 +31,9 @@ namespace LogGrokCore
         {
             _logModelFacade = logModelFacade;
 
-            Title = Path.GetFileName(_logModelFacade.FilePath);
+            Title = 
+                Path.GetFileName(_logModelFacade.FilePath) 
+                ?? throw new InvalidOperationException($"Invalid path: {_logModelFacade.FilePath}");
             
             var lineProvider = _logModelFacade.LineProvider;
             var lineParser = _logModelFacade.LineParser;

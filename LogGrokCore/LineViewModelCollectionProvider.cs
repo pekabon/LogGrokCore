@@ -107,7 +107,7 @@ namespace LogGrokCore
         {
             var indexedComponent = GetIndexedComponent(component);
 
-            List<string> currentExclusions;
+            List<string>? currentExclusions;
             if (!_exclusions.TryGetValue(GetIndexedComponent(indexedComponent), out currentExclusions))
             {
                 currentExclusions = new List<string>();

@@ -26,7 +26,7 @@ namespace LogGrokCore.AvalonDock
             Factory = factory;
 
             TargetCollection.Clear();
-            foreach (var s in SourceCollection)
+            foreach (var s in SourceCollection.Cast<object>().Where(item => item != null))
             {
                 var t = Factory(s);
                 _sourceToTargetMapping[s] = t;
@@ -85,7 +85,7 @@ namespace LogGrokCore.AvalonDock
             return result.Equals(default(KeyValuePair<object, TTarget>)) ? null : result.Key;
         }
 
-        public TTarget TargetFromSource(object source)
+        public TTarget? TargetFromSource(object source)
         {
             if (source == null || !_sourceToTargetMapping.ContainsKey(source))
                 return null;

@@ -79,13 +79,13 @@ namespace LogGrokCore
 
         public void Add(ItemViewModel item) => _sourceCollection.Add(item);
 
-        public int Add(object value) => SourceList.Add(value);
+        public int Add(object? value) => SourceList.Add(value);
 
         public void Clear() => _sourceCollection.Clear();
 
         public bool Contains(ItemViewModel item) => _sourceCollection.Contains(item);
 
-        public bool Contains(object value) => SourceList.Contains(value);
+        public bool Contains(object? value) => SourceList.Contains(value);
 
         public void CopyTo(ItemViewModel[] array, int arrayIndex) => throw new NotSupportedException();
 
@@ -107,15 +107,15 @@ namespace LogGrokCore
 
         public int IndexOf(ItemViewModel item) => _sourceCollection.IndexOf(item) + _headerCount;
 
-        public int IndexOf(object value) => SourceList.IndexOf(value) + _headerCount;
+        public int IndexOf(object? value) => SourceList.IndexOf(value) + _headerCount;
 
         public void Insert(int index, ItemViewModel item) => throw new NotSupportedException();
 
-        public void Insert(int index, object value) => throw new NotSupportedException();
+        public void Insert(int index, object? value) => throw new NotSupportedException();
 
         public bool Remove(ItemViewModel item) => throw new NotSupportedException();
 
-        public void Remove(object value) => throw new NotSupportedException();
+        public void Remove(object? value) => throw new NotSupportedException();
 
         public void RemoveAt(int index) => throw new NotSupportedException();
 
