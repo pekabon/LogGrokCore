@@ -1,4 +1,4 @@
-﻿using System;
+﻿ using System;
 using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
@@ -73,15 +73,15 @@ namespace LogGrokCore.Data.Virtualization
 
         public void CopyTo(T[] array, int arrayIndex) => throw new NotSupportedException();
 
-        public int Add(object value) => throw new NotSupportedException();
+        public int Add(object? value) => throw new NotSupportedException();
 
-        public bool Contains(object value) => false;
+        public bool Contains(object? value) => false;
 
-        public int IndexOf(object value) => 0;
+        public int IndexOf(object? value) => 0;
         
-        public void Insert(int index, object value) => throw new NotSupportedException();
+        public void Insert(int index, object? value) => throw new NotSupportedException();
 
-        public void Remove(object value) => throw new NotSupportedException();
+        public void Remove(object? value) => throw new NotSupportedException();
 
         public void CopyTo(Array array, int index) => throw new NotSupportedException();
 

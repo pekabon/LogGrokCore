@@ -60,7 +60,7 @@ namespace LogGrokCore.Data.Index
             return true;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is IndexKey other && Equals(other);
         }
