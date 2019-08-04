@@ -16,90 +16,11 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
-                <ResourceDictionary
-                    Source="pack://application:,,,/MahApps.Metro;component/styles/themes/light.blue.xaml" />
-                <ResourceDictionary Source="Styles/ListViewItemStyle.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/themes/light.blue.xaml" />
+                <ResourceDictionary Source="Styles/DocumentTemplate.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <th:MetroTheme x:Key="MetroTheme" />
             <localControls:StringShortenerConvereter x:Key="StringShortenerConvereter" />
-            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-            <Style x:Key="FilterContextMenuItem" 
-                   TargetType="MenuItem" 
-                   BasedOn="{StaticResource MetroMenuItem}"
-                   d:DataContext="{d:DesignInstance Type=local:DocumentViewModel, IsDesignTimeCreatable=False}">
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=ItemsSource}"
-                                 Value="{x:Null}">
-                        <DataTrigger.Setters>
-                            <Setter Property="Visibility" Value="Collapsed" />
-                        </DataTrigger.Setters>
-                    </DataTrigger>
-                    <DataTrigger Binding="{Binding CanFilter, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                 Value="False">
-                        <DataTrigger.Setters>
-                            <Setter Property="Visibility" Value="Collapsed" />
-                        </DataTrigger.Setters>
-                    </DataTrigger>
-                </Style.Triggers>
-            </Style>
-            <DataTemplate x:Key="DocumentTemplate" DataType="local:DocumentViewModel">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition />
-                    </Grid.RowDefinitions>
-                    <mahapps:MetroProgressBar
-                        Height="3"
-                        HorizontalAlignment="Stretch"
-                        Value="{Binding Progress}"
-                        Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                    <localControls:ListView Grid.Row="1" ItemsSource="{Binding Lines}"
-                                            FontFamily="Consolas"
-                                            SelectionMode="Extended"
-                                            ReadonlySelectedItems="{Binding SelectedItems,
-                                                            Mode=OneWayToSource}"
-                                            View="{Binding CustomView}"
-                                            ItemContainerStyle="{StaticResource ItemContainerStyle}"
-                                            ScrollViewer.VerticalScrollBarVisibility="Visible"
-                                            ScrollViewer.CanContentScroll="True"
-                                            VirtualizingStackPanel.IsVirtualizing="True"
-                                            VirtualizingStackPanel.VirtualizationMode="Recycling">
-                        <ListView.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <localControls:VirtualizingStackPanel>
-                                    <localControls:VirtualizingStackPanel.ContextMenu>
-                                        <ContextMenu>
-                                            <MenuItem Header="Exclude" Style="{StaticResource FilterContextMenuItem}">
-                                                <MenuItem.ItemsSource>
-                                                    <MultiBinding
-                                                        Converter="{localControls:MetaInfoToMenuItemsConverter}">
-                                                        <Binding Path="MetaInformation" />
-                                                        <Binding Path="ExcludeCommand" />
-                                                        <Binding Path="SelectedItems" />
-                                                    </MultiBinding>
-                                                </MenuItem.ItemsSource>
-                                            </MenuItem>
-                                            <MenuItem Header="Exclude All But" Style="{StaticResource FilterContextMenuItem}">
-                                                <MenuItem.ItemsSource>
-                                                    <MultiBinding
-                                                        Converter="{localControls:MetaInfoToMenuItemsConverter}">
-                                                        <Binding Path="MetaInformation" />
-                                                        <Binding Path="ExcludeAllButCommand" />
-                                                        <Binding Path="SelectedItems" />
-                                                    </MultiBinding>
-                                                </MenuItem.ItemsSource>
-                                            </MenuItem>
-                                            <MenuItem Header="Clear filters" 
-                                                      Visibility="{Binding HaveFilter, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                      Command="{Binding ClearExclusionsCommand}"/>
-                                        </ContextMenu>
-                                    </localControls:VirtualizingStackPanel.ContextMenu>
-                                </localControls:VirtualizingStackPanel>
-                            </ItemsPanelTemplate>
-                        </ListView.ItemsPanel>
-                    </localControls:ListView>
-                </Grid>
-            </DataTemplate>
             <localBehaviors:MenuItemCollection x:Key="AdditionalDocumentMenuItems">
                 <MenuItem Header="Copy Full Path" Command="{Binding Model.Content.CopyPathToClipboardCommand}" />
                 <MenuItem Header="Open Containing Folder" Command="{Binding Model.Content.OpenContainingFolderCommand}" />
@@ -127,7 +48,6 @@
                                    localBehaviors:BindingBehavior.DocumentViewTemplate="{StaticResource DocumentTemplate}"
                                    localBehaviors:BindingBehavior.DocumentsSource="{Binding Documents}"
                                    localBehaviors:DocumentContextMenu.AdditionalContextMenuItems="{StaticResource AdditionalDocumentMenuItems}">
-
             <avalonDock:DockingManager.LayoutItemContainerStyle>
                 <Style TargetType="{x:Type avalonDock:LayoutItem}">
                     <Setter Property="ToolTip" Value="{Binding Model.Content.Title}" />
