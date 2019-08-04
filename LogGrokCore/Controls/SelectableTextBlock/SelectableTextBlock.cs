@@ -3,6 +3,7 @@ using System.Windows.Controls;
 
 namespace LogGrokCore.Controls.SelectableTextBlock
 {
+    #pragma warning disable CS0169
     public class SelectableTextBlock : TextBlock
     {
         static SelectableTextBlock()
@@ -19,6 +20,7 @@ namespace LogGrokCore.Controls.SelectableTextBlock
 
         public SelectableTextBlock()
         {
+            // 
             //_editor = TextEditorWrapper.CreateFor(this);
         }
     }
