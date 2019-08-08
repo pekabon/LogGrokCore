@@ -44,7 +44,7 @@ namespace LogGrokCore
             
             _container.Register<ParsedBufferConsumer>(Reuse.Singleton);
             
-            _container.Register<DocumentViewModel>(
+            _container.Register<LogViewModel>(
                 made: Parameters.Of.Type<ILineParser>(serviceKey: ParserType.Full));
 
             _container.Register<LogModelFacade>(
