@@ -30,10 +30,6 @@ namespace LogGrokCore
         {
             _logModelFacade = logModelFacade;
 
-            Title = 
-                Path.GetFileName(_logModelFacade.FilePath) 
-                ?? throw new InvalidOperationException($"Invalid path: {_logModelFacade.FilePath}");
-            
             var lineProvider = _logModelFacade.LineProvider;
             var lineParser = _logModelFacade.LineParser;
 
@@ -85,7 +81,6 @@ namespace LogGrokCore
         public ICommand ExcludeCommand { get; }
 
         public ICommand ExcludeAllButCommand { get; }
-
         
         public ICommand ClearExclusionsCommand { get; }
 
@@ -117,9 +112,9 @@ namespace LogGrokCore
         public ViewBase CustomView => _viewFactory.CreateView();
 
         public ICommand CopyPathToClipboardCommand { get; }
+        
         public ICommand OpenContainingFolderCommand { get; }
-        public string Title { get; }
-
+        
         public GrowingLogLinesCollection? Lines
         {
             get => _lines;
