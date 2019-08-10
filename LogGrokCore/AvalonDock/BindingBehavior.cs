@@ -62,6 +62,11 @@ namespace LogGrokCore.AvalonDock
             return (ICommand)dockingManager.GetValue(OnDocumentCloseCommandProperty);
         }
 
+        public static void SetOnDocumentCloseCommand(DockingManager dockingManager, ICommand value)
+        {
+            dockingManager.SetValue(OnDocumentCloseCommandProperty, value);
+        }
+
         public static void SetCurrentDocument(DockingManager dockingManager, object value)
         {
             dockingManager.SetValue(CurrentDocumentProperty, value);

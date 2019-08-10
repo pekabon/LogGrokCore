@@ -2,15 +2,67 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-                    xmlns:local="clr-namespace:LogGrokCore"
                     xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
+                    xmlns:avalonDock="http://schemas.xceed.com/wpf/xaml/avalondock"
+                    xmlns:localBehaviors="clr-namespace:LogGrokCore.AvalonDock"
+                    xmlns:controls="clr-namespace:LogGrokCore.Controls"
+                    xmlns:logGrokCore="clr-namespace:LogGrokCore"
                     mc:Ignorable="d">
     <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="ListViewItemStyle.xaml" />
+        <ResourceDictionary Source="ToggleButtonStyle.xaml" />
+        <ResourceDictionary Source="../Resources/Icons.xaml" />
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/themes/light.blue.xaml" />
-        <ResourceDictionary Source="ToggleButtonStyle.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/Xceed.Wpf.AvalonDock.Themes.Metro;component/Theme.xaml" />
     </ResourceDictionary.MergedDictionaries>
-    <DataTemplate x:Key ="DocumentSearchTemplate">
+    <DataTemplate x:Key="SearchDocumentViewTemplate" DataType="logGrokCore:SearchDocumentViewModel">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <ProgressBar x:Name="progressBar"
+                         Height="3"
+                         HorizontalAlignment="Stretch"
+                         IsIndeterminate="{Binding IsIndeterminateProgress, Mode=OneWay}"
+                         Visibility="{Binding IsSearching,
+                                              Mode=OneWay,
+                                              Converter={StaticResource BooleanToVisibilityConverter}}"
+                         Value="{Binding SearchProgress,
+                                        Mode=OneWay}" />
+            <controls:ListView Grid.Row="1"
+                               FontFamily="Consolas"
+                               IsSynchronizedWithCurrentItem="True"
+                               IsTextSearchEnabled="False"
+                               ItemContainerStyle="{StaticResource ItemContainerStyle}"
+                               ItemsSource="{Binding Lines}"
+                               SelectedValue="{Binding SelectedValue}"
+                               View="{Binding CustomView}"
+                               VirtualizingStackPanel.IsVirtualizing="True"
+                               VirtualizingStackPanel.VirtualizationMode="Recycling">
+                <controls:ListView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <controls:VirtualizingStackPanel
+                            Tag="{Binding SelectedItems, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type controls:ListView}}}">
+                            <controls:VirtualizingStackPanel.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Command="Copy" />
+                                    <MenuItem Command="{Binding AddToScratchPadCommand}"
+                                              CommandParameter="{Binding PlacementTarget.Tag,
+                                                                        RelativeSource={RelativeSource FindAncestor,
+                                                                        AncestorType={x:Type ContextMenu}}}"
+                                              Header="Add to scratch pad" />
+                                </ContextMenu>
+                            </controls:VirtualizingStackPanel.ContextMenu>
+                        </controls:VirtualizingStackPanel>
+                    </ItemsPanelTemplate>
+                </controls:ListView.ItemsPanel>
+            </controls:ListView>
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate x:Key="DocumentSearchTemplate" DataType="logGrokCore:SearchViewModel">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -88,12 +140,161 @@
                     </TextBox.Style>
                 </TextBox>
             </Grid>
+            <Border x:Name="ParentBorder"
+                    Grid.Row="1"
+                    Grid.ColumnSpan="3"
+                    VerticalAlignment="Stretch">
+                <avalonDock:DockingManager localBehaviors:BindingBehavior.CurrentDocument="{Binding CurrentDocument}"
+                                           localBehaviors:BindingBehavior.DocumentsSource="{Binding Documents}"
+                                           localBehaviors:BindingBehavior.OnDocumentCloseCommand="{Binding CloseDocumentCommand}"
+                                           localBehaviors:BindingBehavior.DocumentViewTemplate="{StaticResource SearchDocumentViewTemplate}">
 
-            <ListView Grid.Row="1">
-                "dddsd"
-                "sddffd"
-            </ListView>
+                    <!-- localBehaviors:BindingBehavior.OnDocumentCloseCommand="{Binding CloseDocument}" -->
+                    <avalonDock:DockingManager.LayoutItemContainerStyle>
+                        <Style TargetType="{x:Type avalonDock:LayoutItem}">
+                            <Setter Property="Title" Value="{Binding Model.Content.SearchPattern.Text}" />
+                        </Style>
+                    </avalonDock:DockingManager.LayoutItemContainerStyle>
 
+                    <avalonDock:DockingManager.DocumentPaneControlStyle>
+                        <Style BasedOn="{StaticResource AvalonDock_ThemeMetro_DocumentPaneControlStyle}"
+                               TargetType="{x:Type avalonDock:LayoutDocumentPaneControl}">
+                            <Setter Property="Control.Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="{x:Type avalonDock:LayoutDocumentPaneControl}">
+                                        <Grid ClipToBounds="True"
+                                              KeyboardNavigation.TabNavigation="Local"
+                                              SnapsToDevicePixels="True">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="*" />
+                                            </Grid.RowDefinitions>
+                                            <Border Grid.Row="0" Grid.RowSpan="2" Background="#00FFFFFF" />
+                                            <Grid Grid.Row="0" ZIndex="1">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Button Margin="5"
+                                                        Command="{Binding AddNewSearchCommand}"
+                                                        IsTabStop="False"
+                                                        Style="{StaticResource ChromelessButtonStyle}">
+                                                    <Button.Content>
+                                                        <Rectangle Width="15"
+                                                                   Height="15"
+                                                                   Fill="{Binding RelativeSource={RelativeSource AncestorType=Button},
+                                                                                                  Path=Foreground}">
+                                                            <Rectangle.OpacityMask>
+                                                                <VisualBrush Stretch="Fill"
+                                                                             Visual="{StaticResource appbar_add}" />
+                                                            </Rectangle.OpacityMask>
+                                                        </Rectangle>
+                                                    </Button.Content>
+                                                </Button>
+                                                <avalonDock:DocumentPaneTabPanel Name="HeaderPanel"
+                                                                                 Grid.Row="0"
+                                                                                 Grid.Column="1"
+                                                                                 Margin="2,0,2,0"
+                                                                                 IsItemsHost="True"
+                                                                                 KeyboardNavigation.TabIndex="1" />
+                                                <avalonDock:DropDownButton Name="MenuDropDownButton"
+                                                                           Grid.Column="2"
+                                                                           VerticalAlignment="Center"
+                                                                           Focusable="False"
+                                                                           Style="{StaticResource AvalonDock_ThemeMetro_ToolButtonStyle}">
+                                                    <avalonDock:DropDownButton.DropDownContextMenu>
+                                                        <avalonDock:ContextMenuEx
+                                                            ItemsSource="{Binding Model.ChildrenSorted, RelativeSource={RelativeSource TemplatedParent}}">
+                                                            <avalonDock:ContextMenuEx.ItemContainerStyle>
+                                                                <Style BasedOn="{StaticResource {x:Type MenuItem}}"
+                                                                       TargetType="{x:Type avalonDock:MenuItemEx}">
+                                                                    <Setter
+                                                                        Property="HeaderTemplate"
+                                                                        Value="{Binding Path=Root.Manager.DocumentPaneMenuItemHeaderTemplate}" />
+                                                                    <Setter
+                                                                        Property="HeaderTemplateSelector"
+                                                                        Value="{Binding Path=Root.Manager.DocumentPaneMenuItemHeaderTemplateSelector}" />
+                                                                    <Setter
+                                                                        Property="IconTemplate"
+                                                                        Value="{Binding Path=Root.Manager.IconContentTemplate}" />
+                                                                    <Setter
+                                                                        Property="IconTemplateSelector"
+                                                                        Value="{Binding Path=Root.Manager.IconContentTemplateSelector}" />
+                                                                    <Setter Property="Command"
+                                                                            Value="{Binding Path=., Converter={StaticResource ActivateCommandLayoutItemFromLayoutModelConverter}}" />
+                                                                </Style>
+                                                            </avalonDock:ContextMenuEx.ItemContainerStyle>
+                                                        </avalonDock:ContextMenuEx>
+                                                    </avalonDock:DropDownButton.DropDownContextMenu>
+                                                </avalonDock:DropDownButton>
+                                            </Grid>
+                                            <Border Name="ContentPanel"
+                                                    Grid.Row="1"
+                                                    Grid.Column="0"
+                                                    HorizontalAlignment="Stretch"
+                                                    VerticalAlignment="Stretch"
+                                                    Background="{TemplateBinding Control.Background}"
+                                                    BorderBrush="{TemplateBinding Control.BorderBrush}"
+                                                    BorderThickness="{TemplateBinding Control.BorderThickness}"
+                                                    KeyboardNavigation.DirectionalNavigation="Contained"
+                                                    KeyboardNavigation.TabIndex="2"
+                                                    KeyboardNavigation.TabNavigation="Cycle"
+                                                    Padding="0,1,0,2">
+                                                <ContentPresenter Name="PART_SelectedContentHost"
+                                                                  Margin="0,2,0,2"
+                                                                  ContentSource="SelectedContent"
+                                                                  SnapsToDevicePixels="{TemplateBinding UIElement.SnapsToDevicePixels}" />
+                                            </Border>
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition
+                                                        Binding="{Binding RelativeSource={RelativeSource Self}, Path=Model.SelectedContent.IsActive}"
+                                                        Value="True" />
+                                                    <Condition
+                                                        Binding="{Binding RelativeSource={RelativeSource Self}, Path=Model.SelectedContent.IsLastFocusedDocument}"
+                                                        Value="True" />
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Control.Background"
+                                                        Value="{DynamicResource AvalonDock_ThemeMetro_BaseColor31}" />
+                                            </MultiDataTrigger>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition
+                                                        Binding="{Binding RelativeSource={RelativeSource Self}, Path=Model.SelectedContent.IsActive}"
+                                                        Value="False" />
+                                                    <Condition
+                                                        Binding="{Binding RelativeSource={RelativeSource Self}, Path=Model.SelectedContent.IsLastFocusedDocument}"
+                                                        Value="True" />
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Control.Background"
+                                                        Value="{DynamicResource AvalonDock_ThemeMetro_BaseColor30}" />
+                                            </MultiDataTrigger>
+                                            <Trigger Property="UIElement.IsEnabled" Value="False">
+                                                <Setter Property="Control.Foreground"
+                                                        Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+                                            </Trigger>
+                                            <DataTrigger
+                                                Binding="{Binding RelativeSource={RelativeSource Mode=Self}, Path=Model.ChildrenCount}"
+                                                Value="0">
+                                                <Setter TargetName="MenuDropDownButton" Property="UIElement.Visibility"
+                                                        Value="Collapsed" />
+                                            </DataTrigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </avalonDock:DockingManager.DocumentPaneControlStyle>
+                    <avalonDock:LayoutRoot>
+                        <avalonDock:LayoutPanel Orientation="Horizontal">
+                            <avalonDock:LayoutDocumentPane />
+                        </avalonDock:LayoutPanel>
+                    </avalonDock:LayoutRoot>
+                </avalonDock:DockingManager>
+            </Border>
         </Grid>
     </DataTemplate>
 </ResourceDictionary>
