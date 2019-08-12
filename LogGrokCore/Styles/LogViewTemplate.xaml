@@ -9,12 +9,14 @@
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/themes/light.blue.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.contextmenu.xaml" />
+
         <ResourceDictionary Source="ListViewItemStyle.xaml" />
     </ResourceDictionary.MergedDictionaries>
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     <Style x:Key="FilterContextMenuItem"
            TargetType="MenuItem"
-           BasedOn="{StaticResource MetroMenuItem}"
+           BasedOn="{StaticResource MahApps.Styles.MenuItem}"
            d:DataContext="{d:DesignInstance Type=local:LogViewModel, IsDesignTimeCreatable=False}">
         <Style.Triggers>
             <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=ItemsSource}"

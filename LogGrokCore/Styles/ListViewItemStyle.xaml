@@ -52,24 +52,24 @@
                 <Setter Property="Template" Value="{StaticResource LogHeaderControlTemplate}" />
             </DataTrigger>
             <Trigger Property="IsSelected" Value="True">
-                <Setter Property="Background" Value="{StaticResource AccentColorBrush3}" />
-                <Setter Property="BorderBrush" Value="{StaticResource AccentColorBrush2}" />
+                <Setter Property="Background" Value="{StaticResource MahApps.Brushes.Accent3}" />
+                <Setter Property="BorderBrush" Value="{StaticResource MahApps.Brushes.Accent2}" />
             </Trigger>
             <MultiTrigger>
                 <MultiTrigger.Conditions>
                     <Condition Property="IsMouseOver" Value="True" />
                     <Condition Property="IsSelected" Value="False" />
                 </MultiTrigger.Conditions>
-                <Setter Property="Background" Value="{StaticResource AccentColorBrush4}" />
-                <Setter Property="BorderBrush" Value="{StaticResource HighlightBrush}" />
+                <Setter Property="Background" Value="{StaticResource MahApps.Brushes.Accent4}" />
+                <Setter Property="BorderBrush" Value="{StaticResource MahApps.Brushes.Highlight}" />
             </MultiTrigger>
             <MultiTrigger>
                 <MultiTrigger.Conditions>
                     <Condition Property="IsMouseOver" Value="True" />
                     <Condition Property="IsSelected" Value="True" />
                 </MultiTrigger.Conditions>
-                <Setter Property="Background" Value="{StaticResource AccentColorBrush}" />
-                <Setter Property="BorderBrush" Value="{StaticResource HighlightBrush}" />
+                <Setter Property="Background" Value="{StaticResource MahApps.Brushes.Accent}" />
+                <Setter Property="BorderBrush" Value="{StaticResource MahApps.Brushes.Highlight}" />
             </MultiTrigger>
         </Style.Triggers>
     </Style>

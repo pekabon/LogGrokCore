@@ -126,7 +126,7 @@
                         <KeyBinding Key="Escape" Command="{Binding ClearSearchCommand}" />
                     </TextBox.InputBindings>
                     <TextBox.Style>
-                        <Style BasedOn="{StaticResource MetroTextBox}" TargetType="{x:Type TextBox}">
+                        <Style BasedOn="{StaticResource MahApps.Styles.TextBox}" TargetType="{x:Type TextBox}">
                             <Setter Property="mahapps:TextBoxHelper.ClearTextButton" Value="True" />
                             <Style.Triggers>
                                 <Trigger Property="mahapps:TextBoxHelper.HasText" Value="False">
@@ -179,7 +179,7 @@
                                                 <Button Margin="5"
                                                         Command="{Binding AddNewSearchCommand}"
                                                         IsTabStop="False"
-                                                        Style="{StaticResource ChromelessButtonStyle}">
+                                                        Style="{StaticResource MahApps.Styles.Button.Chromeless}">
                                                     <Button.Content>
                                                         <Rectangle Width="15"
                                                                    Height="15"
@@ -257,8 +257,9 @@
                                                         Binding="{Binding RelativeSource={RelativeSource Self}, Path=Model.SelectedContent.IsLastFocusedDocument}"
                                                         Value="True" />
                                                 </MultiDataTrigger.Conditions>
-                                                <Setter Property="Control.Background"
-                                                        Value="{DynamicResource AvalonDock_ThemeMetro_BaseColor31}" />
+                                                <!-- TODO -->
+                                                <!-- <Setter Property="Control.Background" -->
+                                                <!--         Value="{DynamicResource AvalonDock_ThemeMetro_BaseColor31}" /> -->
                                             </MultiDataTrigger>
                                             <MultiDataTrigger>
                                                 <MultiDataTrigger.Conditions>
