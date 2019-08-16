@@ -1,16 +1,19 @@
 using System;
 using System.Windows.Controls;
 using System.Windows.Input;
+using LogGrokCore.Data;
 
 namespace LogGrokCore
 {
     internal class SearchDocumentViewModel : ViewModelBase
     {
         private readonly GridViewFactory _viewFactory;
+        private SearchPattern _searchPattern;
 
-        public SearchDocumentViewModel(GridViewFactory viewFactory)
+        public SearchDocumentViewModel(GridViewFactory viewFactory, SearchPattern searchPattern)
         {
             _viewFactory = viewFactory;
+            _searchPattern = searchPattern;
             AddToScratchPadCommand = new DelegateCommand(() => throw new NotImplementedException());
         }
 
@@ -27,7 +30,15 @@ namespace LogGrokCore
         public ViewBase CustomView => _viewFactory.CreateView();
 
         public ICommand AddToScratchPadCommand { get; private set; }
-        
-        
+
+        public void SetSearchPattern(SearchPattern searchPattern)
+        {
+            _searchPattern = searchPattern;
+            StartSearch();
+        }
+
+        private void StartSearch()
+        {
+        }
     }
 }

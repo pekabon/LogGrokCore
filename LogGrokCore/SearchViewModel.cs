@@ -1,15 +1,37 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace LogGrokCore
 {
+    internal struct SearchPattern
+    {
+        public SearchPattern(string searchText, in bool isCaseSensitive, in bool useRegex)
+        {
+            Pattern = searchText;
+            IsCaseSensitive = isCaseSensitive;
+            UseRegex = useRegex;
+        }
+
+        public string Pattern { get; set; }
+        public bool IsCaseSensitive { get; set; }
+        public bool UseRegex { get; set; }
+    }
     internal class SearchViewModel : ViewModelBase
     {
+        private readonly Func<SearchPattern, SearchDocumentViewModel> _searchDocumentViewModelFactory;
         private string _searchText = string.Empty;
+        private  bool _isCaseSensitive;
+        private bool _useRegex;
 
-        public SearchViewModel()
+        private DispatcherTimer? _searchPatternThrottleTimer;
+        private SearchPattern _searchPattern = new SearchPattern(string.Empty, false, false);
+
+        public SearchViewModel(Func<SearchPattern, SearchDocumentViewModel> searchDocumentViewModelFactory)
         {
+            _searchDocumentViewModelFactory = searchDocumentViewModelFactory;
             ClearSearchCommand = new DelegateCommand(() => throw new NotImplementedException());
             CloseDocumentCommand = new DelegateCommand(() => throw new NotImplementedException());
             AddNewSearchCommand = new DelegateCommand(() => throw new NotImplementedException());
@@ -19,12 +41,20 @@ namespace LogGrokCore
         public string SearchText
         {
             get => _searchText;
-            set => SetAndRaiseIfChanged(ref _searchText, value);
+            set => CommitSearchPattern(ref _searchText, value, TimeSpan.FromMilliseconds(500)); 
         }
 
-        public bool IsCaseSensitive { get; private set; }
+        public bool IsCaseSensitive
+        {
+            get => _isCaseSensitive;
+            set => CommitSearchPattern(ref _isCaseSensitive, value, TimeSpan.Zero);
+        }
 
-        public bool UseRegex { get; private set; }
+        public bool UseRegex
+        {
+            get => _useRegex;
+            set => CommitSearchPattern(ref _useRegex, value, TimeSpan.Zero);
+        }
 
         public ICommand ClearSearchCommand { get; private set; }
 
@@ -32,7 +62,48 @@ namespace LogGrokCore
 
         public ICommand AddNewSearchCommand { get; private set; }
         
-        public object? CurrentDocument { get; private set; }
+        public SearchDocumentViewModel? CurrentDocument { get; private set; }
+
+        private void CommitSearchPattern<T>(ref T field, T newValue, TimeSpan timeSpan, [CallerMemberName] string? propertyName = null)
+        {
+            if (Equals(field, newValue)) return;
+            SetAndRaiseIfChanged(ref field, newValue, propertyName);
+            Throttle(ref _searchPatternThrottleTimer, 
+                () => CommitSearchPatternImmediately(SearchText, IsCaseSensitive, UseRegex), 
+                timeSpan);
+        }
+
+        private static void Throttle(ref DispatcherTimer? throttleTimer, Action action, TimeSpan interval)
+        {
+            throttleTimer?.Stop();
+            throttleTimer = new DispatcherTimer(DispatcherPriority.Normal, Dispatcher.CurrentDispatcher)
+            {
+                Interval = interval
+            };
+
+            DispatcherTimer? timer = throttleTimer;
+            throttleTimer.Tick += (o, e) =>
+            {
+                timer.Stop();
+                timer = null;
+                action();
+            };
+            throttleTimer.Start();
+        }
+
+        private void CommitSearchPatternImmediately(string searchText, in bool isCaseSensitive, in bool useRegex)
+        {
+            _searchPattern = new SearchPattern(searchText, isCaseSensitive, useRegex);
+            if (CurrentDocument != null)
+            {
+                CurrentDocument.SetSearchPattern(_searchPattern);
+            }
+            else
+            {
+                CurrentDocument = _searchDocumentViewModelFactory(_searchPattern);
+                Documents.Add(CurrentDocument);
+            }
+        }
 
         public ObservableCollection<SearchDocumentViewModel> Documents { get; private set; }
     }
