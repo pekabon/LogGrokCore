@@ -5,7 +5,7 @@ namespace LogGrokCore
 {
     internal abstract class ViewModelBase : INotifyPropertyChanged
     {
-        public virtual event PropertyChangedEventHandler PropertyChanged;
+        public virtual event PropertyChangedEventHandler? PropertyChanged;
 
         protected void InvokePropertyChanged([CallerMemberName] string? propertyName = null)
         {

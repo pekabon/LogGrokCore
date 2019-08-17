@@ -74,8 +74,8 @@ namespace LogGrokCore
 
         public object SyncRoot => SourceList.SyncRoot;
 
-        public event NotifyCollectionChangedEventHandler CollectionChanged;
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event NotifyCollectionChangedEventHandler? CollectionChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         public void Add(ItemViewModel item) => _sourceCollection.Add(item);
 

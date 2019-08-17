@@ -101,7 +101,7 @@ namespace LogGrokCore
 
         public bool HaveExclusions => _exclusions.Count > 0;
 
-        public event Action ExclusionsChanged;
+        public event Action? ExclusionsChanged;
 
         public void AddExclusions(int component, IEnumerable<string> componentValuesToExclude)
         {

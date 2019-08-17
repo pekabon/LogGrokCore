@@ -60,7 +60,7 @@ namespace LogGrokCore
         }
 
 #pragma warning disable CS0169, CS0067
-        public event EventHandler CanExecuteChanged;
+        public event EventHandler? CanExecuteChanged;
 #pragma warning restore CS0169
 #pragma warning restore CS0067
     }
