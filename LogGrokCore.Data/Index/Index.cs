@@ -84,7 +84,7 @@ namespace LogGrokCore.Data.Index
                 yield return lastChunk[idx];
         }
         
-        // Find index of smallest stored value which greater or equals then argument
+        // Find index of smallest stored value which is greater or equals then argument
         private static (int chunk, int index) FindStart(int value,
             List<(int, int[])> chunks,
             int chunksCount,

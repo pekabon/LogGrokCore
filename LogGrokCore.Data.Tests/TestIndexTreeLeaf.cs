@@ -44,6 +44,12 @@ namespace LogGrokCore.Data.Tests
             return this.GetEnumerableFromIndex<int, TestIndexTreeLeaf>(index);
         }
 
+        public override IEnumerable<int> GetEnumerableFromValue(int value)
+        {
+            var index = _values.BinarySearch(value);
+            return GetEnumerableFromIndex(value >= 0 ? index : ~index);
+        }
+
         public int this[int index] => _values[index];
 
         public int Count => _values.Count;

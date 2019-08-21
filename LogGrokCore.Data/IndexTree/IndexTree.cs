@@ -6,6 +6,7 @@ namespace LogGrokCore.Data.IndexTree
 {
     public class IndexTree<T, TLeaf> 
         where TLeaf : LeafOrNode<T, TLeaf>, ILeaf<T, TLeaf>, ITreeNode<T>, IEnumerable<T>
+        where T : IComparable<T>
     {
         private readonly int _nodeCapacity;
         private TLeaf? _currentLeaf;
@@ -42,6 +43,11 @@ namespace LogGrokCore.Data.IndexTree
         public IEnumerable<T> GetEnumerableFromIndex(int index)
         {
             return _head == null ? Enumerable.Empty<T>() : _head.GetEnumerableFromIndex(index);
+        }
+
+        public IEnumerable<T> GetEnumerableFromValue(T value)
+        {
+            return _head == null ? Enumerable.Empty<T>() : _head.GetEnumerableFromValue(value);
         }
 
         private void OnNewLeafCreated(TLeaf newLeaf)

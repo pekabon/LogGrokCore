@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Windows.Input;
 using System.Windows.Threading;
 
@@ -18,6 +19,13 @@ namespace LogGrokCore
         public string Pattern { get; set; }
         public bool IsCaseSensitive { get; set; }
         public bool UseRegex { get; set; }
+
+        public Regex GetRegex(RegexOptions regexAdditionalOptions)
+        {
+            var regexOptions = IsCaseSensitive ? RegexOptions.None | RegexOptions.IgnoreCase : RegexOptions.None;
+            var pattern = UseRegex ? Pattern : Regex.Escape(Pattern);
+            return new Regex(pattern, regexOptions | regexAdditionalOptions);
+        }
     }
     internal class SearchViewModel : ViewModelBase
     {

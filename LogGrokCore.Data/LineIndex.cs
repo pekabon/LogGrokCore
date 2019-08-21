@@ -64,8 +64,6 @@ namespace LogGrokCore.Data
             }
         }
 
-
-
         public int Add(long lineStart)
         {
             lock (_lineStarts)

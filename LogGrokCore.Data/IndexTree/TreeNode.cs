@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -5,6 +6,7 @@ namespace LogGrokCore.Data.IndexTree
 {
     public class TreeNode<T, TLeaf> : LeafOrNode<T, TLeaf> 
         where TLeaf : class, ILeaf<T, TLeaf>, ITreeNode<T>, IEnumerable<T>
+        where T : IComparable<T>
     {
         private readonly List<LeafOrNode<T, TLeaf>> _subnodes;
 
@@ -45,6 +47,21 @@ namespace LogGrokCore.Data.IndexTree
             }
 
             return leafOrNode.GetEnumerableFromIndex(index);
+        }
+
+        public override IEnumerable<T> GetEnumerableFromValue(T value)
+        {
+            var leafOrNode = _subnodes[0];
+            for (var idx = 1; idx < _subnodes.Count; idx++)
+            {
+                var candidate = _subnodes[idx];
+                if (candidate.FirstValue.CompareTo(value) <= 0)
+                    leafOrNode = candidate;
+                else
+                    return leafOrNode.GetEnumerableFromValue(value);
+            }
+
+            return leafOrNode.GetEnumerableFromValue(value);
         }
 
         public override T FirstValue => _subnodes[0].FirstValue;
