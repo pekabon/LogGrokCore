@@ -2,7 +2,7 @@ using System;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace LogGrokCore
+namespace LogGrokCore.Search
 {
     internal class SearchDocumentViewModel : ViewModelBase
     {
@@ -13,8 +13,11 @@ namespace LogGrokCore
         {
             _viewFactory = viewFactory;
             _searchPattern = searchPattern;
+            Title = searchPattern.Pattern;
             AddToScratchPadCommand = new DelegateCommand(() => throw new NotImplementedException());
         }
+
+        public string Title { get; }
 
         public bool IsIndeterminateProgress { get; private set; }
 

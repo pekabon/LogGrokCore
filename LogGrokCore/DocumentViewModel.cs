@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using LogGrokCore.Data;
+using LogGrokCore.Search;
 
 namespace LogGrokCore
 {
