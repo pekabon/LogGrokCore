@@ -64,7 +64,7 @@ namespace LogGrokCore.Data.Index
             var indices = _filteredCountIndicesProvider.GetAllKeys().Select(key =>
             {
                 var index = _indexer.GetIndex(key);
-                return index.EnumerateFrom(startIndices.TryGetValue(key, out var startPosition) ? startPosition : 0);
+                return index.GetEnumerableFromValue(startIndices.TryGetValue(key, out var startPosition) ? startPosition : 0);
             });
 
             return CollectionUtlis.MergeSorted(indices).Skip(start - startCount);

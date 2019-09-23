@@ -6,7 +6,16 @@ using System.Threading;
 
 namespace LogGrokCore.Data.Index
 {
-    public class Index : IDisposable
+    public interface IIndex<T>
+    {
+        void Add(T value);
+
+        int Count { get; }
+
+        IEnumerable<T> GetEnumerableFromValue(T value);
+    }
+
+    public class Index : IIndex<int>, IDisposable
     {
         private const int DefaultStartChunkSize = 1024;
         private int _chunkSize;
@@ -42,7 +51,7 @@ namespace LogGrokCore.Data.Index
 
         public int Count { get; private set; }
 
-        public IEnumerable<int> EnumerateFrom(int from)
+        public IEnumerable<int> GetEnumerableFromValue(int from)
         {
             int chunksCount;
             int[] lastChunk;

@@ -1,28 +1,28 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Threading;
 
 namespace LogGrokCore.Data.Index
 {
-    public class CountIndex
+    public class CountIndex<TIndex> where TIndex : IIndex<int>
     {
-        private const int _granularity = 16384;
+        public const int Granularity = 16384;
         private ImmutableList<List<(IndexKey, int)>> _counts = ImmutableList<List<(IndexKey, int)>>.Empty;
 
         public IReadOnlyList<List<(IndexKey, int)>> Counts => _counts;
 
-        public int Granularity => _granularity;
-        public void Add(int currentIndex, IDictionary<IndexKey, Index> indices)
+        public void Add(int currentIndex, IDictionary<IndexKey, TIndex> indices)
         {
-            if (currentIndex % _granularity == 0)
+            if (currentIndex % Granularity == 0)
                 MakeCountsSnapshot(indices);
         }
 
-        public void Finish(IDictionary<IndexKey, Index> indices)
+        public void Finish(IDictionary<IndexKey, TIndex> indices)
         {
             MakeCountsSnapshot(indices);
         }
         
-        private void MakeCountsSnapshot(IDictionary<IndexKey, Index> indices)
+        private void MakeCountsSnapshot(IDictionary<IndexKey, TIndex> indices)
         {
             var snapshotList = new List<(IndexKey, int)>(indices.Count);
             

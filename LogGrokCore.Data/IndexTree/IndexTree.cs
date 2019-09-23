@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using LogGrokCore.Data.Index;
 
 namespace LogGrokCore.Data.IndexTree
 {
-    public class IndexTree<T, TLeaf> 
+    public class IndexTree<T, TLeaf> : IIndex<T>
         where TLeaf : LeafOrNode<T, TLeaf>, ILeaf<T, TLeaf>, ITreeNode<T>, IEnumerable<T>
         where T : IComparable<T>
     {
@@ -34,7 +35,6 @@ namespace LogGrokCore.Data.IndexTree
                 _currentLeaf = _createFirstLeaf(value);
                 _head = _currentLeaf;
             }
-
             _count++;
         }
 
@@ -56,7 +56,7 @@ namespace LogGrokCore.Data.IndexTree
             {
                 case TreeNode<T, TLeaf> headNode:
                     var newNode = AddToTree(headNode, newLeaf);
-                    if (newNode!= null) 
+                    if (newNode != null) 
                         _head = new TreeNode<T, TLeaf>(_nodeCapacity, _head, newNode);
                     break;
                 case TLeaf leaf:

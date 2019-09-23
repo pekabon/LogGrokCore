@@ -11,7 +11,7 @@ namespace LogGrokCore.Data.Tests
         public void TestEmpty()
         {
             var index = new Index.Index();
-            Assert.AreEqual(false, index.EnumerateFrom(0).Any());
+            Assert.AreEqual(false, index.GetEnumerableFromValue(0).Any());
         }
 
         [TestMethod]
@@ -19,7 +19,7 @@ namespace LogGrokCore.Data.Tests
         {
             var testSequence = Enumerable.Range(0, 3).ToList();
             var index = FillIndex(testSequence);
-            Assert.IsTrue(testSequence.SequenceEqual(index.EnumerateFrom(0)));
+            Assert.IsTrue(testSequence.SequenceEqual(index.GetEnumerableFromValue(0)));
         }
 
         [TestMethod]
@@ -27,7 +27,7 @@ namespace LogGrokCore.Data.Tests
         {
             var testSequence = Enumerable.Range(0, 1024).ToList();
             var index = FillIndex(testSequence);
-            Assert.IsTrue(testSequence.SequenceEqual(index.EnumerateFrom(0)));
+            Assert.IsTrue(testSequence.SequenceEqual(index.GetEnumerableFromValue(0)));
         }
 
         [TestMethod]
@@ -36,7 +36,7 @@ namespace LogGrokCore.Data.Tests
             var testSequence = Enumerable.Range(0, 1024).ToList();
             var index = FillIndex(testSequence);
 
-            var foundSequence = index.EnumerateFrom(testSequence.Last()).ToList();
+            var foundSequence = index.GetEnumerableFromValue(testSequence.Last()).ToList();
             Assert.AreEqual(1, foundSequence.Count);
             var lastValue = foundSequence.SingleOrDefault();
             Assert.AreEqual(testSequence.Last(), lastValue);
@@ -50,7 +50,7 @@ namespace LogGrokCore.Data.Tests
             var index = FillIndex(testSequence);
             for (var i = 0; i < sequenceLength; i++)
             {
-                var enumerable = index.EnumerateFrom(i);
+                var enumerable = index.GetEnumerableFromValue(i);
                 Assert.IsTrue(testSequence.Skip(i).SequenceEqual(enumerable), $"Failed for i={i}.");
             }
         }
