@@ -70,7 +70,7 @@ namespace LogGrokCore
 
         public ICommand AddNewSearchCommand { get; private set; }
         
-        public SearchDocumentViewModel? CurrentDocument { get; private set; }
+        public SearchDocumentViewModel? CurrentDocument { get; set; }
 
         private void CommitSearchPattern<T>(ref T field, T newValue, TimeSpan timeSpan, [CallerMemberName] string? propertyName = null)
         {

@@ -24,7 +24,7 @@ namespace LogGrokCore
 
         public GrowingLogLinesCollection? Lines { get; private set; }
 
-        public object? SelectedValue { get; private set; }
+        public object? SelectedValue { get; set; }
         
         public ViewBase CustomView => _viewFactory.CreateView();
 
