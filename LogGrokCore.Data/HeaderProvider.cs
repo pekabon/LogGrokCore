@@ -2,9 +2,9 @@ using System;
 
 namespace LogGrokCore.Data
 {
-    public class HeaderProvider
+    public class HeaderProvider 
     {
-        private Lazy<string?> _header;
+        private readonly Lazy<string?> _header;
 
         public HeaderProvider(
             LineIndex lineIndex,

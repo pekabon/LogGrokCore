@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -36,11 +38,17 @@ namespace LogGrokCore.Search
         public void SetSearchPattern(SearchPattern searchPattern)
         {
             _searchPattern = searchPattern;
-            StartSearch();
+            StartSearch().Start();
         }
 
-        private void StartSearch()
+        private async Task StartSearch()
         {
+            Lines = new GrowingLogLinesCollection(() => null,
+                new List<ItemViewModel>());
+
+            await Task.Factory.StartNew(() =>
+            {
+            });
         }
     }
 }

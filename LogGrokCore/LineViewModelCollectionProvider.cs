@@ -96,7 +96,7 @@ namespace LogGrokCore
                 new VirtualList<string, ItemViewModel>(lineProvider,
                     (str, index) => new LineViewModel(index, str, _lineParser));
 
-            return new GrowingLogLinesCollection(_headerProvider, lineCollection);
+            return new GrowingLogLinesCollection(() => _headerProvider.Header, lineCollection);
         }
 
         public bool HaveExclusions => _exclusions.Count > 0;

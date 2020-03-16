@@ -38,7 +38,7 @@ namespace LogGrokCore
             var lineCollection =
                 new VirtualList<string, ItemViewModel>(lineProvider,
                     (str, index) => new LineViewModel(index, str, lineParser));
-            Lines = new GrowingLogLinesCollection(headerProvider, lineCollection);
+            Lines = new GrowingLogLinesCollection(() => headerProvider.Header, lineCollection);
 
             CopyPathToClipboardCommand =
                 new DelegateCommand(() => TextCopy.Clipboard.SetText(_logModelFacade.FilePath));

@@ -9,29 +9,32 @@ namespace LogGrokCore
 {
     public class GrowingLogLinesCollection: IList<ItemViewModel>, IList, INotifyCollectionChanged, INotifyPropertyChanged
     {
-        private IList<ItemViewModel> _sourceCollection;
-
+        private readonly IList<ItemViewModel> _sourceCollection;
         private int _logLinesCount;
-        private readonly HeaderProvider _headerProvider;
+        private readonly Lazy<string?> _header;
+        
         private readonly Lazy<LogHeaderViewModel?> _headerViewModel;
         private int _headerCount;
         private IList SourceList => (IList)_sourceCollection;
 
-        public GrowingLogLinesCollection(HeaderProvider headerProvider, IList<ItemViewModel> sourceCollection)
+        public GrowingLogLinesCollection(Func<string?> headerProvider, IList<ItemViewModel> sourceCollection)
         {
             _sourceCollection = sourceCollection;
-            _headerProvider = headerProvider;
-            _headerViewModel = new Lazy<LogHeaderViewModel?>(() => 
-                _headerProvider.Header == null ?  null : new LogHeaderViewModel(_headerProvider.Header));
+            
+            _header = new Lazy<string?>(headerProvider);
+            
+            _headerViewModel = new Lazy<LogHeaderViewModel?>(
+                () => _header.Value == null ? null : new LogHeaderViewModel(_header.Value));
+            
             _logLinesCount = sourceCollection.Count;
         }
-
+        
         public void UpdateCount()
         {
             if (_logLinesCount == _sourceCollection.Count)
                 return;
 
-            _headerCount = _headerProvider.Header != null ? 1 : 0;
+            _headerCount = _header.Value != null ? 1 : 0;
             _logLinesCount= _sourceCollection.Count;
             CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Count)));
@@ -96,8 +99,8 @@ namespace LogGrokCore
             if (_logLinesCount == 0)
                 yield break;
             
-            if (_headerProvider.Header != null)
-                yield return new LogHeaderViewModel(_headerProvider.Header);
+            if (_header.Value != null)
+                yield return new LogHeaderViewModel(_header.Value);
 
             foreach (var itemViewModel in _sourceCollection)
             {

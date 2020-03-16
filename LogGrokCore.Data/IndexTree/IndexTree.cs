@@ -49,7 +49,7 @@ namespace LogGrokCore.Data.IndexTree
         {
             return _head == null ? Enumerable.Empty<T>() : _head.GetEnumerableFromValue(value);
         }
-
+        
         private void OnNewLeafCreated(TLeaf newLeaf)
         {
             switch (_head)
