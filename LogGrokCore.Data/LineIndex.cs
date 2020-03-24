@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using LogGrokCore.Data.IndexTree;
 using LogGrokCore.Data.Virtualization;
 
@@ -50,6 +52,25 @@ namespace LogGrokCore.Data
             }
         }
 
+        public async IAsyncEnumerable<(int start, int count)> FetchRanges(int maxRangeSize)
+        {
+            var currentIndex = 0;
+
+            var currentCount = Count;
+            while (currentIndex < currentCount || !IsFinished)
+            {
+                while (currentIndex + maxRangeSize > currentCount && !IsFinished)
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(250));
+                    currentCount = Count;
+                }
+
+                var rangeSize = Math.Min(currentCount - currentIndex, maxRangeSize);
+                yield return (currentIndex, rangeSize);
+                currentIndex += rangeSize;
+            }
+        }
+
         public int Count
         {
             get
@@ -78,7 +99,7 @@ namespace LogGrokCore.Data
         {
             _lastLineLength = lastLength;
         }
-
+        
         public bool IsFinished => _lastLineLength.HasValue;
 
         private readonly IndexTree<long, LongsLeaf> _lineStarts 

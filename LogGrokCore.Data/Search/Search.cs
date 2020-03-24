@@ -4,6 +4,7 @@ using System.Dynamic;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using LogGrokCore.Data.IndexTree;
 
 namespace LogGrokCore.Data.Search
@@ -11,7 +12,6 @@ namespace LogGrokCore.Data.Search
     public class Search
     {
         private static StringPool _searchStringPool = new StringPool();
-        private const int _searchBufferSize = 16384;
         private const int maxSearchSizeLines = 256; 
 
         private class SearchLineIndex : ILineIndex
@@ -41,7 +41,7 @@ namespace LogGrokCore.Data.Search
             }
         }
 
-        public unsafe ILineIndex? Create(
+        public ILineIndex Create(
             Stream stream, Encoding encoding,
             LineIndex sourceLineIndex, Regex regex)
         {
@@ -61,40 +61,48 @@ namespace LogGrokCore.Data.Search
                 var index = start;
                 var currentLineOffset = firstLineOffset;
                 var currentLineLength = firstLineLength;
+                   
                 do
                 {
-                    var charCount = encoding.GetMaxCharCount(firstLineLength);
+                    var charCount = encoding.GetMaxCharCount(currentLineLength);
                     
                     var tempString = _searchStringPool.Rent(charCount);
                     var bytes = 
                         memorySpan.Slice((int) (currentLineOffset - firstLineOffset), currentLineLength);
-
-                    fixed (char* stringPointer = tempString.AsSpan())
+                    var stringLength = 0; 
+                    unsafe
                     {
-                        var chars = new Span<char>(stringPointer, charCount);
-                        var stringLength = encoding.GetChars(bytes, chars);
+
+                        fixed (char* stringPointer = tempString.AsSpan())
+                        {
+                            var chars = new Span<char>(stringPointer, charCount);
+                            stringLength = encoding.GetChars(bytes, chars);
+                        }
                     }
 
-                    if (regex.IsMatch(tempString))
+                    // TODO: there is no regex.IsMatch function that accepts string length
+                    // get rid of regex.Match 
+                    if (regex.Match(tempString, 0, stringLength).Success)
                     {
                         lineIndex.Add(index);
                     }
                     
                     _searchStringPool.Return(tempString);
                     index++;
+                    
+                    (currentLineOffset, currentLineLength) = sourceLineIndex.GetLine(index);
 
                 } while (index < end);
             }
 
-            var startIndex = 0;
-            var endIndex = Math.Min(startIndex + maxSearchSizeLines, lineIndex.Count - 1);
-
-            while (startIndex < lineIndex.Count)
+            Task.Run(async () =>
             {
-                ProcessLines(startIndex, endIndex);
-                startIndex = endIndex + 1;
-            }
+                await foreach (var (start, count) in sourceLineIndex.FetchRanges(maxSearchSizeLines))
+                {
+                    ProcessLines(start, start + count - 1);
+                }
 
+            });
 
             return lineIndex;
         }
