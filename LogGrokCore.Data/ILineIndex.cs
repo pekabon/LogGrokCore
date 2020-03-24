@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace LogGrokCore.Data
 {
@@ -7,5 +8,7 @@ namespace LogGrokCore.Data
         int Count { get; }
         
         (long offset, int length) GetLine(int index);
+
+        void Fetch(int start, Span<(long offset, int length)> values);
     }
 }

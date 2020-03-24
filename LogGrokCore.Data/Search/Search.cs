@@ -1,6 +1,5 @@
 using System;
 using System.Buffers;
-using System.Dynamic;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -9,10 +8,10 @@ using LogGrokCore.Data.IndexTree;
 
 namespace LogGrokCore.Data.Search
 {
-    public class Search
+    public static class Search
     {
-        private static StringPool _searchStringPool = new StringPool();
-        private const int maxSearchSizeLines = 256; 
+        private static readonly StringPool SearchStringPool = new StringPool();
+        private const int MaxSearchSizeLines = 256; 
 
         private class SearchLineIndex : ILineIndex
         {
@@ -35,13 +34,21 @@ namespace LogGrokCore.Data.Search
                 return _sourceLineIndex.GetLine(sourceIndex);
             }
 
+            public void Fetch(int start, Span<(long offset, int length)> values)
+            {
+                for (var i = start; i < start + values.Length; i++)
+                {
+                    values[i] = _sourceLineIndex.GetLine(i);
+                }
+            }
+
             public void Add(int sourceLineIndex)
             {
                 _searchResult.Add(sourceLineIndex);
             }
         }
 
-        public ILineIndex Create(
+        public static ILineIndex CreateSearchIndex(
             Stream stream, Encoding encoding,
             LineIndex sourceLineIndex, Regex regex)
         {
@@ -66,7 +73,7 @@ namespace LogGrokCore.Data.Search
                 {
                     var charCount = encoding.GetMaxCharCount(currentLineLength);
                     
-                    var tempString = _searchStringPool.Rent(charCount);
+                    var tempString = SearchStringPool.Rent(charCount);
                     var bytes = 
                         memorySpan.Slice((int) (currentLineOffset - firstLineOffset), currentLineLength);
                     var stringLength = 0; 
@@ -87,7 +94,7 @@ namespace LogGrokCore.Data.Search
                         lineIndex.Add(index);
                     }
                     
-                    _searchStringPool.Return(tempString);
+                    SearchStringPool.Return(tempString);
                     index++;
                     
                     (currentLineOffset, currentLineLength) = sourceLineIndex.GetLine(index);
@@ -97,7 +104,7 @@ namespace LogGrokCore.Data.Search
 
             Task.Run(async () =>
             {
-                await foreach (var (start, count) in sourceLineIndex.FetchRanges(maxSearchSizeLines))
+                await foreach (var (start, count) in sourceLineIndex.FetchRanges(MaxSearchSizeLines))
                 {
                     ProcessLines(start, start + count - 1);
                 }

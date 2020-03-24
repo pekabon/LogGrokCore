@@ -25,5 +25,10 @@ namespace LogGrokCore.Data.Tests
         {
             throw new NotImplementedException();
         }
+
+        public void Fetch(int start, Span<(long offset, int length)> values)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

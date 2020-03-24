@@ -1,8 +1,10 @@
 ﻿using DryIoc;
 using LogGrokCore.Data;
 using System;
+using System.Windows.Shapes;
 using LogGrokCore.Data.Index;
 using LogGrokCore.Data.Virtualization;
+using LogGrokCore.Search;
 
 namespace LogGrokCore
 {
@@ -29,6 +31,8 @@ namespace LogGrokCore
             _container.Register<Loader>();
             
             _container.Register<LineIndex>();
+            _container.RegisterMapping<ILineIndex, LineIndex>();
+
             _container.Register<IItemProvider<string>, LineProvider>();
 
             _container.RegisterDelegate<ILineParser>(
@@ -58,6 +62,20 @@ namespace LogGrokCore
             _container.Register<Indexer>(Reuse.Singleton);
             _container.Register<LineViewModelCollectionProvider>(Reuse.Singleton, 
                 made: Parameters.Of.Type<ILineParser>(serviceKey: ParserType.Full));
+
+            _container.Register<DocumentViewModel>();
+            _container.Register<SearchViewModel>();
+            
+            
+            _container.RegisterDelegate<Func<SearchPattern, SearchDocumentViewModel>>(
+                r =>
+            {
+                var logFile = r.Resolve<LogFile>();
+                var lineIndex = r.Resolve<LineIndex>();
+                var lineParser = r.Resolve<ILineParser>(serviceKey: ParserType.Full);
+                var viewFactory = r.Resolve<GridViewFactory>();
+                return pattern => new SearchDocumentViewModel(logFile, lineIndex, lineParser, viewFactory, pattern);
+            });
         }
 
         public DocumentViewModel GetDocumentViewModel() => _container.Resolve<DocumentViewModel>(); 
