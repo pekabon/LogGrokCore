@@ -34,7 +34,7 @@ namespace LogGrokCore.Controls
             if (count > 0)
                 MeasureOverrideCore(availableSize, VerticalOffset);
 
-            return (availableSize.Height == double.PositiveInfinity) ? new Size(1, 1) : availableSize;
+            return (double.IsPositiveInfinity(availableSize.Height)) ? new Size(1, 1) : availableSize;
         }
 
         protected override Size ArrangeOverride(Size finalSize)
@@ -42,11 +42,12 @@ namespace LogGrokCore.Controls
 			var firstVisibleIndex = (int)Math.Floor(VerticalOffset);
 
             var elementsBefore = _visibleItems.TakeWhile(item => item.Index < firstVisibleIndex);
-            var visibleElements = _visibleItems.SkipWhile(item => item.Index < firstVisibleIndex);
+            var visibleElements = 
+                _visibleItems.SkipWhile(item => item.Index < firstVisibleIndex).ToList();
 
             var renderOffset = visibleElements.TakeFirst() switch
             {
-                VisibleItem(var firstItem, var firstIndex, _, _) v
+                (var firstItem, var firstIndex, _, _) v
                     => (firstIndex - VerticalOffset) * firstItem.DesiredSize.Height,
                 _ => 0
             };
@@ -105,8 +106,7 @@ namespace LogGrokCore.Controls
                     startOffset, firstVisibleItemIndex, availableSize.Height, _visibleItems, availableSize);
 
             _visibleItems = newVisibleItems;
-            var visibleElements = new HashSet<UIElement>(_visibleItems.Select(v => v.Element));
-
+            
             foreach (var item in itemsToRecycle)
                 RecycleItem(item.Element);
 
@@ -133,14 +133,17 @@ namespace LogGrokCore.Controls
 
             var oldItems = new HashSet<VisibleItem>(currentVisibleItems, new GenericEqualityComparer<VisibleItem>());
             var newItems = new List<VisibleItem>();
+            
             while (currentOffset == null || currentOffset < heightToBuild)
             {
-                VisibleItem? item = currentVisibleItems.Search(item => item.Index == currentIndex);
+                var item = currentVisibleItems.Search(item => item.Index == currentIndex);
+
                 if (item is VisibleItem existingItem)
                 {
                     oldItems.Remove(existingItem);
 
-                    if (itemContainerGenerator.IndexFromContainer(existingItem.Element) >= 0)
+                    var existingItemIndex = itemContainerGenerator.IndexFromContainer(existingItem.Element);
+                    if (existingItemIndex>= 0)
                     {
                         currentOffset ??= existingItem.Height * relativeOffset;
                         newItems.Add(existingItem.MoveTo(currentOffset.Value));
@@ -156,7 +159,6 @@ namespace LogGrokCore.Controls
                 }
 
                 var newItem = itemGenerator.GenerateNext(currentIndex, out var isNewlyRealized);
-
                 if (newItem is UIElement itm)
                 {
                     InsertAndMeasureItem(itm, currentIndex, _recycled.Contains(itm), isNewlyRealized);
@@ -195,14 +197,14 @@ namespace LogGrokCore.Controls
         private void InsertAndMeasureItem(UIElement item, int itemIndex, bool isRecycled, bool isNewElement)
 	    {
 
-        if (InternalChildren == null || !InternalChildren.Cast<UIElement>().Contains(item))
-                AddInternalChild(item);
+            if (InternalChildren == null || !InternalChildren.Cast<UIElement>().Contains(item))
+                    AddInternalChild(item);
 
-        void UpdateItem(ListViewItem item)
-        {
-            var context = Items[itemIndex];
-            if (item.DataContext != context || item.Content != context)
+            void UpdateItem(ListBoxItem item)
             {
+                var context = Items[itemIndex];
+                if (item.DataContext == context && item.Content == context) return;
+                
                 item.DataContext = context;
                 item.Content = context;
                 if (item.IsSelected) item.IsSelected = false;
@@ -212,36 +214,34 @@ namespace LogGrokCore.Controls
                     i.InvalidateMeasure();
                 }
             }
-        }
 
-        switch ((item, isRecycled, isNewElement))
-        {
-            case (ListViewItem i, true, _):
-                _ = _recycled.Remove(i);
-                UpdateItem(i);
-                break;
-            case (object i, _, true):
-                _recycled.Clear();
-                ItemContainerGenerator.PrepareItemContainer(item);
-                break;
-            case (ListViewItem i, false, false):
-                UpdateItem(i);
-                break;
-            default:
-                throw new InvalidOperationException();
-        }
+            switch ((item, isRecycled, isNewElement))
+            {
+                case (ListViewItem i, true, false):
+                    _ = _recycled.Remove(i);
+                    UpdateItem(i);
+                    break;
+                case (_, _, true):
+                    ItemContainerGenerator.PrepareItemContainer(item);
+                    break;
+                case (ListViewItem i, false, false):
+                    UpdateItem(i);
+                    break;
+                default:
+                    throw new InvalidOperationException();
+            }
 
-        item.Measure(new Size(Double.PositiveInfinity, Double.PositiveInfinity));
-	}
+            item.Measure(new Size(Double.PositiveInfinity, Double.PositiveInfinity));
+	    }
 
 
         private void UpdateExtent()
         {
             (int, double) GetCountAndWidth(ListView l)
             {
-                var width = l.View is System.Windows.Controls.GridView gridView ?
+                var viewPortWidth = l.View is System.Windows.Controls.GridView gridView ?
                     gridView.Columns.Sum(c => c.ActualWidth) : _viewPort.Width;
-                return (l.Items.Count, width);
+                return (l.Items.Count, viewPortWidth);
             }
 
             var (count, width) = ItemsControl.GetItemsOwner(this) is ListView l ? GetCountAndWidth(l) : (0, 0);
@@ -259,12 +259,11 @@ namespace LogGrokCore.Controls
 			var viewPort = new Size(availableSize.Width, visibleItemCount);
             _viewPortHeightInPixels = availableSize.Height;
 
-			if (viewPort != _viewPort)
-            {
-                _viewPort = viewPort;
-                if (ScrollOwner != null) ScrollOwner.InvalidateScrollInfo();
-                SetVerticalOffset(VerticalOffset);
-            }
+            if (viewPort == _viewPort) return;
+            
+            _viewPort = viewPort;
+            ScrollOwner?.InvalidateScrollInfo();
+            SetVerticalOffset(VerticalOffset);
         }
 
         public bool CanVerticallyScroll { get; set; }
@@ -336,12 +335,12 @@ namespace LogGrokCore.Controls
             };
 
             var newOffset = new Point(_offset.X, fixedVerticalOffset);
-            if (newOffset != _offset)
-            {
-                _offset = newOffset;
-                ScrollOwner?.InvalidateScrollInfo();
-                InvalidateMeasure();
-            }
+            
+            if (newOffset == _offset) return;
+            
+            _offset = newOffset;
+            ScrollOwner?.InvalidateScrollInfo();
+            InvalidateMeasure();
         }
 
         private void OnCurrentItemChanged(object? sender, EventArgs e)

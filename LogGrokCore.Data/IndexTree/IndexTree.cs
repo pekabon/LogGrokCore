@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using LogGrokCore.Data.Index;
 
@@ -83,6 +84,13 @@ namespace LogGrokCore.Data.IndexTree
             }
         }
 
-        public T this[int idx] => GetEnumerableFromIndex(idx).First();
+        public T this[int idx]
+        {
+            get
+            {
+                Debug.Assert(idx <= _count);
+                return GetEnumerableFromIndex(idx).First();
+            }
+        }
     }
 }
