@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using LogGrokCore.Data;
 using LogGrokCore.Data.Virtualization;
 
@@ -27,13 +29,13 @@ namespace LogGrokCore.Search
             SearchPattern searchPattern)
         {
             _viewFactory = viewFactory;
-            _searchPattern = searchPattern;
 
             _logFile = logFile;
             _lineIndex = lineIndex;
             _lineParser = lineParser;    
             Title = searchPattern.Pattern;
             AddToScratchPadCommand = new DelegateCommand(() => throw new NotImplementedException());
+            SetSearchPattern(searchPattern);
         }
 
         public string Title { get; }
@@ -64,7 +66,7 @@ namespace LogGrokCore.Search
 
         private void StartSearch()
         {
-            var searchLineIndex = Data.Search.Search.CreateSearchIndex(
+            var (progress, searchLineIndex) = Data.Search.Search.CreateSearchIndex(
                 _logFile.OpenForSequentialRead(),
                 _logFile.Encoding,
                 _lineIndex,
@@ -76,6 +78,18 @@ namespace LogGrokCore.Search
 
             Lines = new GrowingLogLinesCollection(() => null,
                 lineCollection);
+
+
+            var context = SynchronizationContext.Current;
+
+            void UpdateCount()
+            {
+                context?.Post(n => Lines?.UpdateCount(), null);
+            }
+
+            progress.Changed += _ => UpdateCount();
+            progress.IsFinishedChanged += UpdateCount;
+
         }
     }
 }

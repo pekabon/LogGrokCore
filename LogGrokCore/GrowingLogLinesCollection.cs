@@ -63,9 +63,9 @@ namespace LogGrokCore
         {
             get
             {
-                if (_sourceCollection.Count == 0)
+                if (_logLinesCount  == 0)
                     return 0;
-                return _sourceCollection.Count + _headerCount;
+                return _logLinesCount + _headerCount;
             }
         }
 

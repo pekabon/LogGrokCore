@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using LogGrokCore.Data;
 
 namespace LogGrokCore
@@ -23,6 +25,11 @@ namespace LogGrokCore
             var lineMeta = _parseResult.Get().ParsedLineComponents;
             
             return _sourceString.Substring(lineMeta.ComponentStart(index), lineMeta.ComponentLength(index)).TrimEnd();
+        }
+
+        public override string ToString()
+        {
+            return $"{Index} | " + _sourceString.Split(Environment.NewLine).First();
         }
     }
 }

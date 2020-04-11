@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace LogGrokCore.Controls
 {
@@ -49,7 +50,16 @@ namespace LogGrokCore.Controls
             lowerBound = LowerBound;
         }
 
-        public override string ToString() => $"{Index}, {UpperBound:##.##} : {LowerBound:##.##} -- {Element}";
+        public override string ToString()
+        {
+            var elementDescriptor = Element switch
+            {
+                ListViewItem l => l.Content,
+                _ => Element
+            };
+            
+            return $"{Index}, {UpperBound:##.##} : {LowerBound:##.##} -- {Element}";
+        }
 
         public bool Equals(VisibleItem other)
         {

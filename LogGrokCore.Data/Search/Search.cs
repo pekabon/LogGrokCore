@@ -11,18 +11,56 @@ namespace LogGrokCore.Data.Search
     public static class Search
     {
         private static readonly StringPool SearchStringPool = new StringPool();
-        private const int MaxSearchSizeLines = 256; 
+        private const int MaxSearchSizeLines = 256;
+        private const double Throttle = 0.01; 
+            
+        public class Progress
+        {
+            public double Value
+            {
+                get => _value;
+                set
+                {
+                    _value = value;
+                    if (value - _lastReportedValue > Throttle)
+                        ReportNewValue(value);
+                }
+            }
 
-        private class SearchLineIndex : ILineIndex
+            public bool IsFinished
+            {
+                get => _isFinished;
+                set
+                {
+                    _isFinished = value;
+                    IsFinishedChanged?.Invoke();
+                }
+            }
+            
+            private void ReportNewValue(double value)
+            {
+                Changed?.Invoke(value);
+                _lastReportedValue = value;
+            }
+
+            public event Action? IsFinishedChanged;
+            
+            public event Action<double>? Changed;
+            
+            private double _value;
+            private double _lastReportedValue;
+            private bool _isFinished;
+        }
+
+        public class SearchLineIndex : ILineIndex
         {
             private readonly IndexTree<int, SimpleLeaf<int>> _searchResult 
                 = new IndexTree<int, SimpleLeaf<int>>(32, 
                 value => new SimpleLeaf<int>(value, 0));
 
             private readonly ILineIndex _sourceLineIndex;
-
             public int Count => _searchResult.Count;
-
+            
             public SearchLineIndex(ILineIndex sourceLineIndex)
             {
                 _sourceLineIndex = sourceLineIndex;
@@ -46,9 +84,10 @@ namespace LogGrokCore.Data.Search
             {
                 _searchResult.Add(sourceLineIndex);
             }
+
         }
 
-        public static ILineIndex CreateSearchIndex(
+        public static (Progress, SearchLineIndex) CreateSearchIndex(
             Stream stream, Encoding encoding,
             LineIndex sourceLineIndex, Regex regex)
         {
@@ -102,16 +141,21 @@ namespace LogGrokCore.Data.Search
                 } while (index < end);
             }
 
+            var progress = new Progress();
             Task.Run(async () =>
             {
+                var totalCount = sourceLineIndex.Count;
                 await foreach (var (start, count) in sourceLineIndex.FetchRanges(MaxSearchSizeLines))
                 {
+                    
                     ProcessLines(start, start + count - 1);
+                    progress.Value = (double)totalCount / (start + count);
                 }
 
+                progress.IsFinished = true;
             });
 
-            return lineIndex;
+            return (progress, lineIndex);
         }
     }
 }

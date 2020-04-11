@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -29,9 +30,10 @@ namespace LogGrokCore.Controls
             }
 
             _batches ??= _itemContainerGenerator.GenerateBatches();
-            var generator = (IItemContainerGenerator)_itemContainerGenerator;
+            var generator = (IItemContainerGenerator) _itemContainerGenerator;
             var supposedPrevIndex = (_direction == GeneratorDirection.Forward)
-                        ? currentIndex - 1 : currentIndex + 1;
+                ? currentIndex - 1
+                : currentIndex + 1;
 
             if (_generatorState == null || _lastIndex is int idx && idx != supposedPrevIndex)
             {
