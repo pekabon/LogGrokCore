@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows;
@@ -23,14 +24,29 @@ namespace LogGrokCore.Controls
         public VirtualizingStackPanel()
         {
             RenderTransform = _trans;
-            Loaded += (o, e) => ItemsControl.GetItemsOwner(this).Items.CurrentChanged += OnCurrentItemChanged;
+            Loaded += (o, e) =>
+            {
+                if (Items.SourceCollection is INotifyCollectionChanged collection)
+                {
+                    collection.CollectionChanged +=
+
+                        (_, e) =>
+                        {
+                            if (e.Action == NotifyCollectionChangedAction.Reset)
+                                InvalidateMeasure();
+                            ;
+                        };
+                }
+
+                Items.CurrentChanged += OnCurrentItemChanged;
+            };
         }
 
         protected override Size MeasureOverride(Size availableSize)
         {
             _viewPort.Width = availableSize.Width;
             UpdateExtent();
-            var count = ItemsControl.GetItemsOwner(this).Items.Count;
+            var count = Items.Count;
             if (count > 0)
                 MeasureOverrideCore(availableSize, VerticalOffset);
 

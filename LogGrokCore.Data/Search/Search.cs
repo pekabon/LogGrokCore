@@ -149,7 +149,7 @@ namespace LogGrokCore.Data.Search
                 {
                     
                     ProcessLines(start, start + count - 1);
-                    progress.Value = (double)totalCount / (start + count);
+                    progress.Value = (double) (start + count) / totalCount;
                 }
 
                 progress.IsFinished = true;
