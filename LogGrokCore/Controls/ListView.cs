@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -28,6 +29,26 @@ namespace LogGrokCore.Controls
                 e.Handled = true;
             else 
                 base.OnKeyDown(e);
+        }
+
+        protected override void OnPreviewMouseDown(MouseButtonEventArgs e)
+        {
+            if (GetPanel()?.ProcessPreviewMouseDown() == true)
+            {
+                e.Handled = true;
+            }
+            
+            base.OnPreviewMouseDown(e);
+        }
+
+        protected override void OnMouseUp(MouseButtonEventArgs e)
+        {
+            base.OnMouseUp(e);
+        }
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
         }
 
         private VirtualizingStackPanel? _panel;

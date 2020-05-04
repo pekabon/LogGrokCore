@@ -16,5 +16,7 @@ namespace LogGrokCore.Controls
         public void Clear() => _indices.Clear();
 
         public bool Contains(int index) => _indices.Contains(index);
+
+        public void Remove(in int index) => _indices.Remove(index);
     }
 }

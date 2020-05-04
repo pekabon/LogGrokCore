@@ -3,12 +3,15 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media;
+using Xceed.Wpf.AvalonDock.Controls;
 
 namespace LogGrokCore.Controls
 {
     public partial class VirtualizingStackPanel
     {
         private readonly Selection _selection = new Selection();
+        private ScrollContentPresenter? _scrollContentPresenter;
 
         private int CurrentPosition
         {
@@ -50,6 +53,45 @@ namespace LogGrokCore.Controls
             return true;
         }
 
+        public bool ProcessPreviewMouseDown()
+        {
+            var item = GetItemUnderMouse();
+            if (item == null) return false;
+            var generator = (ItemContainerGenerator) ItemContainerGenerator;
+            var index = generator.IndexFromContainer(item);
+            _selection.Clear();
+            _selection.Add(index);
+            UpdateSelection();
+            CurrentPosition = index;
+            FocusManager.SetFocusedElement(item, item);
+            return true;
+        }
+
+        
+        private Point? GetMousePosition()
+        {
+            if (ScrollContentPresenter != null)
+            {
+                return Mouse.GetPosition(ScrollContentPresenter);
+            }
+
+            return null;
+        }
+
+        private  ListViewItem? GetItemUnderMouse()
+        {            
+            var mousePosition = GetMousePosition();
+            return mousePosition != null ? GetItemUnderPoint(mousePosition.Value) : null;
+        }
+        
+        private ListViewItem? GetItemUnderPoint(Point p)
+        {
+            if (ScrollContentPresenter == null) return null;
+            var hitTestResult = VisualTreeHelper.HitTest(ScrollContentPresenter, p);
+            return hitTestResult?.VisualHit.FindVisualAncestor<ListViewItem>();
+        }
+
+
         private void UpdateSelection()
         {
             var generator = (ItemContainerGenerator) ItemContainerGenerator;
@@ -83,12 +125,43 @@ namespace LogGrokCore.Controls
 
         private void ExpandSelectionUp()
         {
-            throw new System.NotImplementedException();
+            if (CurrentPosition <= 0 ) return;
+            
+            
+            if (CurrentPosition == _selection.Min)
+            {
+                CurrentPosition--;
+                _selection.Add(CurrentPosition);
+            }
+
+            if (CurrentPosition == _selection.Max)
+            {
+                _selection.Remove(CurrentPosition);
+                CurrentPosition = _selection.Max;
+            }
+
+            BringIndexIntoView(CurrentPosition);
+            UpdateSelection();
         }
 
         private void ExpandSelectionDown()
         {
-            throw new System.NotImplementedException();
+            if (CurrentPosition >= Items.Count - 1) return;
+
+            if (CurrentPosition == _selection.Max)
+            {
+                CurrentPosition++;
+                _selection.Add(CurrentPosition);
+            }
+
+            if (CurrentPosition == _selection.Min)
+            {
+                _selection.Remove(CurrentPosition);
+                CurrentPosition = _selection.Min;
+            }
+            
+            BringIndexIntoViewWhileNavigatingDown(CurrentPosition);
+            UpdateSelection();
         }
 
         protected override void BringIndexIntoView(int index)
@@ -115,7 +188,7 @@ namespace LogGrokCore.Controls
 
                 case (null, _, _, _) when _visibleItems.Max(v => v.Index) == index - 1:
                     var lastItem = _visibleItems[^1];
-                    var nextItem = GenerateOneItemDown(lastItem.LowerBound, index);
+                    var nextItem = GenerateOneItemDown();
                     if (nextItem != null)
                         ScrollDown(nextItem.Value.Height);
                     break;
@@ -125,13 +198,29 @@ namespace LogGrokCore.Controls
             }
         }
 
-        private VisibleItem? GenerateOneItemDown(double offset, int index)
+        private VisibleItem? GenerateOneItemDown()
         {
             BuildVisibleItems(
                 new Size(ActualWidth, _visibleItems[^1].LowerBound + 10.0),
                 VerticalOffset);
 
             return _visibleItems[^1];
+        }
+
+        private ScrollContentPresenter? ScrollContentPresenter
+        {
+            get
+            {
+                var host = ItemsControl.GetItemsOwner(this); 
+                _scrollContentPresenter ??= 
+                    host
+                        .GetVisualChildren<ScrollContentPresenter>()
+                        .Where(c => c.Content is ItemsPresenter)
+                        .FirstOrDefault(c 
+                            => ReferenceEquals(((ItemsPresenter)(c.Content)).TemplatedParent, host));
+
+                return _scrollContentPresenter;
+            }
         }
     }
 }
