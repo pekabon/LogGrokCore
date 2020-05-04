@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows;
@@ -10,7 +9,7 @@ using System.Windows.Media;
 
 namespace LogGrokCore.Controls
 {
-    public class VirtualizingStackPanel : VirtualizingPanel, IScrollInfo
+    public partial class VirtualizingStackPanel : VirtualizingPanel, IScrollInfo
     {
         private readonly TranslateTransform _trans = new TranslateTransform();
         private List<VisibleItem> _visibleItems = new List<VisibleItem>();
@@ -20,23 +19,20 @@ namespace LogGrokCore.Controls
         private Size _extent;
         private Point _offset;
         private double _viewPortHeightInPixels;
+        private int _currentPosition;
 
         public VirtualizingStackPanel()
         {
             RenderTransform = _trans;
+
             Loaded += (o, e) =>
             {
-                if (Items.SourceCollection is INotifyCollectionChanged collection)
+                var necessaryChildrenTouch = this.Children;
+                var itemContainerGenerator = (ItemContainerGenerator) ItemContainerGenerator;
+                itemContainerGenerator.ItemsChanged += (o, e) =>
                 {
-                    collection.CollectionChanged +=
-
-                        (_, e) =>
-                        {
-                            if (e.Action == NotifyCollectionChangedAction.Reset)
-                                InvalidateMeasure();
-                            ;
-                        };
-                }
+                    Items.MoveCurrentToPosition(_currentPosition);
+                };
 
                 Items.CurrentChanged += OnCurrentItemChanged;
             };
@@ -48,7 +44,7 @@ namespace LogGrokCore.Controls
             UpdateExtent();
             var count = Items.Count;
             if (count > 0)
-                MeasureOverrideCore(availableSize, VerticalOffset);
+                BuildVisibleItems(availableSize, VerticalOffset);
 
             return (double.IsPositiveInfinity(availableSize.Height)) ? new Size(1, 1) : availableSize;
         }
@@ -113,7 +109,7 @@ namespace LogGrokCore.Controls
             return finalSize;
         }
 
-        private void MeasureOverrideCore(Size availableSize, double verticalOffset)
+        private void BuildVisibleItems(Size availableSize, double verticalOffset)
         {
             var firstVisibleItemIndex = (int) Math.Floor(verticalOffset);
             var startOffset = firstVisibleItemIndex - verticalOffset;
@@ -124,6 +120,11 @@ namespace LogGrokCore.Controls
 
             _visibleItems = newVisibleItems;
 
+            RecycleItems(itemsToRecycle);
+        }
+
+        private void RecycleItems(IEnumerable<VisibleItem> itemsToRecycle)
+        {
             foreach (var item in itemsToRecycle)
                 RecycleItem(item.Element);
 
@@ -142,7 +143,8 @@ namespace LogGrokCore.Controls
                 double relativeOffset, int startIndex,
                 double heightToBuild, List<VisibleItem> currentVisibleItems, Size availableSize)
         {
-            var necessaryChidrenTouch = this.Children;
+            var necessaryChildrenTouch = this.Children;
+
             var itemContainerGenerator = (ItemContainerGenerator) ItemContainerGenerator;
             using var itemGenerator = new ItemGenerator(itemContainerGenerator, GeneratorDirection.Forward);
             double? currentOffset = null;
@@ -364,6 +366,11 @@ namespace LogGrokCore.Controls
 
         private void OnCurrentItemChanged(object? sender, EventArgs e)
         {
+            if (Items.CurrentPosition == -1)
+                Items.MoveCurrentToPosition(_currentPosition);
+            else
+                _currentPosition = Items.CurrentPosition;
+                    
             // TODO
             // throw new NotImplementedException();
         }

@@ -51,6 +51,7 @@
                                                             Mode=OneWayToSource}"
                                     View="{Binding CustomView}"
                                     ItemContainerStyle="{StaticResource ItemContainerStyle}"
+                                    IsSynchronizedWithCurrentItem="True"
                                     ScrollViewer.VerticalScrollBarVisibility="Visible"
                                     ScrollViewer.CanContentScroll="True"
                                     VirtualizingStackPanel.IsVirtualizing="True"
