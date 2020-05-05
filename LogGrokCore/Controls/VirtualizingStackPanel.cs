@@ -31,6 +31,8 @@ namespace LogGrokCore.Controls
                 var itemContainerGenerator = (ItemContainerGenerator) ItemContainerGenerator;
                 itemContainerGenerator.ItemsChanged += (o, e) =>
                 {
+                    if (Items.Count <= 0) return;
+                    _currentPosition = Math.Min(_currentPosition, Items.Count - 1);
                     Items.MoveCurrentToPosition(_currentPosition);
                 };
 
@@ -366,10 +368,10 @@ namespace LogGrokCore.Controls
 
         private void OnCurrentItemChanged(object? sender, EventArgs e)
         {
-            if (Items.CurrentPosition == -1)
-                Items.MoveCurrentToPosition(_currentPosition);
-            else
-                _currentPosition = Items.CurrentPosition;
+        //     if (Items.CurrentPosition == -1)
+        //         Items.MoveCurrentToPosition(_currentPosition);
+        //     else
+        //         _currentPosition = Items.CurrentPosition;
                     
             // TODO
             // throw new NotImplementedException();

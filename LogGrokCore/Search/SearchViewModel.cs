@@ -26,6 +26,8 @@ namespace LogGrokCore.Search
             Documents = new ObservableCollection<SearchDocumentViewModel>();
         }
 
+        public event Action<int>? CurrentLineChanged; 
+        
         public string SearchText
         {
             get => _searchText;
@@ -89,6 +91,7 @@ namespace LogGrokCore.Search
             else
             {
                 CurrentDocument = _searchDocumentViewModelFactory(_searchPattern);
+                CurrentDocument.SelectedIndexChanged += i => CurrentLineChanged?.Invoke(i);
                 Documents.Add(CurrentDocument);
             }
         }

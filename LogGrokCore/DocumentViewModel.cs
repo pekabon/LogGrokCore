@@ -20,6 +20,8 @@ namespace LogGrokCore
 
             LogViewModel = logViewModel;
             SearchViewModel = searchViewModel;
+
+            SearchViewModel.CurrentLineChanged += lineNumber => LogViewModel.NavigateTo(lineNumber);
         }
 
         public string Title { get; }

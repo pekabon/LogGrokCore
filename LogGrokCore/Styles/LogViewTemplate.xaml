@@ -55,7 +55,10 @@
                                     ScrollViewer.VerticalScrollBarVisibility="Visible"
                                     ScrollViewer.CanContentScroll="True"
                                     VirtualizingStackPanel.IsVirtualizing="True"
-                                    VirtualizingStackPanel.VirtualizationMode="Recycling">
+                                    VirtualizingStackPanel.VirtualizationMode="Recycling"
+                                    
+                                    localControls:NavigateToLineBehavior.NavigateToLineRequest=
+                                        "{Binding NavigateToLineRequest}">
                 <ListView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <localControls:VirtualizingStackPanel>

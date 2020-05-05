@@ -1,12 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Threading;
 using LogGrokCore.Data;
+using LogGrokCore.Data.Search;
 using LogGrokCore.Data.Virtualization;
 
 namespace LogGrokCore.Search
@@ -19,7 +17,6 @@ namespace LogGrokCore.Search
         private readonly LineIndex _lineIndex;
         private readonly ILineParser _lineParser;
         private GrowingLogLinesCollection? _lines;
-
 
         public SearchDocumentViewModel(
             LogFile logFile,
@@ -52,8 +49,23 @@ namespace LogGrokCore.Search
             private set => SetAndRaiseIfChanged(ref _lines,  value);
         }
 
-        public object? SelectedValue { get; set; }
-        
+        public object? SelectedValue
+        {
+            get => _selectedValue;
+            set
+            {
+                if (_selectedValue == value || value == null) return;
+                _selectedValue = value;
+                if (_selectedValue is LineViewModel lineViewModel)
+                {
+                    SelectedIndexChanged?.Invoke(lineViewModel.Index);
+                }
+            }
+        }
+
+        public Action<int>? SelectedIndexChanged;
+        private object? _selectedValue;
+
         public ViewBase CustomView => _viewFactory.CreateView();
 
         public ICommand AddToScratchPadCommand { get; private set; }
@@ -71,10 +83,15 @@ namespace LogGrokCore.Search
                 _logFile.Encoding,
                 _lineIndex,
                 _searchPattern.GetRegex(RegexOptions.Compiled));
-            var lineProvider =  new LineProvider(searchLineIndex, _logFile);
+            
+            var lineProvider =  new SearchLineProvider(searchLineIndex, _logFile);
             var lineCollection =
-                new VirtualList<string, ItemViewModel>(lineProvider,
-                    (str, index) => new LineViewModel(index, str, _lineParser));
+                new VirtualList<(int, string), ItemViewModel>(lineProvider,
+                    (value, _) =>
+                    {
+                        var (originalIndex, str) = value;
+                        return new LineViewModel(originalIndex, str, _lineParser);
+                    });
 
             Lines = new GrowingLogLinesCollection(() => null,
                 lineCollection);

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Input;
+using LogGrokCore.Controls;
 using LogGrokCore.Data;
 using LogGrokCore.Data.Virtualization;
 
@@ -21,6 +22,7 @@ namespace LogGrokCore
         private IEnumerable? _selectedItems;
         private readonly LineViewModelCollectionProvider _lineViewModelCollectionProvider;
         private GrowingLogLinesCollection? _lines;
+        private readonly Lazy<int> _headerLineCount;
         
         public LogViewModel(
             LogModelFacade logModelFacade,
@@ -28,18 +30,19 @@ namespace LogGrokCore
             GridViewFactory viewFactory,
             HeaderProvider headerProvider)
         {
+            _headerLineCount = new Lazy<int>(() => headerProvider.Header == null ? 0 : 1);
             _logModelFacade = logModelFacade;
 
             var lineProvider = _logModelFacade.LineProvider;
             var lineParser = _logModelFacade.LineParser;
-
+            
             _lineViewModelCollectionProvider = lineViewModelCollectionProvider;
             _lineViewModelCollectionProvider.ExclusionsChanged += () => { InvokePropertyChanged(nameof(HaveFilter)); };
             var lineCollection =
                 new VirtualList<string, ItemViewModel>(lineProvider,
                     (str, index) => new LineViewModel(index, str, lineParser));
             Lines = new GrowingLogLinesCollection(() => headerProvider.Header, lineCollection);
-
+            
             CopyPathToClipboardCommand =
                 new DelegateCommand(() => TextCopy.Clipboard.SetText(_logModelFacade.FilePath));
             OpenContainingFolderCommand = new DelegateCommand(OpenContainingFolder);
@@ -115,6 +118,8 @@ namespace LogGrokCore
         
         public ICommand OpenContainingFolderCommand { get; }
         
+        public NavigateToLineRequest NavigateToLineRequest { get; } = new NavigateToLineRequest();
+        
         public GrowingLogLinesCollection? Lines
         {
             get => _lines;
@@ -163,6 +168,11 @@ namespace LogGrokCore
                 : $"/select, {Directory.GetParent(filePath).FullName}";
 
             _ = Process.Start("explorer.exe", cmdLine);
+        }
+
+        public void NavigateTo(in int logLineNumber)
+        {   
+            NavigateToLineRequest.Raise(logLineNumber + _headerLineCount.Value);
         }
     }
 }

@@ -24,30 +24,6 @@ namespace LogGrokCore.Data
 
         public void Fetch(int start, Span<string> values)
         {
-
-            var count = _lineIndex.Count;
-            var length = values.Length;
-            var total = start + length;
-            Debug.Assert(count >= total);
-            if (true)
-            {
-                using var stream = _streamFactory();
-                
-                for (var index = start; index < values.Length + start; index++)
-                {
-                    var (offset, len) = _lineIndex.GetLine(index);
-                    stream.Seek(offset, SeekOrigin.Begin);
-                    using var owner = MemoryPool<byte>.Shared.Rent(len);
-                    var span = owner.Memory.Span.Slice(0, len);
-                    stream.Read(span);
-                    values[index - start] = _encoding.GetString(span).TrimEnd();
-                }
-            }
-
-            return;
-            // TODO: make optimizations for continuous blocks
-
-            /*
             var (startOffset, _) = _lineIndex.GetLine(start);
             var count = values.Length;
             var (lastLineOffset, lastLineLength) = _lineIndex.GetLine(start + count - 1);
@@ -71,7 +47,7 @@ namespace LogGrokCore.Data
                 var (offset, len) = lineIndices[i];
                 var lineSpan = span.Slice((int)(offset - startOffset), len);
                 values[i] = _encoding.GetString(lineSpan).TrimEnd();
-            }*/
+            }
         }
     }
 }

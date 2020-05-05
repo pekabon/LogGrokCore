@@ -17,6 +17,11 @@ namespace LogGrokCore.Controls
             get => (IEnumerable)GetValue(ReadonlySelectedItemsProperty);
             set => SetValue(ReadonlySelectedItemsProperty, value);
         }
+        
+        public void BringIndexIntoView(in int lineNumber)
+        {
+            GetPanel()?.NavigateTo(lineNumber);
+        }
 
         protected override void OnSelectionChanged(SelectionChangedEventArgs e)
         {

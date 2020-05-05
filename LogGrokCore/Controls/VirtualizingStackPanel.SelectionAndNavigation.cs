@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -103,6 +104,14 @@ namespace LogGrokCore.Controls
                 if (item.IsSelected != isItemSelected)
                     item.IsSelected = isItemSelected;
             }
+        }
+
+        public void NavigateTo(int index)
+        {
+            _selection.Clear();
+            CurrentPosition = index;
+            BringIndexIntoView(CurrentPosition);
+            UpdateSelection();
         }
 
         private void NavigateUp()
