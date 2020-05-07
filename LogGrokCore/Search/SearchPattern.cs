@@ -11,9 +11,14 @@ namespace LogGrokCore.Search
             UseRegex = useRegex;
         }
 
-        public string Pattern { get; set; }
-        public bool IsCaseSensitive { get; set; }
-        public bool UseRegex { get; set; }
+        public string Pattern { get; }
+        public bool IsCaseSensitive { get; }
+        public bool UseRegex { get; }
+
+        public SearchPattern Clone()
+        {
+            return new SearchPattern(Pattern, IsCaseSensitive, UseRegex);
+        }
 
         public Regex GetRegex(RegexOptions regexAdditionalOptions)
         {

@@ -93,8 +93,10 @@ namespace LogGrokCore.Data.Virtualization
             if (_pageCache.TryGetValue(pageIndex, out var pageWithGeneration))
             {
                 var (page, _) = pageWithGeneration;
-                if (index - pageStart < page.Count) return (index - pageStart, page);
-                var count = Math.Min(PageSize, Count - pageStart);
+                if (index - pageStart < page.Count) 
+                    return (index - pageStart, page);
+
+                var count = Math.Min(PageSize, Count - pageStart) - page.Count;
                 FetchAndConvert(pageStart + page.Count, count, page);
                 return (index - pageStart, page);
             }

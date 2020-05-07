@@ -32,7 +32,7 @@ namespace LogGrokCore.Search
             _lineParser = lineParser;    
             Title = searchPattern.Pattern;
             AddToScratchPadCommand = new DelegateCommand(() => throw new NotImplementedException());
-            SetSearchPattern(searchPattern);
+            SearchPattern = searchPattern;
         }
 
         public string Title { get; }
@@ -70,10 +70,15 @@ namespace LogGrokCore.Search
 
         public ICommand AddToScratchPadCommand { get; private set; }
 
-        public void SetSearchPattern(SearchPattern searchPattern)
+        public SearchPattern SearchPattern
         {
-            _searchPattern = searchPattern;
-            StartSearch();
+            get => _searchPattern;
+            set
+            {
+                _searchPattern = value;
+                StartSearch();
+                
+            }
         }
 
         private void StartSearch()

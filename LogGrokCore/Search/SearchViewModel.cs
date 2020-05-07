@@ -16,14 +16,42 @@ namespace LogGrokCore.Search
 
         private DispatcherTimer? _searchPatternThrottleTimer;
         private SearchPattern _searchPattern = new SearchPattern(string.Empty, false, false);
+        private SearchDocumentViewModel? _currentDocument;
 
         public SearchViewModel(Func<SearchPattern, SearchDocumentViewModel> searchDocumentViewModelFactory)
         {
-            _searchDocumentViewModelFactory = searchDocumentViewModelFactory;
-            ClearSearchCommand = new DelegateCommand(() => throw new NotImplementedException());
-            CloseDocumentCommand = new DelegateCommand(() => throw new NotImplementedException());
-            AddNewSearchCommand = new DelegateCommand(() => throw new NotImplementedException());
+            _searchDocumentViewModelFactory =
+                pattern =>
+                {
+                    var newDocument = searchDocumentViewModelFactory(pattern);
+                    newDocument.SelectedIndexChanged += i => CurrentLineChanged?.Invoke(i);
+                    return newDocument;
+                };
+                
+            ClearSearchCommand = new DelegateCommand(ClearSearch);
+            CloseDocumentCommand = DelegateCommand.Create<SearchDocumentViewModel>(CloseDocument);
+            AddNewSearchCommand = new DelegateCommand(AddNewSearch);
             Documents = new ObservableCollection<SearchDocumentViewModel>();
+        }
+
+        private void ClearSearch()
+        {
+            SearchText = string.Empty;
+            CommitSearchPatternImmediately(SearchText, IsCaseSensitive, UseRegex);
+        }
+
+        private void CloseDocument(SearchDocumentViewModel  d)
+        {
+            if (Documents.Count != 0) return;
+            SearchText = string.Empty;
+            CurrentDocument = null;
+        }
+
+        private void AddNewSearch()
+        {
+            var newDocument = _searchDocumentViewModelFactory(_searchPattern.Clone());
+            Documents.Add(newDocument);
+            CurrentDocument = newDocument;
         }
 
         public event Action<int>? CurrentLineChanged; 
@@ -51,8 +79,30 @@ namespace LogGrokCore.Search
         public ICommand CloseDocumentCommand { get; private set; }
 
         public ICommand AddNewSearchCommand { get; private set; }
-        
-        public SearchDocumentViewModel? CurrentDocument { get; set; }
+
+        public SearchDocumentViewModel? CurrentDocument
+        {
+            get => _currentDocument;
+            set
+            {
+                if (_currentDocument == value) return;
+                _currentDocument = value;
+
+                if (_currentDocument == null)
+                {
+                    SearchText = string.Empty;
+                    IsCaseSensitive = false;
+                    UseRegex = false;
+                }
+                else
+                {
+                    var searchPattern = _currentDocument.SearchPattern;
+                    SearchText = searchPattern.Pattern;
+                    IsCaseSensitive = searchPattern.IsCaseSensitive;
+                    UseRegex = searchPattern.UseRegex;
+                }
+            }
+        }
 
         private void CommitSearchPattern<T>(ref T field, T newValue, TimeSpan timeSpan, [CallerMemberName] string? propertyName = null)
         {
@@ -86,12 +136,11 @@ namespace LogGrokCore.Search
             _searchPattern = new SearchPattern(searchText, isCaseSensitive, useRegex);
             if (CurrentDocument != null)
             {
-                CurrentDocument.SetSearchPattern(_searchPattern);
+                CurrentDocument.SearchPattern = _searchPattern;
             }
             else
             {
                 CurrentDocument = _searchDocumentViewModelFactory(_searchPattern);
-                CurrentDocument.SelectedIndexChanged += i => CurrentLineChanged?.Invoke(i);
                 Documents.Add(CurrentDocument);
             }
         }
