@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using LogGrokCore.Data.IndexTree;
 using LogGrokCore.Data.Virtualization;
@@ -52,18 +54,30 @@ namespace LogGrokCore.Data
             }
         }
 
-        public async IAsyncEnumerable<(int start, int count)> FetchRanges(int maxRangeSize)
+        public async IAsyncEnumerable<(int start, int count)> FetchRanges(int maxRangeSize, 
+            [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             var currentIndex = 0;
 
             var currentCount = Count;
             while (currentIndex < currentCount || !IsFinished)
             {
-                while (currentIndex + maxRangeSize > currentCount && !IsFinished)
+                try
                 {
-                    await Task.Delay(TimeSpan.FromMilliseconds(250));
-                    currentCount = Count;
+                    while (currentIndex + maxRangeSize > currentCount && !IsFinished)
+                    {
+                        await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken);
+                        currentCount = Count;
+                    }
+
                 }
+                catch (TaskCanceledException)
+                {
+                    yield break;
+                }
+
+                if (cancellationToken.IsCancellationRequested)
+                    yield break;
 
                 var rangeSize = Math.Min(currentCount - currentIndex, maxRangeSize);
                 yield return (currentIndex, rangeSize);

@@ -86,8 +86,9 @@ namespace LogGrokCore.Search
             set
             {
                 if (_currentDocument == value) return;
-                _currentDocument = value;
+                SetAndRaiseIfChanged(ref _currentDocument,  value);
 
+                
                 if (_currentDocument == null)
                 {
                     SearchText = string.Empty;
@@ -134,6 +135,16 @@ namespace LogGrokCore.Search
         private void CommitSearchPatternImmediately(string searchText, in bool isCaseSensitive, in bool useRegex)
         {
             _searchPattern = new SearchPattern(searchText, isCaseSensitive, useRegex);
+            if (_searchPattern.IsEmpty)
+            {
+                if (CurrentDocument != null)
+                {
+                    CurrentDocument.Dispose();
+                    Documents.Remove(CurrentDocument);
+                    CurrentDocument = null;
+                }
+            }
+
             if (CurrentDocument != null)
             {
                 CurrentDocument.SearchPattern = _searchPattern;

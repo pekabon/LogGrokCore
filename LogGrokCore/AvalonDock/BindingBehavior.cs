@@ -97,7 +97,7 @@ namespace LogGrokCore.AvalonDock
 
         private static void OnChanged(DependencyObject d , DependencyPropertyChangedEventArgs _)
         {
-            var dockingManager = (DockingManager)d;
+            DockingManager dockingManager = (DockingManager)d;
 
             void SetDocumentsSourceWithViewFactory(IList documentsSource, Func<object, UIElement> factory)
             {
@@ -106,8 +106,8 @@ namespace LogGrokCore.AvalonDock
                     new ObservableCollectionFactoryLink<UIElement>(documentsSource, targetCollection, factory);
 
                 SetObservableCollectionFactoryLink(dockingManager, documentToDocumentViewLink);
-                dockingManager.DocumentsSource = targetCollection;
 
+                dockingManager.DocumentsSource = targetCollection;
                 dockingManager.DocumentClosed += (_, args) =>
                 {
                     var closedSource = documentToDocumentViewLink.SourceFromTarget((UIElement)args.Document.Content);
@@ -122,7 +122,8 @@ namespace LogGrokCore.AvalonDock
                             var activeSource =
                                 documentToDocumentViewLink.SourceFromTarget((UIElement)dockingManager.ActiveContent);
 
-                            if (activeSource is object value)
+                            var value = activeSource as object;
+                            if (value != null)
                             {
                                 SetCurrentDocument(dockingManager, value);
                             }

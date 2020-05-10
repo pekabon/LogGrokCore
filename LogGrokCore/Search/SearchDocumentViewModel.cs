@@ -9,7 +9,7 @@ using LogGrokCore.Data.Virtualization;
 
 namespace LogGrokCore.Search
 {
-    internal class SearchDocumentViewModel : ViewModelBase
+    internal class SearchDocumentViewModel : ViewModelBase, IDisposable
     {
         private readonly GridViewFactory _viewFactory;
         private SearchPattern _searchPattern;
@@ -17,7 +17,14 @@ namespace LogGrokCore.Search
         private readonly LineIndex _lineIndex;
         private readonly ILineParser _lineParser;
         private GrowingLogLinesCollection? _lines;
+        public Action<int>? SelectedIndexChanged;
+        private object? _selectedValue;
+        private string _title;
+        private  bool _isIndeterminateProgress;
 
+        private readonly object _cancellationTokenSourceLock = new object();
+        private CancellationTokenSource? _currentSearchCancellationTokenSource;
+        
         public SearchDocumentViewModel(
             LogFile logFile,
             LineIndex lineIndex,
@@ -30,14 +37,22 @@ namespace LogGrokCore.Search
             _logFile = logFile;
             _lineIndex = lineIndex;
             _lineParser = lineParser;    
-            Title = searchPattern.Pattern;
+            _title = searchPattern.Pattern;
             AddToScratchPadCommand = new DelegateCommand(() => throw new NotImplementedException());
             SearchPattern = searchPattern;
         }
 
-        public string Title { get; }
+        public string Title
+        {
+            get => _title;
+            set => SetAndRaiseIfChanged(ref _title, value);
+        }
 
-        public bool IsIndeterminateProgress { get; private set; }
+        public bool IsIndeterminateProgress
+        {
+            get => _isIndeterminateProgress;
+            set => SetAndRaiseIfChanged(ref _isIndeterminateProgress, value); 
+        }
 
         public bool IsSearching { get; private set; }
 
@@ -63,9 +78,6 @@ namespace LogGrokCore.Search
             }
         }
 
-        public Action<int>? SelectedIndexChanged;
-        private object? _selectedValue;
-
         public ViewBase CustomView => _viewFactory.CreateView();
 
         public ICommand AddToScratchPadCommand { get; private set; }
@@ -75,19 +87,27 @@ namespace LogGrokCore.Search
             get => _searchPattern;
             set
             {
+                if (_searchPattern.Equals(value)) return;
                 _searchPattern = value;
+                Title = _searchPattern.Pattern;
                 StartSearch();
-                
             }
         }
 
         private void StartSearch()
         {
+            lock (_cancellationTokenSourceLock)
+            {
+                _currentSearchCancellationTokenSource?.Cancel();
+                _currentSearchCancellationTokenSource = new CancellationTokenSource();
+            }
+            
             var (progress, searchLineIndex) = Data.Search.Search.CreateSearchIndex(
                 _logFile.OpenForSequentialRead(),
                 _logFile.Encoding,
                 _lineIndex,
-                _searchPattern.GetRegex(RegexOptions.Compiled));
+                _searchPattern.GetRegex(RegexOptions.Compiled),
+                _currentSearchCancellationTokenSource.Token);
             
             var lineProvider =  new SearchLineProvider(searchLineIndex, _logFile);
             var lineCollection =
@@ -111,7 +131,15 @@ namespace LogGrokCore.Search
 
             progress.Changed += _ => UpdateCount();
             progress.IsFinishedChanged += UpdateCount;
+        }
 
+        public void Dispose()
+        {
+            lock (_cancellationTokenSourceLock)
+            {
+                _currentSearchCancellationTokenSource?.Cancel();
+                _currentSearchCancellationTokenSource = null;
+            }
         }
     }
 }

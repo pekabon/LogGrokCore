@@ -3,6 +3,7 @@ using System.Buffers;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LogGrokCore.Data.Search
@@ -53,7 +54,8 @@ namespace LogGrokCore.Data.Search
 
         public static (Progress, SearchLineIndex) CreateSearchIndex(
             Stream stream, Encoding encoding,
-            LineIndex sourceLineIndex, Regex regex)
+            LineIndex sourceLineIndex, Regex regex,
+            CancellationToken cancellationToken)
         {
             SearchLineIndex lineIndex = new SearchLineIndex(sourceLineIndex);
 
@@ -69,6 +71,7 @@ namespace LogGrokCore.Data.Search
                 _ = stream.Read(memorySpan);
 
                 var index = start;
+                
                 var currentLineOffset = firstLineOffset;
                 var currentLineLength = firstLineLength;
 
@@ -100,17 +103,21 @@ namespace LogGrokCore.Data.Search
                     index++;
 
                     (currentLineOffset, currentLineLength) = sourceLineIndex.GetLine(index);
-                } while (index < end);
+                } while (index < end && !cancellationToken.IsCancellationRequested);
             }
 
             var progress = new Progress();
             Task.Run(async () =>
             {
                 var totalCount = sourceLineIndex.Count;
-                await foreach (var (start, count) in sourceLineIndex.FetchRanges(MaxSearchSizeLines))
+                
+                await foreach (var (start, count) in 
+                    sourceLineIndex.FetchRanges(MaxSearchSizeLines, cancellationToken))
                 {
                     ProcessLines(start, start + count - 1);
                     progress.Value = (double) (start + count) / totalCount;
+                    if (cancellationToken.IsCancellationRequested)
+                        break;
                 }
 
                 progress.IsFinished = true;
