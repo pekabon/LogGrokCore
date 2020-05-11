@@ -73,7 +73,7 @@ namespace LogGrokCore.Controls
                     new Rect(0, 0, ActualWidth, ActualHeight));
 
             var drawingGeometries = 
-            GetDrawingGeometries(MediaTypeNames.Text.Plain, 
+            GetDrawingGeometries(Text, 
                     GetHighlightRegex(this));
                 
             if(drawingGeometries != null)
@@ -101,7 +101,7 @@ namespace LogGrokCore.Controls
                 return _cachedGetDrawingGeometriesResult;
             
             
-            var lines = Text.Split(_newLineSeparators);
+            var lines = text.Split(_newLineSeparators);
             
             // dirty performance fix
             // multiple calls to FormattedText.BuildHighlightGeometry can cost > 1 min on very large lines (it seems like it recalculates text line dimensions on every BuildHighlightGeometry call)
