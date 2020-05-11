@@ -54,22 +54,23 @@ namespace LogGrokCore.Data
             }
         }
 
-        public async IAsyncEnumerable<(int start, int count)> FetchRanges(int maxRangeSize, 
+
+        public async IAsyncEnumerable<(int start, int count)> FetchRanges(
             [EnumeratorCancellation] CancellationToken cancellationToken)
         {
+            const int minRangeSize = 256;
             var currentIndex = 0;
-
             var currentCount = Count;
+
             while (currentIndex < currentCount || !IsFinished)
             {
                 try
                 {
-                    while (currentIndex + maxRangeSize > currentCount && !IsFinished)
+                    while (currentIndex + minRangeSize > currentCount && !IsFinished)
                     {
                         await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken);
                         currentCount = Count;
                     }
-
                 }
                 catch (TaskCanceledException)
                 {
@@ -79,9 +80,11 @@ namespace LogGrokCore.Data
                 if (cancellationToken.IsCancellationRequested)
                     yield break;
 
-                var rangeSize = Math.Min(currentCount - currentIndex, maxRangeSize);
+                
+                var rangeSize = currentCount - currentIndex;
                 yield return (currentIndex, rangeSize);
                 currentIndex += rangeSize;
+                currentCount = Count;
             }
         }
 

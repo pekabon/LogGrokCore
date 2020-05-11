@@ -22,6 +22,7 @@ namespace LogGrokCore
             SearchViewModel = searchViewModel;
 
             SearchViewModel.CurrentLineChanged += lineNumber => LogViewModel.NavigateTo(lineNumber);
+            SearchViewModel.CurrentSearchChanged += regex => LogViewModel.HighlightRegex = regex;
         }
 
         public string Title { get; }

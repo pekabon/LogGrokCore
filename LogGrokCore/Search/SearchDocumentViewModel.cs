@@ -1,6 +1,7 @@
 using System;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Input;
 using LogGrokCore.Data;
@@ -24,7 +25,10 @@ namespace LogGrokCore.Search
 
         private readonly object _cancellationTokenSourceLock = new object();
         private CancellationTokenSource? _currentSearchCancellationTokenSource;
-        
+        private bool _isSearching;
+        private double _progress;
+        private Regex? _highlightRegex;
+
         public SearchDocumentViewModel(
             LogFile logFile,
             LineIndex lineIndex,
@@ -54,10 +58,25 @@ namespace LogGrokCore.Search
             set => SetAndRaiseIfChanged(ref _isIndeterminateProgress, value); 
         }
 
-        public bool IsSearching { get; private set; }
+        public bool IsSearching         
+        {
+            get => _isSearching;
+            set => SetAndRaiseIfChanged(ref _isSearching, value); 
+        }
 
-        public double SearchProgress { get; private set; }
+        public double SearchProgress 
+        {
+            get => _progress;
+            set => SetAndRaiseIfChanged(ref _progress, value); 
+        }
 
+        public Regex? HighlightRegex
+        {
+            get => _highlightRegex;
+            set => SetAndRaiseIfChanged(ref _highlightRegex, value);
+        }
+
+        
         public GrowingLogLinesCollection? Lines
         {
             get => _lines;
@@ -90,6 +109,7 @@ namespace LogGrokCore.Search
                 if (_searchPattern.Equals(value)) return;
                 _searchPattern = value;
                 Title = _searchPattern.Pattern;
+                HighlightRegex = _searchPattern.GetRegex(RegexOptions.None);
                 StartSearch();
             }
         }
@@ -101,6 +121,10 @@ namespace LogGrokCore.Search
                 _currentSearchCancellationTokenSource?.Cancel();
                 _currentSearchCancellationTokenSource = new CancellationTokenSource();
             }
+
+            SearchProgress = 0;
+            IsIndeterminateProgress = true;
+            IsSearching = true;
             
             var (progress, searchLineIndex) = Data.Search.Search.CreateSearchIndex(
                 _logFile.OpenForSequentialRead(),
@@ -124,13 +148,27 @@ namespace LogGrokCore.Search
 
             var context = SynchronizationContext.Current;
 
-            void UpdateCount()
+            var updateScheduled = 0;
+            void UpdateCount(Data.Search.Search.Progress progress)
             {
-                context?.Post(n => Lines?.UpdateCount(), null);
+                if (0 == Interlocked.CompareExchange(ref updateScheduled, 1, 0))
+                {
+                    context?.Post(n =>
+                    {
+                        Lines?.UpdateCount();
+                        Task.Delay(TimeSpan.FromMilliseconds(150)).ContinueWith(t =>
+                            Interlocked.Exchange(ref updateScheduled, 0));
+                        
+                    }, null);
+                }
+
+                SearchProgress = progress.Value * 100.0;
+                IsSearching = !progress.IsFinished;
+                IsIndeterminateProgress = false;
             }
 
-            progress.Changed += _ => UpdateCount();
-            progress.IsFinishedChanged += UpdateCount;
+            progress.Changed += _ => UpdateCount(progress);
+            progress.IsFinishedChanged += () => UpdateCount(progress);
         }
 
         public void Dispose()

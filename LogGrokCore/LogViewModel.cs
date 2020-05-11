@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -23,7 +24,8 @@ namespace LogGrokCore
         private readonly LineViewModelCollectionProvider _lineViewModelCollectionProvider;
         private GrowingLogLinesCollection? _lines;
         private readonly Lazy<int> _headerLineCount;
-        
+        private Regex? _highlightRegex;
+
         public LogViewModel(
             LogModelFacade logModelFacade,
             LineViewModelCollectionProvider lineViewModelCollectionProvider,
@@ -98,6 +100,12 @@ namespace LogGrokCore
                 _selectedItems = value;
                 InvokePropertyChanged();
             }
+        }
+
+        public Regex? HighlightRegex
+        {
+            get => _highlightRegex;
+            set => SetAndRaiseIfChanged(ref _highlightRegex, value);
         }
 
         public double Progress

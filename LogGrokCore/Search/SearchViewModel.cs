@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Windows.Input;
 using System.Windows.Threading;
 
@@ -17,7 +18,6 @@ namespace LogGrokCore.Search
         private DispatcherTimer? _searchPatternThrottleTimer;
         private SearchPattern _searchPattern = new SearchPattern(string.Empty, false, false);
         private SearchDocumentViewModel? _currentDocument;
-
         public SearchViewModel(Func<SearchPattern, SearchDocumentViewModel> searchDocumentViewModelFactory)
         {
             _searchDocumentViewModelFactory =
@@ -54,8 +54,10 @@ namespace LogGrokCore.Search
             CurrentDocument = newDocument;
         }
 
-        public event Action<int>? CurrentLineChanged; 
-        
+        public event Action<int>? CurrentLineChanged;
+
+        public event Action<Regex>? CurrentSearchChanged;
+
         public string SearchText
         {
             get => _searchText;
@@ -154,6 +156,8 @@ namespace LogGrokCore.Search
                 CurrentDocument = _searchDocumentViewModelFactory(_searchPattern);
                 Documents.Add(CurrentDocument);
             }
+            
+            CurrentSearchChanged?.Invoke(_searchPattern.GetRegex(RegexOptions.None));
         }
 
         public ObservableCollection<SearchDocumentViewModel> Documents { get; private set; }

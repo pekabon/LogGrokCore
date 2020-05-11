@@ -109,15 +109,19 @@ namespace LogGrokCore.Data.Search
             var progress = new Progress();
             Task.Run(async () =>
             {
-                var totalCount = sourceLineIndex.Count;
                 
                 await foreach (var (start, count) in 
-                    sourceLineIndex.FetchRanges(MaxSearchSizeLines, cancellationToken))
+                    sourceLineIndex.FetchRanges(cancellationToken))
                 {
-                    ProcessLines(start, start + count - 1);
-                    progress.Value = (double) (start + count) / totalCount;
-                    if (cancellationToken.IsCancellationRequested)
-                        break;
+                    var totalCount = sourceLineIndex.Count;
+
+                    var current = start;
+                    while (current < start + count && !cancellationToken.IsCancellationRequested)
+                    {
+                        ProcessLines(current, Math.Min(current + MaxSearchSizeLines - 1, start + count - 1));
+                        progress.Value = (double) current / totalCount;
+                        current += MaxSearchSizeLines;
+                    }
                 }
 
                 progress.IsFinished = true;

@@ -24,7 +24,11 @@ namespace LogGrokCore.AvalonDock
 
         static BindingBehavior()
         {
-            DocumentsSourceProperty = DependencyProperty.RegisterAttached("DocumentsSource", typeof(IList), typeof(BindingBehavior), new PropertyMetadata(null, OnChanged), null);
+            DocumentsSourceProperty = DependencyProperty.RegisterAttached("DocumentsSource",
+                typeof(IList), 
+                typeof(BindingBehavior), 
+                new PropertyMetadata(null, OnChanged),
+                null);
             CurrentDocumentProperty = DependencyProperty.RegisterAttached("CurrentDocument", typeof(object), typeof(BindingBehavior), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, OnCurrentDocumentChanged), null);
             DocumentViewTemplateProperty = DependencyProperty.RegisterAttached("DocumentViewTemplate", typeof(DataTemplate), typeof(BindingBehavior), new PropertyMetadata(null, OnChanged), null);
             DocumentViewTemplateSelectorProperty = DependencyProperty.RegisterAttached("DocumentViewTemplateSelector", typeof(DataTemplateSelector), typeof(BindingBehavior), new PropertyMetadata(null, OnChanged), null);

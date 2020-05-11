@@ -56,12 +56,12 @@
                                     ScrollViewer.CanContentScroll="True"
                                     VirtualizingStackPanel.IsVirtualizing="True"
                                     VirtualizingStackPanel.VirtualizationMode="Recycling"
-                                    
                                     localControls:NavigateToLineBehavior.NavigateToLineRequest=
                                         "{Binding NavigateToLineRequest}">
                 <ListView.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <localControls:VirtualizingStackPanel>
+                        <localControls:VirtualizingStackPanel
+                            localControls:HighlightedTextBlock.HighlightRegex="{Binding HighlightRegex}">
                             <localControls:VirtualizingStackPanel.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem Header="Exclude" Style="{StaticResource FilterContextMenuItem}">

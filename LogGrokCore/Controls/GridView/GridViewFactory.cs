@@ -23,6 +23,7 @@ namespace LogGrokCore
             var view = new GridView();
             foreach (var fieldHeader in indexFieldName.Yield().Concat(_meta.FieldNames))
             {
+                
                 DataTemplate CreateHeaderTemplate()
                 {
                         var frameworkElementFactory = new FrameworkElementFactory(typeof(LogGridViewHeader));
@@ -44,8 +45,9 @@ namespace LogGrokCore
                         return ln => ln.GetValue(idx);
                     }
 
+                    if (fieldHeader == null) throw new InvalidOperationException();
                     var valueGetter =
-                        fieldHeader == indexFieldName
+                        fieldHeader == indexFieldName 
                             ? ln => ln.Index.ToString()
                             : GetComponent(fieldHeader);
                     

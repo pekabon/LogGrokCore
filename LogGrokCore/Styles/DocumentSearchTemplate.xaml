@@ -45,6 +45,7 @@
                 <controls:ListView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <controls:VirtualizingStackPanel
+                            controls:HighlightedTextBlock.HighlightRegex="{Binding HighlightRegex}"
                             Tag="{Binding SelectedItems, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type controls:ListView}}}">
                             <controls:VirtualizingStackPanel.ContextMenu>
                                 <ContextMenu>
