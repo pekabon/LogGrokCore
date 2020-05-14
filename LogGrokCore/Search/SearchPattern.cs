@@ -25,7 +25,7 @@ namespace LogGrokCore.Search
 
         public Regex GetRegex(RegexOptions regexAdditionalOptions)
         {
-            var regexOptions = IsCaseSensitive ? RegexOptions.None | RegexOptions.IgnoreCase : RegexOptions.None;
+            var regexOptions = IsCaseSensitive ?  RegexOptions.None : RegexOptions.None | RegexOptions.IgnoreCase;
             var pattern = UseRegex ? Pattern : Regex.Escape(Pattern);
             return new Regex(pattern, regexOptions | regexAdditionalOptions);
         }
