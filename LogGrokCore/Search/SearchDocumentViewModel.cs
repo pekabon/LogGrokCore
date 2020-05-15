@@ -149,9 +149,13 @@ namespace LogGrokCore.Search
             var context = SynchronizationContext.Current;
 
             var updateScheduled = 0;
-            void UpdateCount(Data.Search.Search.Progress progress)
+            void UpdateCount(Data.Search.Search.Progress progress, bool force)
             {
-                if (0 == Interlocked.CompareExchange(ref updateScheduled, 1, 0))
+                if (force)
+                {
+                    context?.Post(n => { Lines?.UpdateCount(); }, null);
+                } 
+                else if (0 == Interlocked.CompareExchange(ref updateScheduled, 1, 0))
                 {
                     context?.Post(n =>
                     {
@@ -167,8 +171,8 @@ namespace LogGrokCore.Search
                 IsIndeterminateProgress = false;
             }
 
-            progress.Changed += _ => UpdateCount(progress);
-            progress.IsFinishedChanged += () => UpdateCount(progress);
+            progress.Changed += _ => UpdateCount(progress, false);
+            progress.IsFinishedChanged += () => UpdateCount(progress, true);
         }
 
         public void Dispose()
