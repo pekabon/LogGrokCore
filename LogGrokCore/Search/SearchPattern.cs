@@ -44,5 +44,8 @@ namespace LogGrokCore.Search
         {
             return HashCode.Combine(Pattern, IsCaseSensitive, UseRegex);
         }
+
+        public override string ToString() => 
+            IsEmpty ? "{Empty}" : $"{Pattern}, useRegex: {UseRegex}, caseSensitive: {IsCaseSensitive}";
     }
 }

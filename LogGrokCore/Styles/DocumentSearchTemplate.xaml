@@ -6,7 +6,6 @@
                     xmlns:avalonDock="http://schemas.xceed.com/wpf/xaml/avalondock"
                     xmlns:localBehaviors="clr-namespace:LogGrokCore.AvalonDock"
                     xmlns:controls="clr-namespace:LogGrokCore.Controls"
-                    xmlns:logGrokCore="clr-namespace:LogGrokCore"
                     xmlns:search="clr-namespace:LogGrokCore.Search"
                     mc:Ignorable="d">
     <ResourceDictionary.MergedDictionaries>
@@ -17,6 +16,7 @@
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/themes/light.blue.xaml" />
         <ResourceDictionary Source="pack://application:,,,/Xceed.Wpf.AvalonDock.Themes.Metro;component/Theme.xaml" />
     </ResourceDictionary.MergedDictionaries>
+
     <DataTemplate x:Key="SearchDocumentViewTemplate" DataType="search:SearchDocumentViewModel">
         <Grid>
             <Grid.RowDefinitions>
@@ -64,240 +64,239 @@
         </Grid>
     </DataTemplate>
 
-    <DataTemplate x:Key="DocumentSearchTemplate" DataType="search:SearchViewModel">
+    <DataTemplate x:Key="SearchParametersTemplate" DataType="search:SearchViewModel">
         <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
+
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <ContentControl Grid.ColumnSpan="4"
-                                Margin="0,0,0,5" />
-                <ToggleButton Grid.Row="0" Grid.Column="0"
-                              Margin="0,0,2,0"
-                              HorizontalContentAlignment="Center"
-                              VerticalContentAlignment="Center"
-                              BorderThickness="0"
-                              IsChecked="{Binding IsCaseSensitive}"
-                              Style="{StaticResource SearchOptionToggleButtonStyle}"
-                              ToolTip="Match case">
-                    <TextBlock HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
-                               FontStretch="SemiCondensed"
-                               FontWeight="Bold"
-                               Text="Aa" />
-                </ToggleButton>
-                <ToggleButton Grid.Row="0"
-                              Grid.Column="1"
-                              Margin="0,0,2,0"
-                              HorizontalContentAlignment="Center"
-                              VerticalContentAlignment="Center"
-                              BorderThickness="0"
-                              IsChecked="{Binding UseRegex}"
-                              Style="{StaticResource SearchOptionToggleButtonStyle}"
-                              ToolTip="Use Regular Expressions">
-                    <TextBlock HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
-                               FontStretch="SemiCondensed"
-                               FontWeight="Bold"
-                               Text="(.*)" />
-                </ToggleButton>
-                <TextBox Grid.Row="0"
-                         Grid.Column="2"
-                         Text="{Binding SearchText,
+            <ContentControl Grid.ColumnSpan="4"
+                            Margin="0,0,0,5" />
+            <ToggleButton Grid.Row="0" Grid.Column="0"
+                          Margin="0,0,2,0"
+                          HorizontalContentAlignment="Center"
+                          VerticalContentAlignment="Center"
+                          BorderThickness="0"
+                          IsChecked="{Binding IsCaseSensitive}"
+                          Style="{StaticResource SearchOptionToggleButtonStyle}"
+                          ToolTip="Match case">
+                <TextBlock HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           FontStretch="SemiCondensed"
+                           FontWeight="Bold"
+                           Text="Aa" />
+            </ToggleButton>
+            <ToggleButton Grid.Row="0"
+                          Grid.Column="1"
+                          Margin="0,0,2,0"
+                          HorizontalContentAlignment="Center"
+                          VerticalContentAlignment="Center"
+                          BorderThickness="0"
+                          IsChecked="{Binding UseRegex}"
+                          Style="{StaticResource SearchOptionToggleButtonStyle}"
+                          ToolTip="Use Regular Expressions">
+                <TextBlock HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           FontStretch="SemiCondensed"
+                           FontWeight="Bold"
+                           Text="(.*)" />
+            </ToggleButton>
+            <TextBox Grid.Row="0"
+                     Grid.Column="2"
+                     Text="{Binding SearchText,
                                         UpdateSourceTrigger=PropertyChanged,
                                         NotifyOnValidationError=True,
                                         ValidatesOnDataErrors=True,
                                         Mode=TwoWay}"
 
-                         mahapps:TextBoxHelper.ButtonCommand="{Binding ClearSearchCommand,
+                     mahapps:TextBoxHelper.ButtonCommand="{Binding ClearSearchCommand,
                                                                                              Mode=OneWay}"
-                         mahapps:TextBoxHelper.SelectAllOnFocus="True"
-                         mahapps:TextBoxHelper.Watermark="Search...">
-                    <TextBox.InputBindings>
-                        <KeyBinding Key="Escape" Command="{Binding ClearSearchCommand}" />
-                    </TextBox.InputBindings>
-                    <TextBox.Style>
-                        <Style BasedOn="{StaticResource MahApps.Styles.TextBox}" TargetType="{x:Type TextBox}">
-                            <Setter Property="mahapps:TextBoxHelper.ClearTextButton" Value="True" />
-                            <Style.Triggers>
-                                <Trigger Property="mahapps:TextBoxHelper.HasText" Value="False">
-                                    <Setter Property="mahapps:TextBoxHelper.ClearTextButton" Value="False" />
-                                </Trigger>
-                                <Trigger Property="mahapps:TextBoxHelper.HasText" Value="True">
-                                    <Setter Property="mahapps:TextBoxHelper.ClearTextButton" Value="True" />
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBox.Style>
-                </TextBox>
-            </Grid>
-            <Border x:Name="ParentBorder"
-                    Grid.Row="1"
-                    Grid.ColumnSpan="3"
-                    VerticalAlignment="Stretch">
-                <avalonDock:DockingManager localBehaviors:BindingBehavior.CurrentDocument="{Binding CurrentDocument}"
-                                           localBehaviors:BindingBehavior.DocumentsSource="{Binding Documents}"
-                                           localBehaviors:BindingBehavior.OnDocumentCloseCommand="{Binding CloseDocumentCommand}"
-                                           localBehaviors:BindingBehavior.DocumentViewTemplate="{StaticResource SearchDocumentViewTemplate}">
-
-                    <!-- localBehaviors:BindingBehavior.OnDocumentCloseCommand="{Binding CloseDocument}" -->
-                    <avalonDock:DockingManager.LayoutItemContainerStyle>
-                        <Style TargetType="{x:Type avalonDock:LayoutItem}">
-                            <Setter Property="Title" Value="{Binding Model.Content.Title}" />
-                        </Style>
-                    </avalonDock:DockingManager.LayoutItemContainerStyle>
-
-                    <avalonDock:DockingManager.DocumentPaneControlStyle>
-                        <Style BasedOn="{StaticResource AvalonDock_ThemeMetro_DocumentPaneControlStyle}"
-                               TargetType="{x:Type avalonDock:LayoutDocumentPaneControl}">
-                            <Setter Property="Control.Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="{x:Type avalonDock:LayoutDocumentPaneControl}">
-                                        <Grid ClipToBounds="True"
-                                              KeyboardNavigation.TabNavigation="Local"
-                                              SnapsToDevicePixels="True">
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto" />
-                                                <RowDefinition Height="*" />
-                                            </Grid.RowDefinitions>
-                                            <Border Grid.Row="0" Grid.RowSpan="2" Background="#00FFFFFF" />
-                                            <Grid Grid.Row="0" ZIndex="1">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
-                                                <Button Margin="5"
-                                                        Command="{Binding AddNewSearchCommand}"
-                                                        IsTabStop="False"
-                                                        Style="{StaticResource MahApps.Styles.Button.Chromeless}">
-                                                    <Button.Content>
-                                                        <Rectangle Width="15"
-                                                                   Height="15"
-                                                                   Fill="{Binding RelativeSource={RelativeSource AncestorType=Button},
-                                                                                                  Path=Foreground}">
-                                                            <Rectangle.OpacityMask>
-                                                                <VisualBrush Stretch="Fill"
-                                                                             Visual="{StaticResource appbar_add}" />
-                                                            </Rectangle.OpacityMask>
-                                                        </Rectangle>
-                                                    </Button.Content>
-                                                </Button>
-                                                <avalonDock:DocumentPaneTabPanel Name="HeaderPanel"
-                                                                                 Grid.Row="0"
-                                                                                 Grid.Column="1"
-                                                                                 Margin="2,0,2,0"
-                                                                                 IsItemsHost="True"
-                                                                                 KeyboardNavigation.TabIndex="1" />
-                                                <avalonDock:DropDownButton Name="MenuDropDownButton"
-                                                                           Grid.Column="2"
-                                                                           VerticalAlignment="Center"
-                                                                           Focusable="False"
-                                                                           Style="{StaticResource AvalonDock_ThemeMetro_ToolButtonStyle}">
-                                                    <avalonDock:DropDownButton.DropDownContextMenu>
-                                                        <avalonDock:ContextMenuEx
-                                                            ItemsSource="{Binding Model.ChildrenSorted, RelativeSource={RelativeSource TemplatedParent}}">
-                                                            <avalonDock:ContextMenuEx.ItemContainerStyle>
-                                                                <Style BasedOn="{StaticResource {x:Type MenuItem}}"
-                                                                       TargetType="{x:Type avalonDock:MenuItemEx}">
-                                                                    <Setter
-                                                                        Property="HeaderTemplate"
-                                                                        Value="{Binding Path=Root.Manager.DocumentPaneMenuItemHeaderTemplate}" />
-                                                                    <Setter
-                                                                        Property="HeaderTemplateSelector"
-                                                                        Value="{Binding Path=Root.Manager.DocumentPaneMenuItemHeaderTemplateSelector}" />
-                                                                    <Setter
-                                                                        Property="IconTemplate"
-                                                                        Value="{Binding Path=Root.Manager.IconContentTemplate}" />
-                                                                    <Setter
-                                                                        Property="IconTemplateSelector"
-                                                                        Value="{Binding Path=Root.Manager.IconContentTemplateSelector}" />
-                                                                    <Setter Property="Command"
-                                                                            Value="{Binding Path=., Converter={StaticResource ActivateCommandLayoutItemFromLayoutModelConverter}}" />
-                                                                </Style>
-                                                            </avalonDock:ContextMenuEx.ItemContainerStyle>
-                                                        </avalonDock:ContextMenuEx>
-                                                    </avalonDock:DropDownButton.DropDownContextMenu>
-                                                </avalonDock:DropDownButton>
-                                            </Grid>
-                                            <Border Name="ContentPanel"
-                                                    Grid.Row="1"
-                                                    Grid.Column="0"
-                                                    HorizontalAlignment="Stretch"
-                                                    VerticalAlignment="Stretch"
-                                                    Background="{TemplateBinding Control.Background}"
-                                                    BorderBrush="{TemplateBinding Control.BorderBrush}"
-                                                    BorderThickness="{TemplateBinding Control.BorderThickness}"
-                                                    KeyboardNavigation.DirectionalNavigation="Contained"
-                                                    KeyboardNavigation.TabIndex="2"
-                                                    KeyboardNavigation.TabNavigation="Cycle"
-                                                    Padding="0,1,0,2">
-                                                <ContentPresenter Name="PART_SelectedContentHost"
-                                                                  Margin="0,2,0,2"
-                                                                  ContentSource="SelectedContent"
-                                                                  SnapsToDevicePixels="{TemplateBinding UIElement.SnapsToDevicePixels}" />
-                                            </Border>
-                                        </Grid>
-                                        <ControlTemplate.Triggers>
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition
-                                                        Binding="{Binding RelativeSource={RelativeSource Self}, Path=Model.SelectedContent.IsActive}"
-                                                        Value="True" />
-                                                    <Condition
-                                                        Binding="{Binding RelativeSource={RelativeSource Self}, Path=Model.SelectedContent.IsLastFocusedDocument}"
-                                                        Value="True" />
-                                                </MultiDataTrigger.Conditions>
-                                                <!-- TODO -->
-                                                <!-- <Setter Property="Control.Background" -->
-                                                <!--         Value="{DynamicResource AvalonDock_ThemeMetro_BaseColor31}" /> -->
-                                            </MultiDataTrigger>
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition
-                                                        Binding="{Binding RelativeSource={RelativeSource Self}, Path=Model.SelectedContent.IsActive}"
-                                                        Value="False" />
-                                                    <Condition
-                                                        Binding="{Binding RelativeSource={RelativeSource Self}, Path=Model.SelectedContent.IsLastFocusedDocument}"
-                                                        Value="True" />
-                                                </MultiDataTrigger.Conditions>
-                                                <Setter Property="Control.Background"
-                                                        Value="{DynamicResource AvalonDock_ThemeMetro_BaseColor30}" />
-                                            </MultiDataTrigger>
-                                            <Trigger Property="UIElement.IsEnabled" Value="False">
-                                                <Setter Property="Control.Foreground"
-                                                        Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
-                                            </Trigger>
-                                            <DataTrigger
-                                                Binding="{Binding RelativeSource={RelativeSource Mode=Self}, Path=Model.ChildrenCount}"
-                                                Value="0">
-                                                <Setter TargetName="MenuDropDownButton" Property="UIElement.Visibility"
-                                                        Value="Collapsed" />
-                                            </DataTrigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </avalonDock:DockingManager.DocumentPaneControlStyle>
-                    <avalonDock:LayoutRoot>
-                        <avalonDock:LayoutPanel Orientation="Horizontal">
-                            <avalonDock:LayoutDocumentPane />
-                        </avalonDock:LayoutPanel>
-                    </avalonDock:LayoutRoot>
-                </avalonDock:DockingManager>
-            </Border>
+                     mahapps:TextBoxHelper.SelectAllOnFocus="True"
+                     mahapps:TextBoxHelper.Watermark="Search...">
+                <TextBox.InputBindings>
+                    <KeyBinding Key="Escape" Command="{Binding ClearSearchCommand}" />
+                </TextBox.InputBindings>
+                <TextBox.Style>
+                    <Style BasedOn="{StaticResource MahApps.Styles.TextBox}" TargetType="{x:Type TextBox}">
+                        <Setter Property="mahapps:TextBoxHelper.ClearTextButton" Value="True" />
+                        <Style.Triggers>
+                            <Trigger Property="mahapps:TextBoxHelper.HasText" Value="False">
+                                <Setter Property="mahapps:TextBoxHelper.ClearTextButton" Value="False" />
+                            </Trigger>
+                            <Trigger Property="mahapps:TextBoxHelper.HasText" Value="True">
+                                <Setter Property="mahapps:TextBoxHelper.ClearTextButton" Value="True" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBox.Style>
+            </TextBox>
         </Grid>
+    </DataTemplate>
+
+    <DataTemplate x:Key="SearchResultsTemplate" DataType="search:SearchViewModel">
+        <Border x:Name="ParentBorder"
+                Grid.Row="1"
+                Grid.ColumnSpan="3"
+                VerticalAlignment="Stretch"
+                Visibility="{Binding IsFilterEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
+
+            <avalonDock:DockingManager localBehaviors:BindingBehavior.CurrentDocument="{Binding CurrentDocument}"
+                                       localBehaviors:BindingBehavior.DocumentsSource="{Binding Documents}"
+                                       localBehaviors:BindingBehavior.OnDocumentCloseCommand="{Binding CloseDocumentCommand}"
+                                       localBehaviors:BindingBehavior.DocumentViewTemplate="{StaticResource SearchDocumentViewTemplate}">
+
+                <!-- localBehaviors:BindingBehavior.OnDocumentCloseCommand="{Binding CloseDocument}" -->
+                <avalonDock:DockingManager.LayoutItemContainerStyle>
+                    <Style TargetType="{x:Type avalonDock:LayoutItem}">
+                        <Setter Property="Title" Value="{Binding Model.Content.Title}" />
+                    </Style>
+                </avalonDock:DockingManager.LayoutItemContainerStyle>
+
+                <avalonDock:DockingManager.DocumentPaneControlStyle>
+                    <Style BasedOn="{StaticResource AvalonDock_ThemeMetro_DocumentPaneControlStyle}"
+                           TargetType="{x:Type avalonDock:LayoutDocumentPaneControl}">
+                        <Setter Property="Control.Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type avalonDock:LayoutDocumentPaneControl}">
+                                    <Grid ClipToBounds="True"
+                                          KeyboardNavigation.TabNavigation="Local"
+                                          SnapsToDevicePixels="True">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="*" />
+                                        </Grid.RowDefinitions>
+                                        <Border Grid.Row="0" Grid.RowSpan="2" Background="#00FFFFFF" />
+                                        <Grid Grid.Row="0" ZIndex="1">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Button Margin="5"
+                                                    Command="{Binding AddNewSearchCommand}"
+                                                    IsTabStop="False"
+                                                    Style="{StaticResource MahApps.Styles.Button.Chromeless}">
+                                                <Button.Content>
+                                                    <Rectangle Width="15"
+                                                               Height="15"
+                                                               Fill="{Binding RelativeSource={RelativeSource AncestorType=Button},
+                                                                                                  Path=Foreground}">
+                                                        <Rectangle.OpacityMask>
+                                                            <VisualBrush Stretch="Fill"
+                                                                         Visual="{StaticResource appbar_add}" />
+                                                        </Rectangle.OpacityMask>
+                                                    </Rectangle>
+                                                </Button.Content>
+                                            </Button>
+                                            <avalonDock:DocumentPaneTabPanel Name="HeaderPanel"
+                                                                             Grid.Row="0"
+                                                                             Grid.Column="1"
+                                                                             Margin="2,0,2,0"
+                                                                             IsItemsHost="True"
+                                                                             KeyboardNavigation.TabIndex="1" />
+                                            <avalonDock:DropDownButton Name="MenuDropDownButton"
+                                                                       Grid.Column="2"
+                                                                       VerticalAlignment="Center"
+                                                                       Focusable="False"
+                                                                       Style="{StaticResource AvalonDock_ThemeMetro_ToolButtonStyle}">
+                                                <avalonDock:DropDownButton.DropDownContextMenu>
+                                                    <avalonDock:ContextMenuEx
+                                                        ItemsSource="{Binding Model.ChildrenSorted, RelativeSource={RelativeSource TemplatedParent}}">
+                                                        <avalonDock:ContextMenuEx.ItemContainerStyle>
+                                                            <Style BasedOn="{StaticResource {x:Type MenuItem}}"
+                                                                   TargetType="{x:Type avalonDock:MenuItemEx}">
+                                                                <Setter
+                                                                    Property="HeaderTemplate"
+                                                                    Value="{Binding Path=Root.Manager.DocumentPaneMenuItemHeaderTemplate}" />
+                                                                <Setter
+                                                                    Property="HeaderTemplateSelector"
+                                                                    Value="{Binding Path=Root.Manager.DocumentPaneMenuItemHeaderTemplateSelector}" />
+                                                                <Setter
+                                                                    Property="IconTemplate"
+                                                                    Value="{Binding Path=Root.Manager.IconContentTemplate}" />
+                                                                <Setter
+                                                                    Property="IconTemplateSelector"
+                                                                    Value="{Binding Path=Root.Manager.IconContentTemplateSelector}" />
+                                                                <Setter Property="Command"
+                                                                        Value="{Binding Path=., Converter={StaticResource ActivateCommandLayoutItemFromLayoutModelConverter}}" />
+                                                            </Style>
+                                                        </avalonDock:ContextMenuEx.ItemContainerStyle>
+                                                    </avalonDock:ContextMenuEx>
+                                                </avalonDock:DropDownButton.DropDownContextMenu>
+                                            </avalonDock:DropDownButton>
+                                        </Grid>
+                                        <Border Name="ContentPanel"
+                                                Grid.Row="1"
+                                                Grid.Column="0"
+                                                HorizontalAlignment="Stretch"
+                                                VerticalAlignment="Stretch"
+                                                Background="{TemplateBinding Control.Background}"
+                                                BorderBrush="{TemplateBinding Control.BorderBrush}"
+                                                BorderThickness="{TemplateBinding Control.BorderThickness}"
+                                                KeyboardNavigation.DirectionalNavigation="Contained"
+                                                KeyboardNavigation.TabIndex="2"
+                                                KeyboardNavigation.TabNavigation="Cycle"
+                                                Padding="0,1,0,2">
+                                            <ContentPresenter Name="PART_SelectedContentHost"
+                                                              Margin="0,2,0,2"
+                                                              ContentSource="SelectedContent"
+                                                              SnapsToDevicePixels="{TemplateBinding UIElement.SnapsToDevicePixels}" />
+                                        </Border>
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition
+                                                    Binding="{Binding RelativeSource={RelativeSource Self}, Path=Model.SelectedContent.IsActive}"
+                                                    Value="True" />
+                                                <Condition
+                                                    Binding="{Binding RelativeSource={RelativeSource Self}, Path=Model.SelectedContent.IsLastFocusedDocument}"
+                                                    Value="True" />
+                                            </MultiDataTrigger.Conditions>
+                                            <!-- TODO -->
+                                            <!-- <Setter Property="Control.Background" -->
+                                            <!--         Value="{DynamicResource AvalonDock_ThemeMetro_BaseColor31}" /> -->
+                                        </MultiDataTrigger>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition
+                                                    Binding="{Binding RelativeSource={RelativeSource Self}, Path=Model.SelectedContent.IsActive}"
+                                                    Value="False" />
+                                                <Condition
+                                                    Binding="{Binding RelativeSource={RelativeSource Self}, Path=Model.SelectedContent.IsLastFocusedDocument}"
+                                                    Value="True" />
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Control.Background"
+                                                    Value="{DynamicResource AvalonDock_ThemeMetro_BaseColor30}" />
+                                        </MultiDataTrigger>
+                                        <Trigger Property="UIElement.IsEnabled" Value="False">
+                                            <Setter Property="Control.Foreground"
+                                                    Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+                                        </Trigger>
+                                        <DataTrigger
+                                            Binding="{Binding RelativeSource={RelativeSource Mode=Self}, Path=Model.ChildrenCount}"
+                                            Value="0">
+                                            <Setter TargetName="MenuDropDownButton" Property="UIElement.Visibility"
+                                                    Value="Collapsed" />
+                                        </DataTrigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </avalonDock:DockingManager.DocumentPaneControlStyle>
+                <avalonDock:LayoutRoot>
+                    <avalonDock:LayoutPanel Orientation="Horizontal">
+                        <avalonDock:LayoutDocumentPane />
+                    </avalonDock:LayoutPanel>
+                </avalonDock:LayoutRoot>
+            </avalonDock:DockingManager>
+        </Border>
     </DataTemplate>
 </ResourceDictionary>

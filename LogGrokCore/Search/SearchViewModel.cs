@@ -76,6 +76,17 @@ namespace LogGrokCore.Search
             set => CommitSearchPattern(ref _useRegex, value, TimeSpan.Zero);
         }
 
+        public bool IsFilterEnabled
+        {
+            get => !_searchPattern.IsEmpty;
+        }
+
+        public bool IsFilterDisabled
+        {
+            get => _searchPattern.IsEmpty;
+        }
+
+        
         public ICommand ClearSearchCommand { get; private set; }
 
         public ICommand CloseDocumentCommand { get; private set; }
@@ -137,6 +148,11 @@ namespace LogGrokCore.Search
         private void CommitSearchPatternImmediately(string searchText, in bool isCaseSensitive, in bool useRegex)
         {
             _searchPattern = new SearchPattern(searchText, isCaseSensitive, useRegex);
+            CurrentSearchChanged?.Invoke(_searchPattern.GetRegex(RegexOptions.None));
+
+            InvokePropertyChanged(nameof(IsFilterEnabled));
+            InvokePropertyChanged(nameof(IsFilterDisabled));
+            
             if (_searchPattern.IsEmpty)
             {
                 if (CurrentDocument != null)
@@ -144,6 +160,7 @@ namespace LogGrokCore.Search
                     CurrentDocument.Dispose();
                     Documents.Remove(CurrentDocument);
                     CurrentDocument = null;
+                    return;
                 }
             }
 
@@ -153,13 +170,12 @@ namespace LogGrokCore.Search
             }
             else
             {
-                CurrentDocument = _searchDocumentViewModelFactory(_searchPattern);
-                Documents.Add(CurrentDocument);
+                var newDocument = _searchDocumentViewModelFactory(_searchPattern);;
+                Documents.Add(newDocument);
+                CurrentDocument = newDocument;
             }
-            
-            CurrentSearchChanged?.Invoke(_searchPattern.GetRegex(RegexOptions.None));
         }
 
-        public ObservableCollection<SearchDocumentViewModel> Documents { get; private set; }
+        public ObservableCollection<SearchDocumentViewModel> Documents { get; }
     }
 }

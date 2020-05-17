@@ -3,6 +3,7 @@
                     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                     xmlns:local="clr-namespace:LogGrokCore"
+                    xmlns:controls="clr-namespace:LogGrokCore.Controls"
                     mc:Ignorable="d">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
@@ -10,25 +11,37 @@
         <ResourceDictionary Source="LogViewTemplate.xaml" />
         <ResourceDictionary Source="DocumentSearchTemplate.xaml" />
     </ResourceDictionary.MergedDictionaries>
-
+    
     <DataTemplate x:Key="DocumentTemplate" DataType="local:DocumentViewModel">
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="5*" />
-                <RowDefinition Height="15" />
-                <RowDefinition Height="3*" />
-            </Grid.RowDefinitions>
-            <ContentControl ContentTemplate="{StaticResource LogViewTemplate}" Content="{Binding LogViewModel}" />
-            <GridSplitter Grid.Row="1"
-                          Grid.ColumnSpan="3"
-                          HorizontalAlignment="Stretch"
-                          VerticalAlignment="Stretch"
-                          Visibility="{Binding IsFilterEnabled,
-                                                               Converter={StaticResource BooleanToVisibilityConverter}}" />
-            <ContentControl Grid.Row="2" ContentTemplate="{StaticResource DocumentSearchTemplate}" 
-                            Content="{Binding SearchViewModel}"/>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto"/>
+                <controls:CollapsibleRow Collapsed="{Binding SearchViewModel.IsFilterDisabled}" 
+                                         Height="200"/>
+            </Grid.RowDefinitions>                
+            
+            <ContentControl Grid.Row="0" ContentTemplate="{StaticResource LogViewTemplate}" Content="{Binding LogViewModel}" />
 
+            <GridSplitter Grid.Row="1"
+                ResizeBehavior="PreviousAndNext"  
+                VerticalAlignment="Top"
+                HorizontalAlignment="Stretch"
+                Height="10"
+                Visibility="{Binding SearchViewModel.IsFilterEnabled,
+                            Converter={StaticResource BooleanToVisibilityConverter}}" />
+            
+            <StackPanel Grid.Row="1" >
+                <Border HorizontalAlignment="Stretch" Height="10"></Border>
+                <ContentControl ContentTemplate="{StaticResource SearchParametersTemplate}" 
+                            Content="{Binding SearchViewModel}"/>
+            </StackPanel>
+            
+            <ContentControl Grid.Row="2" 
+                            ContentTemplate="{StaticResource SearchResultsTemplate}" 
+                            Content="{Binding SearchViewModel}"
+                            Visibility="{Binding SearchViewModel.IsFilterEnabled,
+                                Converter={StaticResource BooleanToVisibilityConverter}}" />
         </Grid>
     </DataTemplate>
-
 </ResourceDictionary>
