@@ -4,6 +4,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace LogGrokCore.Controls
 {
@@ -11,6 +12,11 @@ namespace LogGrokCore.Controls
     {
         public static readonly DependencyProperty ReadonlySelectedItemsProperty =
             DependencyProperty.Register(nameof(ReadonlySelectedItems), typeof(IEnumerable), typeof(ListView));
+
+        public ListView()
+        {
+            Loaded += (o, e) => ScheduleResetColumnsWidth();
+        }
 
         public IEnumerable ReadonlySelectedItems
         {
@@ -46,14 +52,72 @@ namespace LogGrokCore.Controls
             base.OnPreviewMouseDown(e);
         }
 
-        protected override void OnMouseUp(MouseButtonEventArgs e)
+        private int _previousItemCount;
+        
+        protected override void OnItemsSourceChanged(IEnumerable oldValue, IEnumerable newValue)
         {
-            base.OnMouseUp(e);
+            base.OnItemsSourceChanged(oldValue, newValue);
+
+            if (newValue == null)
+            {
+                _previousItemCount = 0;
+            }
+            else
+            {
+                _ = Dispatcher.BeginInvoke(
+                    () =>
+                    {
+                        if (Items.Count > 0) ScheduleResetColumnsWidth();
+                        _previousItemCount = Items.Count;
+                    }, 
+                    DispatcherPriority.ApplicationIdle);
+            }
         }
 
-        protected override void OnMouseMove(MouseEventArgs e)
+        protected override void OnItemsChanged(NotifyCollectionChangedEventArgs e)
         {
-            base.OnMouseMove(e);
+            base.OnItemsChanged(e);
+
+            if (_previousItemCount == 0 && this.Items.Count > 0)
+                ScheduleResetColumnsWidth();
+            
+            _previousItemCount = Items.Count;            
+        }
+
+        private void ScheduleResetColumnsWidth()
+        {
+            double CalculateRemainingSpace(System.Windows.Controls.GridView view)
+            {
+                
+                if (double.IsNaN(ActualWidth))
+                    Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                    
+                return ActualWidth - view.Columns
+                                       .Take(view.Columns.Count - 1)
+                                       .Sum(c => c.ActualWidth) 
+                    - SystemParameters.ScrollWidth * 2;
+            }
+              
+            void UpdateLastColumnWidth(System.Windows.Controls.GridView view)
+            {
+                var lastColumn = view.Columns.Last();
+                var remainingSpace = CalculateRemainingSpace(view);
+                if (lastColumn.ActualWidth < remainingSpace)
+                    lastColumn.Width = remainingSpace;                
+            }
+                      
+            void ResetWidth(System.Windows.Controls.GridView view)
+            {
+                foreach (var column in view.Columns.Take(view.Columns.Count - 1))
+                {
+                    column.Width = 1;
+                    column.ClearValue(GridViewColumn.WidthProperty);
+                }
+                _ = Dispatcher.BeginInvoke(() => UpdateLastColumnWidth(view), DispatcherPriority.ApplicationIdle);
+            }
+
+            if (View is System.Windows.Controls.GridView gridView)
+                _ = Dispatcher.BeginInvoke(() => ResetWidth(gridView), DispatcherPriority.ApplicationIdle);
         }
 
         private VirtualizingStackPanel? _panel;
