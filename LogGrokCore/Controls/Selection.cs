@@ -1,9 +1,10 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace LogGrokCore.Controls
 {
-    public class Selection
+    public class Selection : IEnumerable<int>
     {
         private readonly HashSet<int> _indices = new HashSet<int>();
 
@@ -18,5 +19,15 @@ namespace LogGrokCore.Controls
         public bool Contains(int index) => _indices.Contains(index);
 
         public void Remove(in int index) => _indices.Remove(index);
+        
+        public IEnumerator<int> GetEnumerator()
+        {
+            return _indices.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
     }
 }

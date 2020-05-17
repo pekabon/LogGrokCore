@@ -1,6 +1,8 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -16,11 +18,22 @@ namespace LogGrokCore.Controls
         public ListView()
         {
             Loaded += (o, e) => ScheduleResetColumnsWidth();
+            CommandBindings.Add(new CommandBinding(
+                ApplicationCommands.Copy,
+                (o, e) => CopySelectedItemsToClipboard(),
+                (o, e) =>
+                {
+                    if (!ReadonlySelectedItems.Any()) return;
+                    e.CanExecute = true;
+                    e.Handled = true;
+                }
+            ));
+
         }
 
-        public IEnumerable ReadonlySelectedItems
+        public IEnumerable<object> ReadonlySelectedItems
         {
-            get => (IEnumerable)GetValue(ReadonlySelectedItemsProperty);
+            get => ((IEnumerable)GetValue(ReadonlySelectedItemsProperty)).Cast<object>();
             set => SetValue(ReadonlySelectedItemsProperty, value);
         }
         
@@ -118,6 +131,26 @@ namespace LogGrokCore.Controls
 
             if (View is System.Windows.Controls.GridView gridView)
                 _ = Dispatcher.BeginInvoke(() => ResetWidth(gridView), DispatcherPriority.ApplicationIdle);
+        }
+
+        private void CopySelectedItemsToClipboard()
+        {
+            var indices = GetPanel()?.SelectedIndices ?? Enumerable.Empty<int>();
+            
+            var items =  
+                indices
+                    .OrderBy(i => i)
+                    .Select(i => Items[i]);
+            
+            var  text = new StringBuilder();
+            foreach (var line in items)
+            {
+                _ = text.Append(line);
+                _ = text.Append("\r\n");
+            }
+            _ = text.Replace("\0", string.Empty);
+
+            TextCopy.Clipboard.SetText(text.ToString());
         }
 
         private VirtualizingStackPanel? _panel;

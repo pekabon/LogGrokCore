@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -24,6 +24,8 @@ namespace LogGrokCore.Controls
             }
         }
 
+        public IEnumerable<int> SelectedIndices => _selection;
+        
         public bool ProcessKeyDown(Key key)
         {
             switch (key)
