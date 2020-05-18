@@ -29,7 +29,7 @@ namespace LogGrokCore
 
         public override string ToString()
         {
-            return $"{Index} | " + _sourceString.Split(Environment.NewLine).First();
+            return _sourceString;
         }
     }
 }

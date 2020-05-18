@@ -50,11 +50,12 @@
                             <controls:VirtualizingStackPanel.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem Command="Copy" />
-                                    <MenuItem Command="{Binding AddToScratchPadCommand}"
-                                              CommandParameter="{Binding PlacementTarget.Tag,
-                                                                        RelativeSource={RelativeSource FindAncestor,
-                                                                        AncestorType={x:Type ContextMenu}}}"
-                                              Header="Add to scratch pad" />
+                                    <!-- TODO -->
+                                    <!-- <MenuItem Command="{Binding AddToScratchPadCommand}" -->
+                                    <!--           CommandParameter="{Binding PlacementTarget.Tag, -->
+                                    <!--                                     RelativeSource={RelativeSource FindAncestor, -->
+                                    <!--                                     AncestorType={x:Type ContextMenu}}}" -->
+                                    <!--           Header="Add to scratch pad" /> -->
                                 </ContextMenu>
                             </controls:VirtualizingStackPanel.ContextMenu>
                         </controls:VirtualizingStackPanel>
