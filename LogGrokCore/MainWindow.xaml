@@ -10,6 +10,8 @@
                      xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
                      xmlns:th="clr-namespace:Xceed.Wpf.AvalonDock.Themes;assembly=Xceed.Wpf.AvalonDock.Themes.Metro"
                      d:DataContext="{d:DesignInstance Type=local:MainWindowViewModel, IsDesignTimeCreatable=False}"
+                     localControls:DragnDropBehavior.AllowDrop="True"
+                     localControls:DragnDropBehavior.DropCommand="{Binding DropCommand}"
                      mc:Ignorable="d"
                      Title="LOGGROK" Height="450" Width="800">
     <mahapps:MetroWindow.Resources>

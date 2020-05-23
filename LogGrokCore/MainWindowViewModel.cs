@@ -1,5 +1,5 @@
-﻿using System.Collections.ObjectModel;
-using System.Reflection.Metadata;
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Microsoft.Win32;
 
@@ -12,6 +12,10 @@ namespace LogGrokCore
         public ObservableCollection<DocumentViewModel> Documents { get; } =
             new ObservableCollection<DocumentViewModel>();
         public ICommand OpenFileCommand => new DelegateCommand(OpenFile);
+        
+        public ICommand DropCommand => new DelegateCommand(
+            obj=> OpenFiles((IEnumerable<string>)obj), 
+            o => o is IEnumerable<string>);
 
         public DocumentViewModel? CurrentDocument
         {
@@ -49,6 +53,14 @@ namespace LogGrokCore
                 {
                     AddDocument(fileName);
                 }
+            }
+        }
+        
+        private void OpenFiles(IEnumerable<string> files)
+        {
+            foreach (var file in files)
+            {
+                AddDocument(file);
             }
         }
 
