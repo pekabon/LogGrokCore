@@ -71,7 +71,7 @@ namespace LogGrokCore.Data.Search
                 _ = stream.Read(memorySpan);
 
                 var index = start;
-                
+
                 var currentLineOffset = firstLineOffset;
                 var currentLineLength = firstLineLength;
 
@@ -108,26 +108,29 @@ namespace LogGrokCore.Data.Search
 
             var progress = new Progress();
             Task.Run(async () =>
-            {
-                
-                await foreach (var (start, count) in 
-                    sourceLineIndex.FetchRanges(cancellationToken))
                 {
-                    var totalCount = sourceLineIndex.Count;
 
-                    var current = start;
-                    while (current < start + count && !cancellationToken.IsCancellationRequested)
+                    await foreach (var (start, count) in
+                        sourceLineIndex.FetchRanges(cancellationToken))
                     {
-                        ProcessLines(current, Math.Min(current + MaxSearchSizeLines - 1, start + count - 1));
-                        progress.Value = (double) current / totalCount;
-                        current += MaxSearchSizeLines;
+                        var totalCount = sourceLineIndex.Count;
+
+                        var current = start;
+                        while (current < start + count && !cancellationToken.IsCancellationRequested)
+                        {
+                            ProcessLines(current, Math.Min(current + MaxSearchSizeLines, start + count - 1));
+                            progress.Value = (double) current / totalCount;
+                            current += MaxSearchSizeLines;
+                        }
                     }
-                }
+                })
+                .ContinueWith(_ =>
+                {
+                    return progress.IsFinished = true;
+                }, cancellationToken);
+        
 
-                progress.IsFinished = true;
-            });
-
-            return (progress, lineIndex);
+        return (progress, lineIndex);
         }
     }
 }

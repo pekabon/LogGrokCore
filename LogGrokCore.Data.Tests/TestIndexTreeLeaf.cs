@@ -7,29 +7,29 @@ namespace LogGrokCore.Data.Tests
     public class TestIndexTreeLeaf : LeafOrNode<int, TestIndexTreeLeaf >, ILeaf<int, TestIndexTreeLeaf>
     {
         private const int Capacity = 2;
-        private readonly List<int> _values = new List<int>(Capacity);
+        private readonly List<int> _storage = new List<int>(Capacity);
         private readonly int _firstValueIndex;
         public TestIndexTreeLeaf(int value, int index)
         {
-            _values.Add(value);
+            _storage.Add(value);
             _firstValueIndex = index;
         }
 
         public TestIndexTreeLeaf? Add(int value, int valueIndex)
         {
-            if (_values.Count >= Capacity)
+            if (_storage.Count >= Capacity)
             {
                 Next = new TestIndexTreeLeaf(value, valueIndex);
                 return Next;
             }
 
-            _values.Add(value);
+            _storage.Add(value);
             return null;
         }
 
         public IEnumerator<int> GetEnumerator()
         {
-            return _values.GetEnumerator();
+            return _storage.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -37,22 +37,22 @@ namespace LogGrokCore.Data.Tests
             return GetEnumerator();
         }
 
-        public override int FirstValue => _values[0];
+        public override int FirstValue => _storage[0];
         public override int MinIndex => _firstValueIndex;
         public override IEnumerable<int> GetEnumerableFromIndex(int index)
         {
             return this.GetEnumerableFromIndex<int, TestIndexTreeLeaf>(index);
         }
 
-        public override IEnumerable<int> GetEnumerableFromValue(int value)
+        public override (int index, TestIndexTreeLeaf leaf) FindByValue(int value)
         {
-            var index = _values.BinarySearch(value);
-            return GetEnumerableFromIndex(value >= 0 ? index : ~index);
+            var index = _storage.BinarySearch((int) (value));
+            return (index, this);
         }
 
-        public int this[int index] => _values[index];
+        public int this[int index] => _storage[index];
 
-        public int Count => _values.Count;
+        public int Count => _storage.Count;
 
         public TestIndexTreeLeaf? Next { get; private set; }
     }

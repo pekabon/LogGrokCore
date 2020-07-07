@@ -33,7 +33,7 @@ namespace LogGrokCore
             _container.Register<LineIndex>();
             _container.RegisterMapping<ILineIndex, LineIndex>();
 
-            _container.Register<IItemProvider<string>, LineProvider>();
+            _container.Register<IItemProvider<(int, string)>, LineProvider>();
 
             _container.RegisterDelegate<ILineParser>(
                 r => new RegexBasedLineParser(r.Resolve<LogMetaInformation>(), true), 

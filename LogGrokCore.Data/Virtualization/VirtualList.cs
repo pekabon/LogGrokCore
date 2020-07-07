@@ -38,7 +38,7 @@ namespace LogGrokCore.Data.Virtualization
             set => throw new NotSupportedException();
         }
 
-        public VirtualList(IItemProvider<TSource> itemProvider, Func<TSource, int, T> converter)
+        public VirtualList(IItemProvider<TSource> itemProvider, Func<TSource, T> converter)
         {
             _itemProvider = itemProvider;
             _converter = converter;
@@ -120,7 +120,7 @@ namespace LogGrokCore.Data.Virtualization
                         var lineIndex = idx;
                         var sourceString = newLines[lineIndex];
                         pageToAdd.Add(
-                            new Lazy<T>(() => _converter(sourceString, lineIndex + start)));
+                            new Lazy<T>(() => _converter(sourceString)));
                     }
                 }
                 finally
@@ -141,7 +141,7 @@ namespace LogGrokCore.Data.Virtualization
 
         private const int PageSize = 100;
         private const int MaxCacheSize = 10;
-        private readonly Func<TSource, int, T> _converter;
+        private readonly Func<TSource, T> _converter;
         private readonly Dictionary<int, (IList<Lazy<T>>, int)> _pageCache = new Dictionary<int, (IList<Lazy<T>>, int)>();
         private int _pageCounter;
     }

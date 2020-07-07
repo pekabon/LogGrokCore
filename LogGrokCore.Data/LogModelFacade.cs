@@ -33,7 +33,7 @@ namespace LogGrokCore.Data
 
         public ILineParser LineParser { get; }
         
-        public IItemProvider<string> LineProvider { get; }
+        public IItemProvider<(int, string)> LineProvider { get; }
         
         public string FilePath { get; }
         

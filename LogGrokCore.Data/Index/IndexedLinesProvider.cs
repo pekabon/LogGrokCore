@@ -1,12 +1,10 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using LogGrokCore.Data.Virtualization;
 
 namespace LogGrokCore.Data.Index
 {
-    internal class IndexedLinesProvider : IItemProvider<int>
+    internal class IndexedLinesProvider : IIndexedLinesProvider
     {
         private readonly Indexer _indexer;
         private readonly FilteredCountIndicesProvider<IndexKey> _filteredCountIndicesProvider;
@@ -44,7 +42,7 @@ namespace LogGrokCore.Data.Index
         }
 
         public int Count => _filteredCountIndicesProvider.Count;
-        
+
         public void Fetch(int start, Span<int> values)
         {
             
@@ -55,19 +53,42 @@ namespace LogGrokCore.Data.Index
             }
         }
 
+        public int GetIndexByValue(int value)
+        {
+            var countIndicesItem = _filteredCountIndicesProvider.GetStartIndicesForValue(value);
+            var index = countIndicesItem.TotalCount;
+            foreach (var v in GetEnumerable(countIndicesItem))
+            {
+                if (v == value) return index;
+                index++;
+            }
+
+            return Count - 1;
+        }
+
+        private IEnumerable<int> GetEnumerable(CountIndexItem<IndexKey> countIndicesItem)
+        {
+            var startIndices = 
+                countIndicesItem.Counts.ToDictionary(item => item.key, 
+                    item => item.count);
+
+            var indices = _filteredCountIndicesProvider.GetAllKeys().Select(key =>
+            {
+                var index = _indexer.GetIndex(key);
+                return index.GetEnumerableFromValue(
+                    startIndices.TryGetValue(key, out var startPosition) 
+                        ? startPosition 
+                        : 0); 
+            });
+
+            return CollectionUtlis.MergeSorted(indices);
+        }
+
         private IEnumerable<int> GetEnumerableFrom(int start)
         {
             var countIndicesItem = _filteredCountIndicesProvider.GetStartIndices(start);
             var startCount = countIndicesItem.TotalCount;
-
-            var startIndices = countIndicesItem.Counts.ToDictionary(item => item.key, item => item.count);
-            var indices = _filteredCountIndicesProvider.GetAllKeys().Select(key =>
-            {
-                var index = _indexer.GetIndex(key);
-                return index.GetEnumerableFromValue(startIndices.TryGetValue(key, out var startPosition) ? startPosition : 0);
-            });
-
-            return CollectionUtlis.MergeSorted(indices).Skip(start - startCount);
+            return GetEnumerable(countIndicesItem).Skip(start - startCount);
         }
     }
 }

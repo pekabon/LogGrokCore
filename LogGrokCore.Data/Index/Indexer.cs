@@ -19,7 +19,7 @@ namespace LogGrokCore.Data.Index
             return _indices.Keys.Select(indexKey => new string(indexKey.GetComponent(componentNumber)));
         }
 
-        public IItemProvider<int> GetIndexedLinesProvider(Dictionary<int, List<string>> excludedComponents)
+        public IIndexedLinesProvider GetIndexedLinesProvider(Dictionary<int, List<string>> excludedComponents)
         {
             return new IndexedLinesProvider(this, _countIndex.Counts, 
                 CountIndex<IndexTree<int, SimpleLeaf<int>>>.Granularity, excludedComponents);

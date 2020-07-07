@@ -44,9 +44,9 @@ namespace LogGrokCore.AvalonDock
             var oldItems = GetItems(e.OldValue);
             var newItems = GetItems(e.NewValue);
 
-            void UpdateContextMenu(ContextMenu contextMenu)
+            void UpdateContextMenu(ItemsControl contextMenu)
             {
-                var contextMenuItems = contextMenu.Items;
+                var contextMenuItems = contextMenu!.Items;
                 foreach (var item in oldItems.Except(newItems))
                 {
                     contextMenuItems.Remove(item);
@@ -58,7 +58,7 @@ namespace LogGrokCore.AvalonDock
                 }
             }
 
-            ContextMenu? documentContextMenu = dockingManager.DocumentContextMenu;
+            var documentContextMenu = dockingManager.DocumentContextMenu;
             if (documentContextMenu != null)
             {
                 UpdateContextMenu(documentContextMenu);

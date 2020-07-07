@@ -42,10 +42,10 @@ namespace LogGrokCore.Data.IndexTree
             return this.GetEnumerableFromIndex<T, SimpleLeaf<T>>(index);
         }
 
-        public override IEnumerable<T> GetEnumerableFromValue(T value)
+        public override (int index, SimpleLeaf<T> leaf) FindByValue(T value)
         {
             var index = _storage.BinarySearch(value);
-            return GetEnumerableFromIndex(index >= 0 ? index : ~index);
+            return (index, this);
         }
 
         public SimpleLeaf<T>? Next { get; private set; }

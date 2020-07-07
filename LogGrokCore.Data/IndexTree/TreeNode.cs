@@ -49,8 +49,9 @@ namespace LogGrokCore.Data.IndexTree
             return leafOrNode.GetEnumerableFromIndex(index);
         }
 
-        public override IEnumerable<T> GetEnumerableFromValue(T value)
+        public override (int index, TLeaf leaf) FindByValue(T value)
         {
+            
             var leafOrNode = _subnodes[0];
             for (var idx = 1; idx < _subnodes.Count; idx++)
             {
@@ -58,10 +59,10 @@ namespace LogGrokCore.Data.IndexTree
                 if (candidate.FirstValue.CompareTo(value) <= 0)
                     leafOrNode = candidate;
                 else
-                    return leafOrNode.GetEnumerableFromValue(value);
+                    return leafOrNode.FindByValue(value);
             }
 
-            return leafOrNode.GetEnumerableFromValue(value);
+            return leafOrNode.FindByValue(value);
         }
 
         public override T FirstValue => _subnodes[0].FirstValue;

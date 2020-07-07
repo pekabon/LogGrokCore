@@ -136,7 +136,7 @@ namespace LogGrokCore.Search
             var lineProvider =  new SearchLineProvider(searchLineIndex, _logFile);
             var lineCollection =
                 new VirtualList<(int, string), ItemViewModel>(lineProvider,
-                    (value, _) =>
+                    (value) =>
                     {
                         var (originalIndex, str) = value;
                         return new LineViewModel(originalIndex, str, _lineParser);

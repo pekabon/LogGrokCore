@@ -13,26 +13,26 @@ namespace LogGrokCore
     {
         private readonly Indexer _indexer;
         private readonly Dictionary<int, List<string>> _exclusions = new Dictionary<int, List<string>>();
-        private readonly IItemProvider<string> _lineProvider;
+        private readonly IItemProvider<(int index, string str)> _lineProvider;
         private readonly ILineParser _lineParser;
         private readonly HeaderProvider _headerProvider;
         private readonly LogMetaInformation _metaInformation;
         
-        private class FilteredLineProvider: IItemProvider<string>
+        private class FilteredLineProvider: IItemProvider<(int index, string str)>
         {
             private readonly IItemProvider<int> _lineNumbersProvider;
-            private readonly IItemProvider<string> _lineProvider;
+            private readonly IItemProvider<(int index, string str)> _lineProvider;
             
             public FilteredLineProvider(
                 IItemProvider<int> lineNumbersProvider,
-                IItemProvider<string> lineProvider)
+                IItemProvider<(int index, string str)> lineProvider)
             {
                 _lineNumbersProvider = lineNumbersProvider;
                 _lineProvider = lineProvider;
             }
 
             public int Count => _lineNumbersProvider.Count;
-            public void Fetch(int start, Span<string> values)
+            public void Fetch(int start, Span<(int, string)> values)
             {
                 using var owner = MemoryPool<int>.Shared.Rent(values.Length);
                 var lineNumbers = owner.Memory.Span.Slice(0, values.Length);
@@ -40,7 +40,7 @@ namespace LogGrokCore
                 FetchRanges(lineNumbers, values);
             }
 
-            private void FetchRanges(Span<int> lineNumbers, Span<string> values)
+            private void FetchRanges(Span<int> lineNumbers, Span<(int, string)> values)
             {
                 var sourceRangeStart = -1;
                 var sourceRangeEnd = 0;
@@ -76,8 +76,7 @@ namespace LogGrokCore
 
         public LineViewModelCollectionProvider(
             Indexer indexer,
-            LineIndex lineIndex,
-            IItemProvider<string> lineProvider,
+            IItemProvider<(int index, string str)> lineProvider,
             ILineParser lineParser,
             HeaderProvider headerProvider,
             LogMetaInformation metaInformation)
@@ -89,14 +88,16 @@ namespace LogGrokCore
             _metaInformation = metaInformation;
         }
 
-        public GrowingLogLinesCollection GetLogLinesCollection()
+        public (GrowingLogLinesCollection lineViewModelsCollectins, Func<int, int> getIndexByValue) GetLogLinesCollection()
         {
-            var lineProvider = GetLineProvider();
+            var lineProviderAndGetIndexByValue = GetLineProvider();
             var lineCollection =
-                new VirtualList<string, ItemViewModel>(lineProvider,
-                    (str, index) => new LineViewModel(index, str, _lineParser));
+                new VirtualList<(int index, string str), ItemViewModel>(lineProviderAndGetIndexByValue.itemProvider,
+                    indexAndString => 
+                        new LineViewModel(indexAndString.index, indexAndString.str, _lineParser));
 
-            return new GrowingLogLinesCollection(() => _headerProvider.Header, lineCollection);
+            return (new GrowingLogLinesCollection(() => _headerProvider.Header, lineCollection),
+                        lineProviderAndGetIndexByValue.GetIndexByValue);
         }
 
         public bool HaveExclusions => _exclusions.Count > 0;
@@ -108,7 +109,8 @@ namespace LogGrokCore
             var indexedComponent = GetIndexedComponent(component);
 
             List<string>? currentExclusions;
-            if (!_exclusions.TryGetValue(GetIndexedComponent(indexedComponent), out currentExclusions))
+
+            if (!_exclusions.TryGetValue(indexedComponent, out currentExclusions))
             {
                 currentExclusions = new List<string>();
             }
@@ -138,12 +140,12 @@ namespace LogGrokCore
         
         private int GetIndexedComponent(int component) => _metaInformation.IndexedFieldNumbers.IndexOf(component);
         
-        private IItemProvider<string> GetLineProvider()
+        private (IItemProvider<(int index, string str)> itemProvider, Func<int, int> GetIndexByValue) GetLineProvider()
         {
-            if (_exclusions.Count == 0) return _lineProvider;
+            if (_exclusions.Count == 0) return (_lineProvider, x=> x);
             var lineNumbersProvider = _indexer.GetIndexedLinesProvider(_exclusions);
-            return new FilteredLineProvider(lineNumbersProvider, _lineProvider);
+            return (new FilteredLineProvider(lineNumbersProvider, _lineProvider),
+                value => lineNumbersProvider.GetIndexByValue(value));
         }
-
     }
 }

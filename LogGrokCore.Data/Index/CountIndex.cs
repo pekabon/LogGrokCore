@@ -13,7 +13,7 @@ namespace LogGrokCore.Data.Index
 
         public void Add(int currentIndex, IDictionary<IndexKey, TIndex> indices)
         {
-            if (currentIndex % Granularity == 0)
+            if (currentIndex % Granularity == 0 && currentIndex != 0)
                 MakeCountsSnapshot(indices);
         }
 

@@ -51,6 +51,11 @@ namespace LogGrokCore.Data.IndexTree
             return _head == null ? Enumerable.Empty<T>() : _head.GetEnumerableFromValue(value);
         }
         
+        public int FindIndexByValue(T value)
+        {
+            return _head?.GetIndexByValue(value) ?? 0;
+        }
+
         private void OnNewLeafCreated(TLeaf newLeaf)
         {
             switch (_head)

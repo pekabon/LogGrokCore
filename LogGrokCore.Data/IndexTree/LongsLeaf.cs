@@ -44,10 +44,10 @@ namespace LogGrokCore.Data.IndexTree
             return this.GetEnumerableFromIndex<long, LongsLeaf>(index);
         }
 
-        public override IEnumerable<long> GetEnumerableFromValue(long value)
+        public override (int index, LongsLeaf leaf) FindByValue(long value)
         {
             var index = _storage.BinarySearch((int) (value - _firstIndex));
-            return GetEnumerableFromIndex(index >= 0 ? index : ~index);
+            return (index, this);
         }
 
         public IEnumerator<long> GetEnumerator()
