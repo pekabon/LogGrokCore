@@ -4,9 +4,9 @@ namespace LogGrokCore
 {
     public static class EnumerableExtensions
     {
-        public static IEnumerable<T> Yield<T>(this T t) 
+        public static IEnumerable<T> Yield<T>(this T source) 
         {
-            yield return t;
+            yield return source;
         }
-   }
+    }
 }

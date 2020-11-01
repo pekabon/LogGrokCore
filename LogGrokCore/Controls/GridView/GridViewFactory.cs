@@ -21,9 +21,9 @@ namespace LogGrokCore
         {
             var indexFieldName = "Index";
             var view = new GridView();
+            
             foreach (var fieldHeader in indexFieldName.Yield().Concat(_meta.FieldNames))
             {
-                
                 DataTemplate CreateHeaderTemplate()
                 {
                         var frameworkElementFactory = new FrameworkElementFactory(typeof(LogGridViewHeader));

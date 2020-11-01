@@ -51,7 +51,6 @@ namespace LogGrokCore.Controls
             return MeasureOverrideCore(formattedText);
         }
 
-
         private FormattedText? _cachedText;
         private Size _cachedSize;
         private Size MeasureOverrideCore(FormattedText formattedText)
