@@ -28,6 +28,8 @@ namespace LogGrokCore
                     .WithUnknownServiceResolvers
                         (Rules.AutoResolveConcreteTypeRule()));
 
+            LoggerRegistrationHelper.Register(_container);
+            
             _container.Register<Loader>();
             
             _container.Register<LineIndex>();

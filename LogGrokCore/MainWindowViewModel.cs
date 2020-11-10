@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
 
 namespace LogGrokCore
@@ -8,6 +9,7 @@ namespace LogGrokCore
     internal class MainWindowViewModel : ViewModelBase
     {
         private DocumentViewModel? _currentDocument;
+        private readonly ILogger _logger;
 
         public ObservableCollection<DocumentViewModel> Documents { get; } =
             new ObservableCollection<DocumentViewModel>();
@@ -16,6 +18,11 @@ namespace LogGrokCore
         public ICommand DropCommand => new DelegateCommand(
             obj=> OpenFiles((IEnumerable<string>)obj), 
             o => o is IEnumerable<string>);
+
+        public MainWindowViewModel(ILogger logger)
+        {
+            _logger = logger;
+        }
 
         public DocumentViewModel? CurrentDocument
         {
@@ -51,6 +58,7 @@ namespace LogGrokCore
             {
                 foreach (var fileName in dialog.FileNames)
                 {
+                    _logger.LogInformation($"Open document {fileName}.");
                     AddDocument(fileName);
                 }
             }

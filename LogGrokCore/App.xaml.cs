@@ -10,6 +10,7 @@ namespace LogGrokCore
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             var container = new Container();
+            LoggerRegistrationHelper.Register(container);
             container.UseDryIocDependencyResolver();
             RegisterDependencies(container);
         }
