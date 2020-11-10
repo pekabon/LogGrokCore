@@ -183,7 +183,7 @@ namespace LogGrokCore
 
             var cmdLine = File.Exists(filePath)
                 ? $"/select, {filePath}"
-                : $"/select, {Directory.GetParent(filePath).FullName}";
+                : $"/select, {Directory.GetParent(filePath)?.FullName}";
 
             _ = Process.Start("explorer.exe", cmdLine);
         }
