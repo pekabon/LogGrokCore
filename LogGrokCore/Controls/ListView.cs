@@ -150,7 +150,7 @@ namespace LogGrokCore.Controls
             }
             _ = text.Replace("\0", string.Empty);
 
-            TextCopy.Clipboard.SetText(text.ToString());
+            TextCopy.ClipboardService.SetText(text.ToString());
         }
 
         private VirtualizingStackPanel? _panel;

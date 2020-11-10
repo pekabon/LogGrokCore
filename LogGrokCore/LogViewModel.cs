@@ -48,7 +48,7 @@ namespace LogGrokCore
             Lines = new GrowingLogLinesCollection(() => headerProvider.Header, lineCollection);
             
             CopyPathToClipboardCommand =
-                new DelegateCommand(() => TextCopy.Clipboard.SetText(_logModelFacade.FilePath));
+                new DelegateCommand(() => TextCopy.ClipboardService.SetText(_logModelFacade.FilePath));
             OpenContainingFolderCommand = new DelegateCommand(OpenContainingFolder);
 
             void UpdateFilteredCollection(LineViewModelCollectionProvider viewModelCollectionProvider)
