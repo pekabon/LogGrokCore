@@ -5,8 +5,8 @@ namespace LogGrokCore
 {
     public class DelegateCommand : ICommand
     {
-        private readonly Action<object> _execute;
-        private readonly Func<object, bool>? _canExecute;
+        private readonly Action<object?> _execute;
+        private readonly Func<object?, bool>? _canExecute;
 
         public DelegateCommand(Action execute, Func<bool> canExecute)
         {
@@ -16,13 +16,22 @@ namespace LogGrokCore
 
         public DelegateCommand(Action<object> execute, Func<object, bool> canExecute)
         {
-            _execute = execute;
-            _canExecute = canExecute;
+            _execute = o =>
+            {
+                if (o == null) throw new NullReferenceException("Execute: parameter is null.");
+                execute(o);
+            };
+            
+            _canExecute = o =>
+            {
+                if (o == null) throw new NullReferenceException("CanExecute: parameter is null.");
+                return canExecute(o);
+            };
         }
 
         public static DelegateCommand Create<T>(Action<T> execute, Func<T, bool> canExecute)
         {
-            void Execute(object o)
+            void Execute(object? o)
             {
                 if (o is T t)
                     execute(t);
@@ -30,7 +39,7 @@ namespace LogGrokCore
                     throw new InvalidOperationException();
             }
 
-            bool CanExecute(object o)
+            bool CanExecute(object? o)
             {
                 if (o is T t) return canExecute(t);
                 throw new InvalidOperationException();
@@ -49,12 +58,12 @@ namespace LogGrokCore
             _execute = _ => execute();
         }
 
-        public bool CanExecute(object parameter)
+        public bool CanExecute(object? parameter)
         {
             return _canExecute == null || _canExecute(parameter);
         }
 
-        public void Execute(object parameter)
+        public void Execute(object? parameter)
         {
             _execute(parameter);
         }

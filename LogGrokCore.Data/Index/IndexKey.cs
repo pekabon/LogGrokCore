@@ -38,7 +38,7 @@ namespace LogGrokCore.Data.Index
             return meta.GetComponent(dataSpan, index);
         }
 
-        public bool Equals(IndexKey other)
+        public bool Equals(IndexKey? other)
         {
             if (other == null)
                 return false;
