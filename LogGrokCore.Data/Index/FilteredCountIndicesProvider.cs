@@ -25,7 +25,8 @@ namespace LogGrokCore.Data.Index
             _granularity = granularity;
         }
 
-        public int Count => _filteredCountIndices.Select(t=> t.TotalCount).LastOrDefault();
+        public int Count =>
+            _filteredCountIndices.Count == 0 ? 0 : _filteredCountIndices[^1].TotalCount;
 
         public IEnumerable<T> GetAllKeys()
         {
