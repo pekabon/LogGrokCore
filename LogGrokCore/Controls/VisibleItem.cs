@@ -7,7 +7,7 @@ namespace LogGrokCore.Controls
 {
     internal readonly struct VisibleItem : IEquatable<VisibleItem>
     {
-        public VisibleItem(UIElement element, int index, double upperBound, double lowerBound)
+        public VisibleItem(ListViewItem  element, int index, double upperBound, double lowerBound)
         {
             Element = element;
             Index = index;
@@ -16,7 +16,7 @@ namespace LogGrokCore.Controls
             Debug.Assert(Height > 0);
         }
 
-        public readonly UIElement Element;
+        public readonly ListViewItem Element;
         
         public readonly int Index;
         
@@ -42,7 +42,7 @@ namespace LogGrokCore.Controls
 
         public VisibleItem MoveTo(double newUpperBound) => Move(newUpperBound - UpperBound);
 
-        public void Deconstruct(out UIElement uiElement, out int index, out double upperBound, out double lowerBound)
+        public void Deconstruct(out ListViewItem uiElement, out int index, out double upperBound, out double lowerBound)
         {
             uiElement = Element;
             index = Index;

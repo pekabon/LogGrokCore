@@ -10,6 +10,7 @@ using System.Windows.Threading;
 
 namespace LogGrokCore.Controls
 {
+    
     public class ListView : System.Windows.Controls.ListView
     {
         public static readonly DependencyProperty ReadonlySelectedItemsProperty =
@@ -28,7 +29,21 @@ namespace LogGrokCore.Controls
                     e.Handled = true;
                 }
             ));
+        }
 
+        public void PrepareItemContainer(ListViewItem container, object item)
+        {
+            var itemContainerStyle = ItemContainerStyle;
+            if (container.ReadLocalValue(FrameworkElement.StyleProperty) is Style style
+                && style == itemContainerStyle)
+                return;
+            container.Style = itemContainerStyle;
+            PrepareContainerForItemOverride(container, item);
+        }
+
+        protected override void OnItemContainerStyleChanged(Style oldItemContainerStyle, Style newItemContainerStyle)
+        {
+            base.OnItemContainerStyleChanged(oldItemContainerStyle, newItemContainerStyle);
         }
 
         public IEnumerable<object> ReadonlySelectedItems
@@ -67,7 +82,7 @@ namespace LogGrokCore.Controls
 
         private int _previousItemCount;
         
-        protected override void OnItemsSourceChanged(IEnumerable oldValue, IEnumerable newValue)
+        protected override void OnItemsSourceChanged(IEnumerable? oldValue, IEnumerable? newValue)
         {
             base.OnItemsSourceChanged(oldValue, newValue);
 
@@ -77,6 +92,11 @@ namespace LogGrokCore.Controls
             }
             else
             {
+                if (newValue is IGrowingCollection growingCollection)
+                {
+                    growingCollection.CollectionGrown += _ => _panel?.InvalidateMeasure();
+                }
+
                 _ = Dispatcher.BeginInvoke(
                     () =>
                     {

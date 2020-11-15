@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using Xceed.Wpf.AvalonDock.Controls;
@@ -60,8 +59,9 @@ namespace LogGrokCore.Controls
         {
             var item = GetItemUnderMouse();
             if (item == null) return false;
-            var generator = (ItemContainerGenerator) ItemContainerGenerator;
-            var index = generator.IndexFromContainer(item);
+
+            var index = _visibleItems.Single(i => i.Element == item).Index;
+            
             _selection.Clear();
             _selection.Add(index);
             UpdateSelection();
@@ -89,22 +89,40 @@ namespace LogGrokCore.Controls
         
         private ListViewItem? GetItemUnderPoint(Point p)
         {
+            HitTestFilterBehavior VisibilityHitTestFilter(DependencyObject target)
+            {
+                if (!(target is UIElement uiElement)) 
+                    return HitTestFilterBehavior.Continue;
+                if(!uiElement.IsHitTestVisible || !uiElement.IsVisible)
+                    return HitTestFilterBehavior.ContinueSkipSelfAndChildren;
+                return HitTestFilterBehavior.Continue;
+            }
+            
             if (ScrollContentPresenter == null) return null;
-            var hitTestResult = VisualTreeHelper.HitTest(ScrollContentPresenter, p);
-            return hitTestResult?.VisualHit.FindVisualAncestor<ListViewItem>();
-        }
+            ListViewItem? hitTestResult = null; 
+            VisualTreeHelper.HitTest(ScrollContentPresenter, 
+                                            VisibilityHitTestFilter,
+                                            t =>
+                                            {
+                                                var foundItem =  t.VisualHit.FindVisualAncestor<ListViewItem>();
+                                                if (foundItem == null)
+                                                    return HitTestResultBehavior.Continue;
+                                                hitTestResult = foundItem;
+                                                return HitTestResultBehavior.Stop;
 
+                                            }, 
+                                            new PointHitTestParameters(p));
+
+            return hitTestResult;
+        }
 
         private void UpdateSelection()
         {
-            var generator = (ItemContainerGenerator) ItemContainerGenerator;
-            if (generator.Status != GeneratorStatus.ContainersGenerated) return;
-            foreach (var item in this.GetVisualChildren<ListViewItem>())
+            foreach (var visibleItem in _visibleItems)
             {
-                var index = generator.IndexFromContainer(item);
-                var isItemSelected = _selection.Contains(index);
-                if (item.IsSelected != isItemSelected)
-                    item.IsSelected = isItemSelected;
+                var isItemSelected = _selection.Contains(visibleItem.Index);
+                if (visibleItem.Element.IsSelected != isItemSelected)
+                    visibleItem.Element.IsSelected = isItemSelected;
             }
         }
 
@@ -192,8 +210,8 @@ namespace LogGrokCore.Controls
 
             switch (existed)
             {
-                case (UIElement uiElement, _, _, double lowerBound)
-                    when uiElement != null && lowerBound > screenBound:
+                case (UIElement uiElement, _, _, { } lowerBound)
+                    when lowerBound > screenBound:
                     ScrollDown(lowerBound - screenBound);
                     break;
 

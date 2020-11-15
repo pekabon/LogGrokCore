@@ -7,7 +7,12 @@ using LogGrokCore.Data;
 
 namespace LogGrokCore
 {
-    public class GrowingLogLinesCollection: IList<ItemViewModel>, IList, INotifyCollectionChanged, INotifyPropertyChanged
+    public interface IGrowingCollection
+    {
+        public event Action<int> CollectionGrown;
+    }
+
+    public class GrowingLogLinesCollection: IList<ItemViewModel>, IList, INotifyCollectionChanged, INotifyPropertyChanged, IGrowingCollection
     {
         private readonly IList<ItemViewModel> _sourceCollection;
         private int _logLinesCount;
@@ -36,8 +41,9 @@ namespace LogGrokCore
 
             _headerCount = _header.Value != null ? 1 : 0;
             _logLinesCount= _sourceCollection.Count;
-            CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+            //CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Count)));
+            CollectionGrown?.Invoke(_logLinesCount);
         }
 
         public ItemViewModel this[int index]
@@ -123,5 +129,7 @@ namespace LogGrokCore
         public void RemoveAt(int index) => throw new NotSupportedException();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        
+        public event Action<int>? CollectionGrown;
     }
 }
