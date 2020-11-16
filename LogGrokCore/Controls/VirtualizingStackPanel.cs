@@ -134,6 +134,7 @@ namespace LogGrokCore.Controls
             _visibleItems = newVisibleItems;
 
             RecycleItems(itemsToRecycle);
+            UpdateSelection();
         }
 
         private void RecycleItems(IEnumerable<VisibleItem> itemsToRecycle)

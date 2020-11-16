@@ -20,6 +20,7 @@ namespace LogGrokCore.Controls
             {
                 Items.MoveCurrentToPosition(value);
                 _selection.Add(value);
+                UpdateSelection();
             }
         }
 
@@ -63,8 +64,7 @@ namespace LogGrokCore.Controls
             var index = _visibleItems.Single(i => i.Element == item).Index;
             
             _selection.Clear();
-            _selection.Add(index);
-            UpdateSelection();
+            
             CurrentPosition = index;
             FocusManager.SetFocusedElement(item, item);
             return true;
