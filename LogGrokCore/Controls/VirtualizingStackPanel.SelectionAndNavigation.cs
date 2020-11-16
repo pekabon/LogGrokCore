@@ -62,10 +62,27 @@ namespace LogGrokCore.Controls
             if (item == null) return false;
 
             var index = _visibleItems.Single(i => i.Element == item).Index;
-            
-            _selection.Clear();
-            
+
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+            {
+                if (item.IsSelected)
+                {
+                    _selection.Remove(index);
+                    item.IsSelected = false;
+                    return true;
+                }
+            } 
+            else  if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
+            {
+                _selection.AddRangeToValue(index);
+            }
+            else
+            {
+                _selection.Clear();
+            }
+
             CurrentPosition = index;
+
             FocusManager.SetFocusedElement(item, item);
             return true;
         }
@@ -210,13 +227,12 @@ namespace LogGrokCore.Controls
 
             switch (existed)
             {
-                case (UIElement uiElement, _, _, { } lowerBound)
+                case ({ }, _, _, { } lowerBound)
                     when lowerBound > screenBound:
                     ScrollDown(lowerBound - screenBound);
                     break;
 
                 case (null, _, _, _) when _visibleItems.Max(v => v.Index) == index - 1:
-                    var lastItem = _visibleItems[^1];
                     var nextItem = GenerateOneItemDown();
                     if (nextItem != null)
                         ScrollDown(nextItem.Value.Height);
