@@ -31,8 +31,9 @@
     </mahapps:MetroWindow.Resources>
     <mahapps:MetroWindow.LeftWindowCommands>
         <mahapps:WindowCommands>
-            <Menu>
-                <MenuItem Header="File">
+            <Menu VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="0, 0, 5, 0">
+                
+                <MenuItem Header="File" >
                     <MenuItem Command="{Binding OpenFileCommand}" Header="Open" />
                     <Separator />
                     <MenuItem Command="{Binding ExitCommand}" Header="Exit" />
