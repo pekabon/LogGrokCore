@@ -1,3 +1,5 @@
+using System;
+using System.Configuration;
 using LogGrokCore.Data;
 
 namespace LogGrokCore
@@ -21,8 +23,9 @@ namespace LogGrokCore
         public string GetValue(int index)
         {
             var lineMeta = _parseResult.Get().ParsedLineComponents;
-            
-            return _sourceString.Substring(lineMeta.ComponentStart(index), lineMeta.ComponentLength(index)).TrimEnd();
+            return _sourceString.Substring(lineMeta.ComponentStart(index), 
+                lineMeta.ComponentLength(index))
+                    .TrimEnd('\0').TrimEnd();
         }
 
         public override string ToString()
