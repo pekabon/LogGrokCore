@@ -1,13 +1,60 @@
 ﻿<UserControl x:Class="LogGrokCore.Controls.GridView.LogGridViewHeader"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:metro="clr-namespace:MahApps.Metro.Converters;assembly=MahApps.Metro">
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:metro="clr-namespace:MahApps.Metro.Converters;assembly=MahApps.Metro"
+             xmlns:gridView="clr-namespace:LogGrokCore.Controls.GridView"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=gridView:HeaderViewModel, IsDesignTimeCreatable=False}">
     <UserControl.Resources>
-        <metro:ToUpperConverter x:Key="ToUpperConverter" />
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../../Styles/ToggleButtonStyle.xaml"/>
+                <ResourceDictionary Source="../../Resources/Icons.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <metro:ToUpperConverter x:Key="ToUpperConverter" />
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        </ResourceDictionary>
     </UserControl.Resources>
     <DockPanel>
+        <ToggleButton x:Name="CategoriesSearchButton"
+                      Margin="2"
+                      Background="Transparent"
+                      Visibility="{Binding IsFilteredField, 
+                        Converter={StaticResource BooleanToVisibilityConverter}}">
+            <ToggleButton.Style>
+                <Style BasedOn="{StaticResource SearchOptionToggleButtonStyle}" TargetType="ToggleButton">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding FilterViewModel.IsFilterApplied}" Value="False">
+                            <Setter Property="BorderThickness" Value="0" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding FilterViewModel.IsFilterApplied}" Value="True">
+                            <Setter Property="BorderBrush" Value="{StaticResource ToggleButtonGoldBorder}" />
+                            <Setter Property="BorderThickness" Value="1" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ToggleButton.Style>
+            <ToggleButton.Content>
+                <Grid>
+                    <ContentControl>
+                        <Rectangle Width="14"
+                                   Height="14"
+                                   Fill="{Binding RelativeSource={RelativeSource AncestorType=ToggleButton},
+                                                  Path=Foreground}">
+                            <Rectangle.OpacityMask>
+                                <VisualBrush Stretch="Fill" Visual="{StaticResource appbar_filter}" />
+                            </Rectangle.OpacityMask>
+                        </Rectangle>
+                    </ContentControl>
+         <!--            <ContentControl Content="{Binding}" ContentTemplate="{StaticResource CategoriesPopup}" /> -->
+                </Grid>
+            </ToggleButton.Content>
+        </ToggleButton>
+
         <TextBlock VerticalAlignment="Center"
-                   Text="{Binding Converter={StaticResource ToUpperConverter}}"
+                   Text="{Binding Path=FieldHeader, Converter={StaticResource ToUpperConverter}}"
                    FontWeight="SemiBold" MinWidth="36"
                    Width="Auto"/>
     </DockPanel>

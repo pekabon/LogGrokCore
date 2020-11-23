@@ -1,9 +1,11 @@
-﻿using DryIoc;
+﻿using System;
+using System.Windows.Controls;
+using DryIoc;
+using LogGrokCore.Controls.GridView;
 using LogGrokCore.Data;
-using System;
-using System.Windows.Shapes;
 using LogGrokCore.Data.Index;
 using LogGrokCore.Data.Virtualization;
+using LogGrokCore.Filter;
 using LogGrokCore.Search;
 
 namespace LogGrokCore
@@ -12,6 +14,12 @@ namespace LogGrokCore
     {
         Full,
         OnlyIndexed
+    }
+
+    public enum GridViewType
+    {
+        FilteringGirdViewType,
+        NotFilteringGridViewType
     }
 
     internal class DocumentContainer : IDisposable
@@ -51,7 +59,9 @@ namespace LogGrokCore
             _container.Register<ParsedBufferConsumer>(Reuse.Singleton);
             
             _container.Register<LogViewModel>(
-                made: Parameters.Of.Type<ILineParser>(serviceKey: ParserType.Full));
+                made: Parameters.Of
+                    .Type<ILineParser>(serviceKey: ParserType.Full)
+                    .Type<GridViewFactory>(serviceKey: GridViewType.FilteringGirdViewType));
 
             _container.Register<LogModelFacade>(
                 made: Parameters.Of.Type<ILineParser>(serviceKey: ParserType.Full));
@@ -68,16 +78,29 @@ namespace LogGrokCore
             _container.Register<DocumentViewModel>();
             _container.Register<SearchViewModel>();
             
-            
+            _container.RegisterDelegate<Func<string, FilterViewModel>>(
+                _ => fieldName => new FilterViewModel(fieldName));
+
+            _container.RegisterDelegate(
+                r => new GridViewFactory(r.Resolve<LogMetaInformation>(),
+                        true, r.Resolve<Func<string, FilterViewModel>>()), 
+                serviceKey: GridViewType.FilteringGirdViewType);
+
+            _container.RegisterDelegate(
+                r => new GridViewFactory(r.Resolve<LogMetaInformation>(),
+                    false, null), 
+                serviceKey: GridViewType.NotFilteringGridViewType);
+
             _container.RegisterDelegate<Func<SearchPattern, SearchDocumentViewModel>>(
                 r =>
             {
                 var logFile = r.Resolve<LogFile>();
                 var lineIndex = r.Resolve<LineIndex>();
-                var lineParser = r.Resolve<ILineParser>(serviceKey: ParserType.Full);
-                var viewFactory = r.Resolve<GridViewFactory>();
+                var lineParser = r.Resolve<ILineParser>(ParserType.Full);
+                var viewFactory = r.Resolve<GridViewFactory>(GridViewType.NotFilteringGridViewType);
                 return pattern => new SearchDocumentViewModel(logFile, lineIndex, lineParser, viewFactory, pattern);
             });
+            
         }
 
         public DocumentViewModel GetDocumentViewModel() => _container.Resolve<DocumentViewModel>(); 

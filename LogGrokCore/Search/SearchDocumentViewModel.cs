@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Input;
+using LogGrokCore.Controls.GridView;
 using LogGrokCore.Data;
 using LogGrokCore.Data.Search;
 using LogGrokCore.Data.Virtualization;

@@ -2,37 +2,53 @@ using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using ImTools;
-using LogGrokCore.Controls.GridView;
 using LogGrokCore.Data;
+using LogGrokCore.Filter;
 
-namespace LogGrokCore
+namespace LogGrokCore.Controls.GridView
 {
     public class GridViewFactory
     {
         private readonly LogMetaInformation _meta;
-
-        public GridViewFactory(LogMetaInformation meta)
+        private readonly Func<string, FilterViewModel>? _filterViewModelFactory;
+        public GridViewFactory(LogMetaInformation meta, 
+                bool canFilter,
+                Func<string, FilterViewModel>? filterViewModelFactory)
         {
             _meta = meta;
+            if (canFilter && filterViewModelFactory != null)
+                _filterViewModelFactory = filterViewModelFactory;
+            else if (canFilter && filterViewModelFactory == null)
+                throw new ArgumentException($"filterViewModelFactory cannot be null if canFilter is true.");
+            else if (!canFilter && filterViewModelFactory != null)
+                throw new ArgumentException($"filterViewModelFactory must be null if canFilter is false.");
         }
 
         public ViewBase CreateView()
         {
             var indexFieldName = "Index";
-            var view = new GridView();
+            var view = new System.Windows.Controls.GridView();
             
             foreach (var fieldHeader in indexFieldName.Yield().Concat(_meta.FieldNames))
             {
                 DataTemplate CreateHeaderTemplate()
                 {
-                        var frameworkElementFactory = new FrameworkElementFactory(typeof(LogGridViewHeader));
-                        frameworkElementFactory.SetValue(FrameworkElement.DataContextProperty, fieldHeader);
-                        var dataTemplate = new DataTemplate(typeof(DependencyObject))
-                        {
-                            VisualTree = frameworkElementFactory
-                        };
-                        return dataTemplate;
+                    var frameworkElementFactory = new FrameworkElementFactory(typeof(LogGridViewHeader));
+
+                    FilterViewModel? filterViewModel = null;
+                    if (_filterViewModelFactory != null && _meta.IsFieldIndexed(fieldHeader))
+                    {
+                        filterViewModel = _filterViewModelFactory(fieldHeader);
+                    }
+                    
+                    frameworkElementFactory.SetValue(FrameworkElement.DataContextProperty, 
+                        new HeaderViewModel { FieldHeader = fieldHeader, FilterViewModel = filterViewModel });
+                     
+                    var dataTemplate = new DataTemplate(typeof(DependencyObject))
+                    {
+                        VisualTree = frameworkElementFactory
+                    };
+                    return dataTemplate;
                 }
                 
                 DataTemplate CreateCellTemplate()
@@ -41,7 +57,7 @@ namespace LogGrokCore
 
                     Func<LineViewModel, string> GetComponent(string fieldName)
                     {
-                        var idx = _meta.FieldNames.IndexOf(fieldName);
+                        var idx = Array.IndexOf(_meta.FieldNames, fieldName);
                         return ln => ln.GetValue(idx);
                     }
 

@@ -1,3 +1,5 @@
+using System;
+
 namespace LogGrokCore.Data
 {
     public class LogMetaInformation
@@ -12,6 +14,13 @@ namespace LogGrokCore.Data
             FieldNames = new[] {"Time", "Thread", "Severity", "Component", "Text"};
             ComponentCount = FieldNames.Length;
             IndexedFieldNumbers = indexedFieldNumbers;
+        }
+
+        public bool IsFieldIndexed(string fieldName)
+        {
+            var index = Array.IndexOf(FieldNames, fieldName);
+            if (index < 0) return false;
+            return Array.IndexOf(IndexedFieldNumbers, index) >= 0;
         }
 
         public string LineRegex { get; }
