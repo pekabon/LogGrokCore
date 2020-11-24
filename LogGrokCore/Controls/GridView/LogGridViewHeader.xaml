@@ -12,6 +12,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="../../Styles/ToggleButtonStyle.xaml"/>
                 <ResourceDictionary Source="../../Resources/Icons.xaml"/>
+                <ResourceDictionary Source="../../Styles/FilterPopup.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <metro:ToUpperConverter x:Key="ToUpperConverter" />
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
@@ -48,13 +49,15 @@
                             </Rectangle.OpacityMask>
                         </Rectangle>
                     </ContentControl>
-         <!--            <ContentControl Content="{Binding}" ContentTemplate="{StaticResource CategoriesPopup}" /> -->
+                    <ContentControl Content="{Binding}" 
+                         ContentTemplate="{StaticResource FilterPopup}" />
                 </Grid>
             </ToggleButton.Content>
         </ToggleButton>
 
         <TextBlock VerticalAlignment="Center"
-                   Text="{Binding Path=FieldHeader, Converter={StaticResource ToUpperConverter}}"
+                   Text="{Binding Path=FieldHeader, 
+                   Converter={StaticResource ToUpperConverter}}"
                    FontWeight="SemiBold" MinWidth="36"
                    Width="Auto"/>
     </DockPanel>

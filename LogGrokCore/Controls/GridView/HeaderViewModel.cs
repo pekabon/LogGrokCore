@@ -2,10 +2,16 @@
 
 namespace LogGrokCore.Controls.GridView
 {
-    public class HeaderViewModel
+    internal class HeaderViewModel
     {
-        public string? FieldHeader { get; init; }
-        public FilterViewModel? FilterViewModel { get; init; }
+        public HeaderViewModel(string? fieldHeader, FilterViewModel? filterViewModel)
+        {
+            FieldHeader = fieldHeader;
+            FilterViewModel = filterViewModel;
+        }
+        
+        public string? FieldHeader { get; }
+        public FilterViewModel? FilterViewModel { get; }
 
         public bool IsFilteredField => FilterViewModel != null;
     }

@@ -1,9 +1,13 @@
-﻿namespace LogGrokCore.Filter
+﻿using System.ComponentModel;
+
+namespace LogGrokCore.Filter
 {
-    public class FilterViewModel
+    internal class FilterViewModel : ViewModelBase
     {
         public FilterViewModel(string fieldName)
         {
         }
+
+        public bool IsFilterApplied { get; private set; }
     }
 }

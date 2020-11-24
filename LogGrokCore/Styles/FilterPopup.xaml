@@ -1,0 +1,182 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="clr-namespace:LogGrokCore.Controls"
+                    xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+                    xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+                    xmlns:filterPopup="clr-namespace:LogGrokCore.Controls.FilterPopup"
+                    xmlns:local="clr-namespace:LogGrokCore.Filter">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <DataTemplate x:Key="FilterPopup">
+        <filterPopup:ResizablePopup Width="250"
+                                    Height="300"
+                                    MinWidth="200"
+                                    MinHeight="200"
+                                    StaysOpen="False"
+                                    filterPopup:BindPopupBehavior.ToToggleButton="{Binding ElementName=CategoriesSearchButton}"
+                                    filterPopup:RoutedCommandBehavior.RoutedCommandToCommandBinding="{filterPopup:RoutedCommandToCommandBinding 
+                                                Command={Binding 
+                                                    Source={x:Static filterPopup:PopupCommands.Close}},
+                                                RoutedCommand={x:Static filterPopup:RoutedCommands.Cancel}}"
+                                    filterPopup:FocusOnOpenPopupBehavior.DefaultFocusedElement="{Binding ElementName=FilterTextBox}">
+            <filterPopup:ResizablePopup.InputBindings>
+                <KeyBinding Key="Escape"
+                            Command="{x:Static filterPopup:RoutedCommands.Cancel}"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Popup}}" />
+            </filterPopup:ResizablePopup.InputBindings>
+            <Border BorderBrush="LightGray" BorderThickness="1">
+                <Grid Background="White">
+                    <AdornerDecorator>
+                        <Grid Margin="4">
+                            <Grid.Resources>
+                                <CollectionViewSource x:Key="items" Source="{Binding Elements}">
+                                    <CollectionViewSource.SortDescriptions>
+                                        <componentModel:SortDescription PropertyName="Category" />
+                                    </CollectionViewSource.SortDescriptions>
+                                </CollectionViewSource>
+                            </Grid.Resources>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="FilterTextBox"
+                                     Grid.ColumnSpan="3"
+                                     Margin="10, 10, 10, 0"
+                                     Text="{Binding TextFilter,
+                                                            UpdateSourceTrigger=PropertyChanged}"
+                                     filterPopup:RoutedCommandBehavior.RoutedCommandToCommandBinding="{filterPopup:RoutedCommandToCommandBinding 
+                                                    Command={Binding 
+                                                        Source={x:Static filterPopup:TextBoxCommands.Clear}},
+                                                    RoutedCommand={x:Static filterPopup:RoutedCommands.Cancel}}"
+
+                                     mah:TextBoxHelper.ButtonCommand="{Binding 
+                                                Source={x:Static filterPopup:TextBoxCommands.Clear}}"
+                                     mah:TextBoxHelper.ButtonCommandParameter="{Binding ElementName=FilterTextBox}"
+                                     mah:TextBoxHelper.SelectAllOnFocus="True"
+                                     mah:TextBoxHelper.Watermark="Search...">
+                                <TextBox.InputBindings>
+                                    <KeyBinding Key="Escape"
+                                                Command="{x:Static filterPopup:RoutedCommands.Cancel}"
+                                                CommandParameter="{Binding ElementName=FilterTextBox}" />
+                                </TextBox.InputBindings>
+                                <TextBox.Style>
+                                    <Style BasedOn="{StaticResource MahApps.Styles.TextBox}" 
+                                           TargetType="{x:Type TextBox}">
+                                        <Setter Property="mah:TextBoxHelper.ClearTextButton" Value="True" />
+                                        <Style.Triggers>
+                                            <Trigger Property="mah:TextBoxHelper.HasText" Value="False">
+                                                <Setter Property="mah:TextBoxHelper.ClearTextButton" Value="False" />
+                                            </Trigger>
+                                            <Trigger Property="mah:TextBoxHelper.HasText" Value="True">
+                                                <Setter Property="mah:TextBoxHelper.ClearTextButton" Value="True" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                            <Button Grid.Row="1"
+                                    Margin="10, 10, 5, 0"
+                                    Command="{Binding SelectAll}"
+                                    CommandParameter="{Binding Items,
+                                                                       ElementName=ListBox}"
+                                    Content="Select All" />
+                            <Button Grid.Row="1"
+                                    Grid.Column="1"
+                                    Margin="10, 10, 5, 0"
+                                    Command="{Binding DeselectAll}"
+                                    CommandParameter="{Binding Items,
+                                                                       ElementName=ListBox}"
+                                    Content="Deselect All" />
+                            <Button Grid.Row="2"
+                                    Grid.ColumnSpan="2"
+                                    Margin="10, 10, 5, 0"
+                                    Command="{Binding SelectOnlySearchResults}"
+                                    CommandParameter="{Binding Items,
+                                                                       ElementName=ListBox}"
+                                    Content="Select Only Search Results" />
+                            <ListBox x:Name="ListBox"
+                                     Grid.Row="3"
+                                     Grid.ColumnSpan="4"
+                                     Margin="10"
+                                     HorizontalContentAlignment="Stretch"
+                                     ItemsSource="{Binding Source={StaticResource items}}"
+                                     SelectionMode="Single"
+                                     filterPopup:ItemsFilteringBehavior.FilteredProperty="Name"
+                                     filterPopup:ItemsFilteringBehavior.TextFilter="{Binding TextFilter}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <ContentControl Content="{Binding}">
+                                            <ContentControl.Resources>
+                                                <DataTemplate DataType="{x:Type local:ElementViewModel}">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <CheckBox
+                                                            Command="{Binding Path=DataContext.RefreshActiveChanged,
+                                                                                            ElementName=ListBox}"
+                                                            Content="{Binding Name}"
+                                                            IsChecked="{Binding IsActive}" />
+                                                        <TextBlock Grid.Column="1"
+                                                                   Margin="0,0,5,0"
+                                                                   HorizontalAlignment="Right"
+                                                                   FontStyle="Italic"
+                                                                   Foreground="Gray"
+                                                                   Text="{Binding Percent}" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                                <!--
+                                                            <DataTemplate DataType="{x:Type local:ComponentViewModel}">
+                                                            <CheckBox Command="{Binding Path=DataContext.RefreshActiveChanged,
+                                                            ElementName=ListBox}"
+                                                            Content="{Binding Name}"
+                                                            IsChecked="{Binding IsActive}" />
+                                                            </DataTemplate>
+                                                            <DataTemplate >
+                                                            <CheckBox Command="{Binding Path=DataContext.RefreshActiveChanged,
+                                                            ElementName=ListBox}"
+                                                            Content="{Binding Name}"
+                                                            IsChecked="{Binding IsActive}" />
+                                                            </DataTemplate>
+                                                            <DataTemplate >
+                                                            <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="*" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <CheckBox Command="{Binding Path=DataContext.RefreshActiveChanged,
+                                                            ElementName=ListBox}"
+                                                            Content="{Binding Name}"
+                                                            IsChecked="{Binding IsActive}" />
+                                                            <TextBlock Grid.Column="1"
+                                                            Margin="0,0,5,0"
+                                                            HorizontalAlignment="Right"
+                                                            FontStyle="Italic"
+                                                            Foreground="Gray"
+                                                            Text="{Binding Percent}" />
+                                                            </Grid>
+                                                            </DataTemplate>
+                                                        -->
+                                            </ContentControl.Resources>
+                                        </ContentControl>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+                    </AdornerDecorator>
+                </Grid>
+            </Border>
+        </filterPopup:ResizablePopup>
+    </DataTemplate>
+
+</ResourceDictionary>

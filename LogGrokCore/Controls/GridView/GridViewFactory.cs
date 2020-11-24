@@ -7,7 +7,7 @@ using LogGrokCore.Filter;
 
 namespace LogGrokCore.Controls.GridView
 {
-    public class GridViewFactory
+    internal class GridViewFactory
     {
         private readonly LogMetaInformation _meta;
         private readonly Func<string, FilterViewModel>? _filterViewModelFactory;
@@ -42,7 +42,7 @@ namespace LogGrokCore.Controls.GridView
                     }
                     
                     frameworkElementFactory.SetValue(FrameworkElement.DataContextProperty, 
-                        new HeaderViewModel { FieldHeader = fieldHeader, FilterViewModel = filterViewModel });
+                        new HeaderViewModel(fieldHeader, filterViewModel));
                      
                     var dataTemplate = new DataTemplate(typeof(DependencyObject))
                     {
