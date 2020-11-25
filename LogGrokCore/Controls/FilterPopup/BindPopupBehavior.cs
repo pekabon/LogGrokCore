@@ -64,8 +64,9 @@ namespace LogGrokCore.Controls.FilterPopup
             popup.Closed += OnPopupClosed;
         }
         
-        private static void OnPopupClosed(object s, EventArgs eventArgs)
+        private static void OnPopupClosed(object? s, EventArgs eventArgs)
         {
+            if (s == null) return;
             var popup = (Popup)s;;
             var toggleButton = GetToToggleButton(popup);
             if (toggleButton != null)

@@ -7,6 +7,7 @@
                     xmlns:local="clr-namespace:LogGrokCore.Filter">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
+        <ResourceDictionary Source="ResizablePopupContent.xaml"/>
     </ResourceDictionary.MergedDictionaries>
 
     <DataTemplate x:Key="FilterPopup">
@@ -15,7 +16,10 @@
                                     MinWidth="200"
                                     MinHeight="200"
                                     StaysOpen="False"
-                                    filterPopup:BindPopupBehavior.ToToggleButton="{Binding ElementName=CategoriesSearchButton}"
+                      
+                                    
+                                    filterPopup:BindPopupBehavior.ToToggleButton="{Binding 
+                                        RelativeSource={RelativeSource FindAncestor, AncestorType=ToggleButton}}"
                                     filterPopup:RoutedCommandBehavior.RoutedCommandToCommandBinding="{filterPopup:RoutedCommandToCommandBinding 
                                                 Command={Binding 
                                                     Source={x:Static filterPopup:PopupCommands.Close}},

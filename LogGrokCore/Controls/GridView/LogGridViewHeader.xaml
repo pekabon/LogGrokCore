@@ -49,7 +49,7 @@
                             </Rectangle.OpacityMask>
                         </Rectangle>
                     </ContentControl>
-                    <ContentControl Content="{Binding}" 
+                    <ContentControl  VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Content="{Binding}" 
                          ContentTemplate="{StaticResource FilterPopup}" />
                 </Grid>
             </ToggleButton.Content>

@@ -23,7 +23,6 @@ namespace LogGrokCore.Controls.FilterPopup
         
         private static void DefaultFocusedElementChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs  args)
         {
-            
             var popup = (Popup)dependencyObject;
             
             if(args.OldValue is UIElement)
@@ -37,8 +36,9 @@ namespace LogGrokCore.Controls.FilterPopup
             }
         }
         
-        private static void PopupOpened(object sender, EventArgs args)
+        private static void PopupOpened(object? sender, EventArgs args)
         {
+            if (sender is null) return;
             var popup = (Popup)sender; 
             var focusedElement = GetDefaultFocusedElement(popup);
          
