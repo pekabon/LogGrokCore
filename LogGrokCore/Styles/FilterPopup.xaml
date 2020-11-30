@@ -16,8 +16,6 @@
                                     MinWidth="200"
                                     MinHeight="200"
                                     StaysOpen="False"
-                      
-                                    
                                     filterPopup:BindPopupBehavior.ToToggleButton="{Binding 
                                         RelativeSource={RelativeSource FindAncestor, AncestorType=ToggleButton}}"
                                     filterPopup:RoutedCommandBehavior.RoutedCommandToCommandBinding="{filterPopup:RoutedCommandToCommandBinding 
@@ -138,8 +136,7 @@
                                                                    Foreground="Gray"
                                                                    Text="{Binding Percent}" />
                                                     </Grid>
-                                                </DataTemplate>
-                                                <!--
+                                                </DataTemplate><!--
                                                             <DataTemplate DataType="{x:Type local:ComponentViewModel}">
                                                             <CheckBox Command="{Binding Path=DataContext.RefreshActiveChanged,
                                                             ElementName=ListBox}"

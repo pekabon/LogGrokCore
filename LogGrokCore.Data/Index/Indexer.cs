@@ -3,23 +3,26 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using LogGrokCore.Data.IndexTree;
-using LogGrokCore.Data.Virtualization;
 
 namespace LogGrokCore.Data.Index
 {
+
     public class Indexer : IDisposable
     {
         private readonly ConcurrentDictionary<IndexKey, IndexTree<int, SimpleLeaf<int>>> _indices =
-            new ConcurrentDictionary<IndexKey, IndexTree<int, SimpleLeaf<int>>>(1, 16384);
+            new(1, 16384);
 
+        private readonly ConcurrentDictionary<int, HashSet<IndexKey>> _components = new();
+        
         private readonly CountIndex<IndexTree<int, SimpleLeaf<int>>> _countIndex 
-            = new CountIndex<IndexTree<int, SimpleLeaf<int>>>();
+            = new();
+        
         public IEnumerable<string> GetAllComponents(int componentNumber)
         {
-            return _indices.Keys.Select(indexKey => new string(indexKey.GetComponent(componentNumber)));
+            return _components[componentNumber].Select(key => key.GetComponent(componentNumber).ToString()); 
         }
 
-        public IIndexedLinesProvider GetIndexedLinesProvider(Dictionary<int, List<string>> excludedComponents)
+        public IIndexedLinesProvider GetIndexedLinesProvider(IReadOnlyDictionary<int, IReadOnlyList<string>> excludedComponents)
         {
             return new IndexedLinesProvider(this, _countIndex.Counts, 
                 CountIndex<IndexTree<int, SimpleLeaf<int>>>.Granularity, excludedComponents);
@@ -30,20 +33,52 @@ namespace LogGrokCore.Data.Index
         public void Add(IndexKey key, int lineNumber)
         {
             var index = _indices.GetOrAdd(key,
-                indexedKey =>
+                static indexedKey =>
                 {
-                    indexedKey.MakeCopy();
+                    indexedKey.MakeLocalCopy();
                     return CreateIndexTree();
                 });
-
+            
             index.Add(lineNumber);    
-            _countIndex.Add(lineNumber, _indices);            
+            _countIndex.Add(lineNumber, _indices);
+
+            var newIndexCreated = key.HasLocalBuffer;
+            if (newIndexCreated)
+                UpdateComponents(key);
+        }
+
+        public event Action<(int compnentNumber, IndexKey key)>? NewComponentAdded;
+        
+        private class ComponentComparer : IEqualityComparer<IndexKey>
+        {
+            private readonly int _index;
+
+            public ComponentComparer(int index) => _index = index;
+
+            public bool Equals(IndexKey? x, IndexKey? y) =>
+                x != null && y != null &&
+                x.GetComponent(_index).SequenceEqual(y.GetComponent(_index));
+
+            public int GetHashCode(IndexKey obj) => string.GetHashCode(obj.GetComponent(_index));
+        }
+        
+        private void UpdateComponents(IndexKey key)
+        {
+            for (var componentIndex = 0; componentIndex < key.ComponentCount; componentIndex++)
+            {
+                var componentSet = _components.GetOrAdd(componentIndex,
+                    static index => new HashSet<IndexKey>(new ComponentComparer(index)));
+
+                if (componentSet.Add(key))
+                    NewComponentAdded?.Invoke((componentIndex, key)); 
+                    
+            }
         }
 
         private static IndexTree<int, SimpleLeaf<int>> CreateIndexTree()
         {
             return new IndexTree<int, SimpleLeaf<int>>(16, 
-                value => new SimpleLeaf<int>(value, 0));
+                static value => new SimpleLeaf<int>(value, 0));
         }
 
         public void Dispose()

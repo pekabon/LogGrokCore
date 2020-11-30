@@ -12,6 +12,7 @@ using LogGrokCore.Controls;
 using LogGrokCore.Controls.GridView;
 using LogGrokCore.Data;
 using LogGrokCore.Data.Virtualization;
+using LogGrokCore.Filter;
 
 namespace LogGrokCore
 {
@@ -27,20 +28,29 @@ namespace LogGrokCore
         private readonly Lazy<int> _headerLineCount;
         private Regex? _highlightRegex;
         private Func<int, int> _getIndexByValue = x => x;
+        private readonly FilterSettings _filterSettings;
+
         public LogViewModel(
             LogModelFacade logModelFacade,
             LineViewModelCollectionProvider lineViewModelCollectionProvider,
             GridViewFactory viewFactory,
-            HeaderProvider headerProvider)
+            HeaderProvider headerProvider,
+            FilterSettings filterSettings)
         {
             _headerLineCount = new Lazy<int>(() => headerProvider.Header == null ? 0 : 1);
             _logModelFacade = logModelFacade;
+            _filterSettings = filterSettings;
 
             var lineProvider = _logModelFacade.LineProvider;
             var lineParser = _logModelFacade.LineParser;
             
             _lineViewModelCollectionProvider = lineViewModelCollectionProvider;
-            _lineViewModelCollectionProvider.ExclusionsChanged += () => { InvokePropertyChanged(nameof(HaveFilter)); };
+            filterSettings.ExclusionsChanged += () =>
+            {
+                InvokePropertyChanged(nameof(HaveFilter));
+                UpdateFilteredCollection(_lineViewModelCollectionProvider);
+            };
+
             var lineCollection =
                 new VirtualList<(int index, string str), ItemViewModel>(lineProvider,
                     (indexAndString) => 
@@ -54,32 +64,28 @@ namespace LogGrokCore
 
             void UpdateFilteredCollection(LineViewModelCollectionProvider viewModelCollectionProvider)
             {
-                var (lineViewModelCollection,
-                    getIndexByValue) = lineViewModelCollectionProvider.GetLogLinesCollection();
+                var (lineViewModelCollection, getIndexByValue) = 
+                    lineViewModelCollectionProvider.GetLogLinesCollection(_filterSettings.Exclusions);
                 Lines = lineViewModelCollection;
                 _getIndexByValue = getIndexByValue;
             }
 
             ExcludeCommand = DelegateCommand.Create(
-                    (int componentIndex) =>
-                    {
-                        _lineViewModelCollectionProvider.AddExclusions(componentIndex,
+                    (int componentIndex) => {
+                        _filterSettings.AddExclusions(componentIndex,
                             GetComponentsInSelectedLines(componentIndex));
-                        UpdateFilteredCollection(_lineViewModelCollectionProvider);
                     });    
             
             ExcludeAllButCommand = DelegateCommand.Create(
                 (int componentIndex) =>
                 {
-                    _lineViewModelCollectionProvider.ExcludeAllExcept(componentIndex,
+                    _filterSettings.ExcludeAllExcept(componentIndex,
                         GetComponentsInSelectedLines(componentIndex));
-                    UpdateFilteredCollection(_lineViewModelCollectionProvider);
                 });
             
             ClearExclusionsCommand = new DelegateCommand(() =>
                 {
-                    _lineViewModelCollectionProvider.ClearAllExclusions();
-                    UpdateFilteredCollection(_lineViewModelCollectionProvider);
+                    _filterSettings.ClearAllExclusions();
                 }
             );
             
@@ -90,7 +96,7 @@ namespace LogGrokCore
 
         public bool CanFilter => true;
 
-        public bool HaveFilter => _lineViewModelCollectionProvider.HaveExclusions;
+        public bool HaveFilter => _filterSettings.HaveExclusions;
 
         public LogMetaInformation MetaInformation => _logModelFacade.MetaInformation;
 

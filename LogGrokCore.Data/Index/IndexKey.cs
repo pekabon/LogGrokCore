@@ -10,6 +10,7 @@ namespace LogGrokCore.Data.Index
         private string _buffer;
         private int _start;
         private readonly int _componentCount;
+        private bool _hasLocalBuffer; 
 
         public IndexKey(string buffer, int start, int componentCount)
         {
@@ -18,7 +19,11 @@ namespace LogGrokCore.Data.Index
             _componentCount = componentCount;
         }
 
-        public unsafe void MakeCopy()
+        public int ComponentCount => _componentCount;
+
+        public bool HasLocalBuffer => _hasLocalBuffer;
+        
+        public unsafe void MakeLocalCopy()
         {
             var bufferSpan = _buffer.AsSpan(_start);
             fixed (char* start = bufferSpan)
@@ -28,6 +33,8 @@ namespace LogGrokCore.Data.Index
                 _buffer = new string(start, 0, size);
                 _start = 0;
             }
+
+            _hasLocalBuffer = true;
         }
 
         public ReadOnlySpan<char> GetComponent(int index)

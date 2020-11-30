@@ -41,11 +41,6 @@ namespace LogGrokCore.Controls
             PrepareContainerForItemOverride(container, item);
         }
 
-        protected override void OnItemContainerStyleChanged(Style oldItemContainerStyle, Style newItemContainerStyle)
-        {
-            base.OnItemContainerStyleChanged(oldItemContainerStyle, newItemContainerStyle);
-        }
-
         public IEnumerable<object> ReadonlySelectedItems
         {
             get => ((IEnumerable)GetValue(ReadonlySelectedItemsProperty)).Cast<object>();
@@ -70,18 +65,18 @@ namespace LogGrokCore.Controls
                 base.OnKeyDown(e);
         }
 
-        protected override void OnPreviewMouseDown(MouseButtonEventArgs e)
+        protected override void OnMouseDown(MouseButtonEventArgs e)
         {
-            if (GetPanel()?.ProcessPreviewMouseDown() == true)
+            if (GetPanel()?.ProcessMouseDown() == true)
             {
                 e.Handled = true;
             }
             
-            base.OnPreviewMouseDown(e);
+            base.OnMouseDown(e);
         }
 
         private int _previousItemCount;
-        
+
         protected override void OnItemsSourceChanged(IEnumerable? oldValue, IEnumerable? newValue)
         {
             base.OnItemsSourceChanged(oldValue, newValue);

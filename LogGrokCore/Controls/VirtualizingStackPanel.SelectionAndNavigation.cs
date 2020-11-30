@@ -56,7 +56,7 @@ namespace LogGrokCore.Controls
             return true;
         }
 
-        public bool ProcessPreviewMouseDown()
+        public bool ProcessMouseDown()
         {
             var item = GetItemUnderMouse();
             if (item == null) return false;

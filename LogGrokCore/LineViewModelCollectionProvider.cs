@@ -1,7 +1,6 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
-using System.Linq;
 using ImTools;
 using LogGrokCore.Data;
 using LogGrokCore.Data.Index;
@@ -12,7 +11,6 @@ namespace LogGrokCore
     public class LineViewModelCollectionProvider
     {
         private readonly Indexer _indexer;
-        private readonly Dictionary<int, List<string>> _exclusions = new Dictionary<int, List<string>>();
         private readonly IItemProvider<(int index, string str)> _lineProvider;
         private readonly ILineParser _lineParser;
         private readonly HeaderProvider _headerProvider;
@@ -88,9 +86,10 @@ namespace LogGrokCore
             _metaInformation = metaInformation;
         }
 
-        public (GrowingLogLinesCollection lineViewModelsCollectins, Func<int, int> getIndexByValue) GetLogLinesCollection()
+        public (GrowingLogLinesCollection lineViewModelsCollectins, Func<int, int> getIndexByValue) 
+            GetLogLinesCollection(IReadOnlyDictionary<int, IReadOnlyList<string>> exclusions)
         {
-            var lineProviderAndGetIndexByValue = GetLineProvider();
+            var lineProviderAndGetIndexByValue = GetLineProvider(exclusions);
             var lineCollection =
                 new VirtualList<(int index, string str), ItemViewModel>(lineProviderAndGetIndexByValue.itemProvider,
                     indexAndString => 
@@ -100,50 +99,13 @@ namespace LogGrokCore
                         lineProviderAndGetIndexByValue.GetIndexByValue);
         }
 
-        public bool HaveExclusions => _exclusions.Count > 0;
-
-        public event Action? ExclusionsChanged;
-
-        public void AddExclusions(int component, IEnumerable<string> componentValuesToExclude)
-        {
-            var indexedComponent = GetIndexedComponent(component);
-
-            List<string>? currentExclusions;
-
-            if (!_exclusions.TryGetValue(indexedComponent, out currentExclusions))
-            {
-                currentExclusions = new List<string>();
-            }
-
-            SetExclusions(indexedComponent, currentExclusions.Concat(componentValuesToExclude));
-        }
-
-        public void ExcludeAllExcept(int component, IEnumerable<string> componentValuesToInclude)
-        {
-            var indexedComponent = GetIndexedComponent(component);
-
-            var exclusions = _indexer.GetAllComponents(indexedComponent).Except(componentValuesToInclude);
-            SetExclusions(indexedComponent , exclusions);
-        }
-
-        public void ClearAllExclusions()
-        {
-            _exclusions.Clear();
-            ExclusionsChanged?.Invoke();
-        }
-
-        private void SetExclusions(int indexedComponent, IEnumerable<string> componentValuesToExclude)
-        {
-            _exclusions[indexedComponent] = componentValuesToExclude.ToList();
-            ExclusionsChanged?.Invoke();
-        }
-        
         private int GetIndexedComponent(int component) => _metaInformation.IndexedFieldNumbers.IndexOf(component);
         
-        private (IItemProvider<(int index, string str)> itemProvider, Func<int, int> GetIndexByValue) GetLineProvider()
+        private (IItemProvider<(int index, string str)> itemProvider, Func<int, int> GetIndexByValue) GetLineProvider(
+            IReadOnlyDictionary<int, IReadOnlyList<string>> exclusions)
         {
-            if (_exclusions.Count == 0) return (_lineProvider, x=> x);
-            var lineNumbersProvider = _indexer.GetIndexedLinesProvider(_exclusions);
+            if (exclusions.Count == 0) return (_lineProvider, x=> x);
+            var lineNumbersProvider = _indexer.GetIndexedLinesProvider(exclusions);
             return (new FilteredLineProvider(lineNumbersProvider, _lineProvider),
                 value => lineNumbersProvider.GetIndexByValue(value));
         }

@@ -6,18 +6,21 @@ namespace LogGrokCore.Filter
     {
         public string Name { get; }
 
-        public string Category { get; }
-        
-        public bool IsActive { get; }
+        public bool IsActive
+        {
+            get => _isActive;
+            set => SetAndRaiseIfChanged(ref _isActive, value);
+        }
 
         public int Percent => _percentGetter();
 
         private readonly Func<int> _percentGetter;
+        private bool _isActive;
 
-        public ElementViewModel(string name, string category, bool isActive, Func<int> percentGetter)
+        public ElementViewModel(string name, bool isActive, Func<int> percentGetter)
         {
             Name = name;
-            Category = category;
+            
             IsActive = isActive;
             
             _percentGetter = percentGetter;

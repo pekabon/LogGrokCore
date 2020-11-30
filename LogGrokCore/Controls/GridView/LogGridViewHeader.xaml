@@ -49,8 +49,9 @@
                             </Rectangle.OpacityMask>
                         </Rectangle>
                     </ContentControl>
-                    <ContentControl  VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Content="{Binding}" 
-                         ContentTemplate="{StaticResource FilterPopup}" />
+                    <ContentControl VerticalAlignment="Bottom" HorizontalAlignment="Stretch" 
+                        Content="{Binding Path=FilterViewModel}" 
+                        ContentTemplate="{StaticResource FilterPopup}"/>
                 </Grid>
             </ToggleButton.Content>
         </ToggleButton>

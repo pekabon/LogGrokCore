@@ -75,11 +75,17 @@ namespace LogGrokCore
             _container.Register<LineViewModelCollectionProvider>(Reuse.Singleton, 
                 made: Parameters.Of.Type<ILineParser>(serviceKey: ParserType.Full));
 
+            _container.Register<FilterSettings>(Reuse.Singleton);
+            
             _container.Register<DocumentViewModel>();
             _container.Register<SearchViewModel>();
             
             _container.RegisterDelegate<Func<string, FilterViewModel>>(
-                _ => fieldName => new FilterViewModel(fieldName));
+                r => fieldName => new FilterViewModel(
+                    fieldName, 
+                    r.Resolve<FilterSettings>(),
+                    r.Resolve<Indexer>(),
+                    r.Resolve<LogMetaInformation>()));
 
             _container.RegisterDelegate(
                 r => new GridViewFactory(r.Resolve<LogMetaInformation>(),

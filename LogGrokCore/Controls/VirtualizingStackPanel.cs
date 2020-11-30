@@ -419,7 +419,7 @@ namespace LogGrokCore.Controls
             }
             else
             {
-                newItem = new ListViewItem();
+                newItem = new NotHandlingListViewItem();
                 InsertAndMeasureItem(newItem, currentIndex, true);
             }
 
