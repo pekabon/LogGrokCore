@@ -142,7 +142,7 @@ namespace LogGrokCore.Data.Virtualization
         private const int PageSize = 100;
         private const int MaxCacheSize = 10;
         private readonly Func<TSource, T> _converter;
-        private readonly Dictionary<int, (IList<Lazy<T>>, int)> _pageCache = new Dictionary<int, (IList<Lazy<T>>, int)>();
+        private readonly Dictionary<int, (IList<Lazy<T>>, int)> _pageCache = new();
         private int _pageCounter;
     }
 }

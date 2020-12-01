@@ -7,7 +7,7 @@ namespace LogGrokCore.Controls
 {
     public class Selection : IEnumerable<int>
     {
-        private readonly HashSet<int> _indices = new HashSet<int>();
+        private readonly HashSet<int> _indices = new();
 
         public int Min => _indices.Min();
 

@@ -16,7 +16,7 @@ namespace LogGrokCore.Search
         private bool _useRegex;
 
         private DispatcherTimer? _searchPatternThrottleTimer;
-        private SearchPattern _searchPattern = new SearchPattern(string.Empty, false, false);
+        private SearchPattern _searchPattern = new(string.Empty, false, false);
         private SearchDocumentViewModel? _currentDocument;
         public SearchViewModel(Func<SearchPattern, SearchDocumentViewModel> searchDocumentViewModelFactory)
         {

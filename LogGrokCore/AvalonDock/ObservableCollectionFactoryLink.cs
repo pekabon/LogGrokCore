@@ -16,7 +16,7 @@ namespace LogGrokCore.AvalonDock
 
         public Func<object, TTarget> Factory { get; }
         
-        private readonly Dictionary<object, TTarget> _sourceToTargetMapping = new Dictionary<object, TTarget>();
+        private readonly Dictionary<object, TTarget> _sourceToTargetMapping = new();
         
         public ObservableCollectionFactoryLink(IList source, ObservableCollection<TTarget> target, 
             Func<object,TTarget> factory)

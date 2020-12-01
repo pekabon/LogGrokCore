@@ -6,15 +6,14 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
-using ImTools;
 
 namespace LogGrokCore.Controls
 {
     public partial class VirtualizingStackPanel : VirtualizingPanel, IScrollInfo
     {
-        private readonly TranslateTransform _trans = new TranslateTransform();
-        private List<VisibleItem> _visibleItems = new List<VisibleItem>();
-        private readonly Stack<ListViewItem> _recycled = new Stack<ListViewItem>();
+        private readonly TranslateTransform _trans = new();
+        private List<VisibleItem> _visibleItems = new();
+        private readonly Stack<ListViewItem> _recycled = new();
 
         private Size _viewPort;
         private Size _extent;
@@ -305,7 +304,7 @@ namespace LogGrokCore.Controls
 
         public void LineUp() => ScrollUp(20);
 
-        public Rect MakeVisible(Visual visual, Rect rectangle) => new Rect();
+        public Rect MakeVisible(Visual visual, Rect rectangle) => new();
 
         public void MouseWheelDown() => ScrollDown(ScrollUnitPixels);
 

@@ -211,7 +211,7 @@ namespace LogGrokCore.Controls
             FontStretch fontStretch,
             double fontSize,
             Brush foreground) =>
-                new FormattedText(value == null ? string.Empty : value,
+                new(value == null ? string.Empty : value,
                     CultureInfo.CurrentUICulture,
                     flowDirection,
                     new Typeface(fontFamily, fontStyle, fontWeight, fontStretch),

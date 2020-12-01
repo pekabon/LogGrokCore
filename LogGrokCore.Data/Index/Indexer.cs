@@ -96,7 +96,7 @@ namespace LogGrokCore.Data.Index
 
         private static IndexTree<int, SimpleLeaf<int>> CreateIndexTree()
         {
-            return new IndexTree<int, SimpleLeaf<int>>(16, 
+            return new(16, 
                 static value => new SimpleLeaf<int>(value, 0));
         }
 

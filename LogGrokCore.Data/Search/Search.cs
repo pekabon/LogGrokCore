@@ -10,7 +10,7 @@ namespace LogGrokCore.Data.Search
 {
     public static class Search
     {
-        private static readonly StringPool SearchStringPool = new StringPool();
+        private static readonly StringPool SearchStringPool = new();
         private const int MaxSearchSizeLines = 256;
         private const double Throttle = 0.01;
 
@@ -57,7 +57,7 @@ namespace LogGrokCore.Data.Search
             LineIndex sourceLineIndex, Regex regex,
             CancellationToken cancellationToken)
         {
-            SearchLineIndex lineIndex = new SearchLineIndex(sourceLineIndex);
+            SearchLineIndex lineIndex = new(sourceLineIndex);
 
             void ProcessLines(int start, int end)
             {

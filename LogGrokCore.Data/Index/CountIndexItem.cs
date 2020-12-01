@@ -16,7 +16,7 @@ namespace LogGrokCore.Data.Index
 
         public int TotalCount => _totalCount.Value;
 
-        public static CountIndexItem<T> Empty { get; } = new CountIndexItem<T>(new List<(T, int)>(0));
+        public static CountIndexItem<T> Empty { get; } = new(new List<(T, int)>(0));
 
         private readonly Lazy<int> _totalCount;
     }

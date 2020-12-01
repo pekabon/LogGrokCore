@@ -8,7 +8,7 @@ namespace LogGrokCore.Data
     public sealed class ParsedBufferConsumer
     {
         private readonly BlockingCollection<(long startOffset, int lineCount, string buffer)> _queue
-            = new BlockingCollection<(long, int, string)>(4);
+            = new(4);
 
         private readonly LineIndex _lineIndex;
         private readonly Indexer _indexer;

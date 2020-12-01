@@ -21,9 +21,9 @@ namespace LogGrokCore.Data.Index
         private int _chunkSize;
         private int[]? _currentChunk;
         private int _currentIndexInChunk;
-        private readonly ReaderWriterLockSlim _chunksLock = new ReaderWriterLockSlim();
+        private readonly ReaderWriterLockSlim _chunksLock = new();
         
-        private readonly List<(int, int[])> _chunks = new List<(int, int[])>(16);
+        private readonly List<(int, int[])> _chunks = new(16);
 
         public Index(int chunkSize)
         {

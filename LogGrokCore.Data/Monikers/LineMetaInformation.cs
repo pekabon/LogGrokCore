@@ -11,7 +11,7 @@ namespace LogGrokCore.Data.Monikers
         
         public static unsafe LineMetaInformation Get(char* pointer, int componentCount)
         {
-            return new LineMetaInformation(new Span<int>(pointer, GetSizeInts(componentCount)), componentCount);
+            return new(new Span<int>(pointer, GetSizeInts(componentCount)), componentCount);
         }
 
         public LineMetaInformation(Span<int> placeholder, int componentCount)

@@ -56,17 +56,17 @@ namespace LogGrokCore.Data.Index
 
         public static ReadLockOwner GetReadLockOwner(this ReaderWriterLockSlim @lock)
         {
-            return new ReadLockOwner(@lock);
+            return new(@lock);
         }
         
         public static UpgradableReadLockOwner GetUpgradableReadLockOwner(this ReaderWriterLockSlim @lock)
         {
-            return new UpgradableReadLockOwner (@lock);
+            return new(@lock);
         }
         
         public static WriteLockOwner GetWriteLockOwner(this ReaderWriterLockSlim @lock)
         {
-            return new WriteLockOwner(@lock);
+            return new(@lock);
         }
 
     }

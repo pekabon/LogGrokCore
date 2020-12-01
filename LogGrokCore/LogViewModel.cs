@@ -143,7 +143,7 @@ namespace LogGrokCore
         
         public ICommand OpenContainingFolderCommand { get; }
         
-        public NavigateToLineRequest NavigateToLineRequest { get; } = new NavigateToLineRequest();
+        public NavigateToLineRequest NavigateToLineRequest { get; } = new();
         
         public GrowingLogLinesCollection? Lines
         {

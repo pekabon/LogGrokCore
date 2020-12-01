@@ -38,7 +38,7 @@ namespace LogGrokCore.Controls
             }
         }
 
-        public VisibleItem Move(double offset) => new VisibleItem(Element, Index, UpperBound + offset, LowerBound + offset);
+        public VisibleItem Move(double offset) => new(Element, Index, UpperBound + offset, LowerBound + offset);
 
         public VisibleItem MoveTo(double newUpperBound) => Move(newUpperBound - UpperBound);
 

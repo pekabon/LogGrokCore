@@ -20,7 +20,7 @@ namespace LogGrokCore.Search
         
         public SearchPattern Clone()
         {
-            return new SearchPattern(Pattern, IsCaseSensitive, UseRegex);
+            return new(Pattern, IsCaseSensitive, UseRegex);
         }
 
         public Regex GetRegex(RegexOptions regexAdditionalOptions)

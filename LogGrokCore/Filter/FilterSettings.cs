@@ -9,7 +9,7 @@ namespace LogGrokCore.Filter
     internal class FilterSettings
     {
         private readonly Dictionary<int, IReadOnlyList<string>> _exclusions = 
-            new Dictionary<int, IReadOnlyList<string>>();
+            new();
         private readonly Indexer _indexer;
         private readonly LogMetaInformation _metaInformation;
         

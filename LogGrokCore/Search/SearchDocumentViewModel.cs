@@ -24,7 +24,7 @@ namespace LogGrokCore.Search
         private string _title;
         private  bool _isIndeterminateProgress;
 
-        private readonly object _cancellationTokenSourceLock = new object();
+        private readonly object _cancellationTokenSourceLock = new();
         private CancellationTokenSource? _currentSearchCancellationTokenSource;
         private bool _isSearching;
         private double _progress;

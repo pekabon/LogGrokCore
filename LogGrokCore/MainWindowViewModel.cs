@@ -12,7 +12,7 @@ namespace LogGrokCore
         private readonly ILogger _logger;
 
         public ObservableCollection<DocumentViewModel> Documents { get; } =
-            new ObservableCollection<DocumentViewModel>();
+            new();
         public ICommand OpenFileCommand => new DelegateCommand(OpenFile);
         
         public ICommand DropCommand => new DelegateCommand(

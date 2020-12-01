@@ -120,7 +120,7 @@ namespace LogGrokCore.Data
         public bool IsFinished => _lastLineLength.HasValue;
 
         private readonly IndexTree<long, LongsLeaf> _lineStarts 
-            = new IndexTree<long, LongsLeaf>(16, l => new LongsLeaf(l, 0));
+            = new(16, l => new LongsLeaf(l, 0));
         private int? _lastLineLength;
     }
 }

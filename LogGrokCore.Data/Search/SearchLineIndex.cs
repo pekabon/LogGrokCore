@@ -5,7 +5,7 @@ namespace LogGrokCore.Data.Search
     public class SearchLineIndex 
     {
         private readonly IndexTree<int, SimpleLeaf<int>> _searchResult 
-            = new IndexTree<int, SimpleLeaf<int>>(32, 
+            = new(32, 
                 value => new SimpleLeaf<int>(value, 0));
 
         private readonly ILineIndex _sourceLineIndex;

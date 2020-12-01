@@ -47,6 +47,6 @@ namespace LogGrokCore.Controls
         }
 
         private static readonly Dictionary<NavigateToLineRequest, ListView> SubscribersMap 
-            = new Dictionary<NavigateToLineRequest, ListView>();
+            = new();
     }
 }

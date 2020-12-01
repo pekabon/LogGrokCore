@@ -8,7 +8,7 @@ namespace LogGrokCore.Data
         private class StringPoolBucket
         {
             private readonly int _stringSize;
-            private readonly ConcurrentBag<string> _pool = new ConcurrentBag<string>();
+            private readonly ConcurrentBag<string> _pool = new();
             public StringPoolBucket(int stringSize)
             {
                 _stringSize = stringSize;
@@ -27,7 +27,7 @@ namespace LogGrokCore.Data
             }
         }
 
-        ConcurrentDictionary<int, StringPoolBucket> _buckets = new ConcurrentDictionary<int, StringPoolBucket>();
+        ConcurrentDictionary<int, StringPoolBucket> _buckets = new();
 
         private Func<int, StringPoolBucket> _bucketFactory = size => new StringPoolBucket(size);
         public string Rent(int size)

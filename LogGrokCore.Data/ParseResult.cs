@@ -16,7 +16,7 @@ namespace LogGrokCore.Data
 
         public LineMetaInformation Get()
         {
-            return new LineMetaInformation(_metaPlaceHolder.AsSpan(), _componentCount);
+            return new(_metaPlaceHolder.AsSpan(), _componentCount);
         }
     }
 }
