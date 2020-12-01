@@ -6,7 +6,6 @@ using LogGrokCore.Data.IndexTree;
 
 namespace LogGrokCore.Data.Index
 {
-
     public class Indexer : IDisposable
     {
         private readonly ConcurrentDictionary<IndexKey, IndexTree<int, SimpleLeaf<int>>> _indices =
@@ -16,10 +15,17 @@ namespace LogGrokCore.Data.Index
         
         private readonly CountIndex<IndexTree<int, SimpleLeaf<int>>> _countIndex 
             = new();
+
+        private readonly object _componentsLocker = new();
         
         public IEnumerable<string> GetAllComponents(int componentNumber)
         {
-            return _components[componentNumber].Select(key => key.GetComponent(componentNumber).ToString()); 
+            var componentSet = _components[componentNumber];
+            lock (_componentsLocker)
+            {
+                return componentSet
+                    .Select(key => key.GetComponent(componentNumber).ToString());
+            }
         }
 
         public IIndexedLinesProvider GetIndexedLinesProvider(IReadOnlyDictionary<int, IReadOnlyList<string>> excludedComponents)
@@ -49,6 +55,14 @@ namespace LogGrokCore.Data.Index
 
         public event Action<(int compnentNumber, IndexKey key)>? NewComponentAdded;
         
+        public int GetIndexCountForComponent(int componentIndex, string componentValue)
+        {
+            return _indices
+                .Where(keyValuePair =>
+                    keyValuePair.Key.GetComponent(componentIndex).SequenceEqual(componentValue.AsSpan()))
+                .Sum(kv => kv.Value.Count);
+        }
+
         private class ComponentComparer : IEqualityComparer<IndexKey>
         {
             private readonly int _index;
@@ -69,9 +83,14 @@ namespace LogGrokCore.Data.Index
                 var componentSet = _components.GetOrAdd(componentIndex,
                     static index => new HashSet<IndexKey>(new ComponentComparer(index)));
 
-                if (componentSet.Add(key))
+                bool isAdded;
+                lock (_componentsLocker)
+                {
+                    isAdded = componentSet.Add(key);
+                }
+
+                if (isAdded)
                     NewComponentAdded?.Invoke((componentIndex, key)); 
-                    
             }
         }
 
