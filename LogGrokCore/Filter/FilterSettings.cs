@@ -91,7 +91,7 @@ namespace LogGrokCore.Filter
             ExclusionsChanged?.Invoke();
         }
 
-        private void SetExclusions(int indexedComponent, IEnumerable<string> componentValuesToExclude)
+        public void SetExclusions(int indexedComponent, IEnumerable<string> componentValuesToExclude)
         {
             _exclusions[indexedComponent] = componentValuesToExclude.ToHashSet();
             ExclusionsChanged?.Invoke();

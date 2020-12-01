@@ -1,6 +1,5 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:controls="clr-namespace:LogGrokCore.Controls"
                     xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
                     xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
                     xmlns:filterPopup="clr-namespace:LogGrokCore.Controls.FilterPopup"
@@ -35,7 +34,7 @@
                     <AdornerDecorator>
                         <Grid Margin="4">
                             <Grid.Resources>
-                                <CollectionViewSource x:Key="items" Source="{Binding Elements}">
+                                <CollectionViewSource x:Key="ElementsCollectionViewSource" Source="{Binding Elements}">
                                     <CollectionViewSource.SortDescriptions>
                                         <componentModel:SortDescription PropertyName="Name" />
                                     </CollectionViewSource.SortDescriptions>
@@ -88,6 +87,7 @@
                                 </TextBox.Style>
                             </TextBox>
                             <Button Grid.Row="1"
+                                    Grid.Column="0"
                                     Margin="10, 10, 5, 0"
                                     Command="{Binding SelectAll}"
                                     CommandParameter="{Binding Items,
@@ -101,6 +101,7 @@
                                                                        ElementName=ListBox}"
                                     Content="Deselect All" />
                             <Button Grid.Row="2"
+                                    Grid.Column="0"
                                     Grid.ColumnSpan="2"
                                     Margin="10, 10, 5, 0"
                                     Command="{Binding SelectOnlySearchResults}"
@@ -108,12 +109,14 @@
                                                                        ElementName=ListBox}"
                                     Content="Select Only Search Results" />
                             <ListBox x:Name="ListBox"
+                                     Grid.Column="0"
                                      Grid.Row="3"
                                      Grid.ColumnSpan="4"
                                      Margin="10"
                                      ItemContainerStyle="{StaticResource MahApps.Styles.ListBoxItem}"
                                      HorizontalContentAlignment="Stretch"
-                                     ItemsSource="{Binding Source={StaticResource items}}"
+                                     ItemsSource="{Binding 
+                                        Source={StaticResource ElementsCollectionViewSource}}"
                                      SelectionMode="Single"
                                      filterPopup:ItemsFilteringBehavior.FilteredProperty="Name"
                                      filterPopup:ItemsFilteringBehavior.TextFilter="{Binding TextFilter}">
@@ -128,8 +131,6 @@
                                                             <ColumnDefinition Width="*" />
                                                         </Grid.ColumnDefinitions>
                                                         <CheckBox
-                                                            Command="{Binding Path=DataContext.RefreshActiveChanged,
-                                                                                            ElementName=ListBox}"
                                                             Content="{Binding Name}"
                                                             IsChecked="{Binding IsActive}" />
                                                         <TextBlock Grid.Column="1"

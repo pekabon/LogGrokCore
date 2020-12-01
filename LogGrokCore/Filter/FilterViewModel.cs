@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Threading;
 using LogGrokCore.Data;
 using LogGrokCore.Data.Index;
@@ -89,6 +90,14 @@ namespace LogGrokCore.Filter
         public ObservableCollection<ElementViewModel> Elements { get; }
 
         public bool IsFilterApplied => _filterSettings.HaveExclusions;
+        
+        public DelegateCommand DeselectAll =>
+            new(() => _filterSettings.ExcludeAllExcept(_indexedFieldIndex, 
+                Enumerable.Empty<string>()));
+
+        public DelegateCommand SelectAll =>
+            new DelegateCommand(() => _filterSettings.SetExclusions(_indexedFieldIndex, 
+                Enumerable.Empty<string>()));
         
         // IndexedFilter, 
                     // ndexer : GenericIndexer, 
