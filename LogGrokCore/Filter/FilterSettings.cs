@@ -8,8 +8,7 @@ namespace LogGrokCore.Filter
 {
     internal class FilterSettings
     {
-        private readonly Dictionary<int, IReadOnlyList<string>> _exclusions = 
-            new();
+        private readonly Dictionary<int, HashSet<string>> _exclusions = new();
         private readonly Indexer _indexer;
         private readonly LogMetaInformation _metaInformation;
         
@@ -23,15 +22,56 @@ namespace LogGrokCore.Filter
             _metaInformation = metaInformation;
         }
 
-        public IReadOnlyDictionary<int, IReadOnlyList<string>> Exclusions => _exclusions;
-        
+        public IReadOnlyDictionary<int, IEnumerable<string>> Exclusions
+        {
+            get
+            {
+                return _exclusions.ToDictionary(
+                    kv => kv.Key, 
+                    kv => kv.Value as IEnumerable<string>);
+            }
+        }
+
+        public bool this[(int component, string value) arg]
+        {
+            get
+            {
+                if (!_exclusions.TryGetValue(arg.component, out var componentExclusions))
+                    return true;
+                return !componentExclusions.Contains(arg.value);
+            }
+            set
+            {
+                var areExclusionsExist = _exclusions.TryGetValue(arg.component, out var componentExclusions);
+
+                if (value && componentExclusions != null)
+                {
+                    componentExclusions.Remove(arg.value);
+                    ExclusionsChanged?.Invoke();
+                }
+                else
+                {
+                    if (!areExclusionsExist)
+                    {
+                        componentExclusions = new HashSet<string>();
+                        _exclusions[arg.component] = componentExclusions;
+                    }
+
+                    if (componentExclusions?.Add(arg.value) is true)
+                    {
+                        ExclusionsChanged?.Invoke();
+                    }
+                }
+            }
+        }
+
         public void AddExclusions(int component, IEnumerable<string> componentValuesToExclude)
         {
             var indexedComponent = GetIndexedComponent(component);
 
             if (!_exclusions.TryGetValue(indexedComponent, out var currentExclusions))
             {
-                currentExclusions = new List<string>();
+                currentExclusions = new HashSet<string>();
             }
 
             SetExclusions(indexedComponent, currentExclusions.Concat(componentValuesToExclude));
@@ -53,7 +93,7 @@ namespace LogGrokCore.Filter
 
         private void SetExclusions(int indexedComponent, IEnumerable<string> componentValuesToExclude)
         {
-            _exclusions[indexedComponent] = componentValuesToExclude.ToList();
+            _exclusions[indexedComponent] = componentValuesToExclude.ToHashSet();
             ExclusionsChanged?.Invoke();
         }
 

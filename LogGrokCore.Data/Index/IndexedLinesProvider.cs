@@ -13,7 +13,7 @@ namespace LogGrokCore.Data.Index
             Indexer indexer, 
             IReadOnlyList<List<(IndexKey, int)>> countIndices,
             int countIndexGranularity,
-            IReadOnlyDictionary<int, IReadOnlyList<string>> excludedComponents)
+            IReadOnlyDictionary<int, IEnumerable<string>> excludedComponents)
         {
             _indexer = indexer;
 

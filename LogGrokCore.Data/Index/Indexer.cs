@@ -28,7 +28,7 @@ namespace LogGrokCore.Data.Index
             }
         }
 
-        public IIndexedLinesProvider GetIndexedLinesProvider(IReadOnlyDictionary<int, IReadOnlyList<string>> excludedComponents)
+        public IIndexedLinesProvider GetIndexedLinesProvider(IReadOnlyDictionary<int, IEnumerable<string>> excludedComponents)
         {
             return new IndexedLinesProvider(this, _countIndex.Counts, 
                 CountIndex<IndexTree<int, SimpleLeaf<int>>>.Granularity, excludedComponents);

@@ -87,7 +87,7 @@ namespace LogGrokCore
         }
 
         public (GrowingLogLinesCollection lineViewModelsCollectins, Func<int, int> getIndexByValue) 
-            GetLogLinesCollection(IReadOnlyDictionary<int, IReadOnlyList<string>> exclusions)
+            GetLogLinesCollection(IReadOnlyDictionary<int, IEnumerable<string>> exclusions)
         {
             var lineProviderAndGetIndexByValue = GetLineProvider(exclusions);
             var lineCollection =
@@ -102,7 +102,7 @@ namespace LogGrokCore
         private int GetIndexedComponent(int component) => _metaInformation.IndexedFieldNumbers.IndexOf(component);
         
         private (IItemProvider<(int index, string str)> itemProvider, Func<int, int> GetIndexByValue) GetLineProvider(
-            IReadOnlyDictionary<int, IReadOnlyList<string>> exclusions)
+            IReadOnlyDictionary<int, IEnumerable<string>> exclusions)
         {
             if (exclusions.Count == 0) return (_lineProvider, x=> x);
             var lineNumbersProvider = _indexer.GetIndexedLinesProvider(exclusions);

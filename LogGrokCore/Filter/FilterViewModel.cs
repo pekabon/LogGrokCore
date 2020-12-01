@@ -10,7 +10,6 @@ namespace LogGrokCore.Filter
 {
     internal class FilterViewModel : ViewModelBase 
     {
-        private readonly string _fieldName;
         private readonly FilterSettings _filterSettings;
         private readonly Indexer _indexer;
         private string? _textFilter;
@@ -22,7 +21,6 @@ namespace LogGrokCore.Filter
             Indexer indexer,
             LogMetaInformation metaInformation)
         {
-            _fieldName = fieldName;
             _filterSettings = filterSettings;
             _indexer = indexer;
 
@@ -33,16 +31,26 @@ namespace LogGrokCore.Filter
 
             
             Elements = new ObservableCollection<ElementViewModel>(
-                fieldValues.Select(fieldValue => 
-                    new ElementViewModel(fieldValue, true, 
-                        () => _indexer.GetIndexCountForComponent(_indexedFieldIndex, fieldValue))));
+                fieldValues.Select(CreateElementViewModel));
             
             _indexer.NewComponentAdded += OnNewComponentAdded;
         }      
 
         private readonly ConcurrentBag<(int componentNumber, IndexKey key)> _newComponentsQueue = new();
         private DispatcherOperation? _addComponentDispatcherOperation;
-        
+
+        private ElementViewModel CreateElementViewModel(string fieldValue)
+        {
+            var newElementViewModel =
+                new ElementViewModel(
+                    fieldValue,
+                    _indexedFieldIndex,
+                    _filterSettings,
+                    () => _indexer.GetIndexCountForComponent(_indexedFieldIndex, fieldValue));
+            
+            return newElementViewModel;
+        }
+
         private void OnNewComponentAdded((int componentNumber, IndexKey key) newComponent)
         {
             var (componentIndex, _) = newComponent;
@@ -55,11 +63,10 @@ namespace LogGrokCore.Filter
             
             void ProcessNewComponents()
             {
-                while ( _newComponentsQueue.TryTake(out var valueTuple))
+                while (_newComponentsQueue.TryTake(out var valueTuple))
                 {
                     var (componentNumber, key) = valueTuple;
-                    var newElement = new ElementViewModel(key.GetComponent(componentNumber).ToString(), 
-                        true, () => 0);
+                    var newElement = CreateElementViewModel(key.GetComponent(componentNumber).ToString());
                     Elements.Add(newElement);
                 }
             }

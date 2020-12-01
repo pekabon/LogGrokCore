@@ -111,6 +111,7 @@
                                      Grid.Row="3"
                                      Grid.ColumnSpan="4"
                                      Margin="10"
+                                     ItemContainerStyle="{StaticResource MahApps.Styles.ListBoxItem}"
                                      HorizontalContentAlignment="Stretch"
                                      ItemsSource="{Binding Source={StaticResource items}}"
                                      SelectionMode="Single"
