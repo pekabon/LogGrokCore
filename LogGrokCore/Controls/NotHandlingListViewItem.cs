@@ -8,5 +8,12 @@ namespace LogGrokCore.Controls
         protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
         {
         }
+
+        protected override void OnMouseRightButtonDown(MouseButtonEventArgs e)
+        {
+            ;
+        }
+
+
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -10,7 +11,6 @@ using System.Windows.Threading;
 
 namespace LogGrokCore.Controls
 {
-    
     public class ListView : System.Windows.Controls.ListView
     {
         public static readonly DependencyProperty ReadonlySelectedItemsProperty =
@@ -18,17 +18,31 @@ namespace LogGrokCore.Controls
 
         public ListView()
         {
-            Loaded += (o, e) => ScheduleResetColumnsWidth();
+            Loaded += (o, e) =>
+            {
+                ScheduleResetColumnsWidth();
+                if (GetPanel() is { } panel)
+                    panel.SelectionChanged += UpdateReadonlySelectedItems;
+                else
+                    throw new InvalidOperationException("Panel is not Set when loaded");
+            };
+            
             CommandBindings.Add(new CommandBinding(
                 ApplicationCommands.Copy,
                 (o, e) => CopySelectedItemsToClipboard(),
                 (o, e) =>
                 {
-                    if (!ReadonlySelectedItems.Any()) return;
+                    var items = ReadonlySelectedItems;
+                    if (items == null || !items.Any()) return; 
                     e.CanExecute = true;
                     e.Handled = true;
                 }
             ));
+        }
+
+        private void UpdateReadonlySelectedItems()
+        {
+            ReadonlySelectedItems = GetPanel()?.SelectedIndices.Select(index => Items[index]);
         }
 
         public void PrepareItemContainer(ListViewItem container, object item)
@@ -41,7 +55,7 @@ namespace LogGrokCore.Controls
             PrepareContainerForItemOverride(container, item);
         }
 
-        public IEnumerable<object> ReadonlySelectedItems
+        public IEnumerable<object>? ReadonlySelectedItems
         {
             get => ((IEnumerable)GetValue(ReadonlySelectedItemsProperty)).Cast<object>();
             set => SetValue(ReadonlySelectedItemsProperty, value);
@@ -50,11 +64,6 @@ namespace LogGrokCore.Controls
         public void BringIndexIntoView(in int lineNumber)
         {
             GetPanel()?.NavigateTo(lineNumber);
-        }
-
-        protected override void OnSelectionChanged(SelectionChangedEventArgs e)
-        {
-            ReadonlySelectedItems = SelectedItems.Cast<object>().ToList();
         }
 
         protected override void OnKeyDown(KeyEventArgs e)

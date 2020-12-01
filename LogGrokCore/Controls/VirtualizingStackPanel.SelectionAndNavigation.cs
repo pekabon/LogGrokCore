@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -10,7 +11,7 @@ namespace LogGrokCore.Controls
 {
     public partial class VirtualizingStackPanel
     {
-        private readonly Selection _selection = new Selection();
+        private readonly Selection _selection = new();
         private ScrollContentPresenter? _scrollContentPresenter;
 
         private int CurrentPosition
@@ -25,6 +26,8 @@ namespace LogGrokCore.Controls
         }
 
         public IEnumerable<int> SelectedIndices => _selection;
+
+        public event Action? SelectionChanged;
         
         public bool ProcessKeyDown(Key key)
         {

@@ -41,6 +41,8 @@ namespace LogGrokCore.Controls
 
                 Items.CurrentChanged += OnCurrentItemChanged;
             };
+
+            _selection.Changed += () => SelectionChanged?.Invoke();
         }
 
         protected override Size MeasureOverride(Size availableSize)

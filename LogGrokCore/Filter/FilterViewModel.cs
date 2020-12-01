@@ -14,7 +14,8 @@ namespace LogGrokCore.Filter
         private readonly FilterSettings _filterSettings;
         private readonly Indexer _indexer;
         private string? _textFilter;
-        private int _indexedFieldIndex;
+        private readonly int _indexedFieldIndex;
+        
         public FilterViewModel(
             string fieldName, 
             FilterSettings filterSettings,
@@ -26,15 +27,17 @@ namespace LogGrokCore.Filter
             _indexer = indexer;
 
             _indexedFieldIndex = metaInformation.GetIndexedFieldIndexByName(fieldName);
-            
-            _indexer.NewComponentAdded += OnNewComponentAdded;
-            
+                       
             var fieldValues = 
                 _indexer.GetAllComponents(_indexedFieldIndex);
+
             
             Elements = new ObservableCollection<ElementViewModel>(
-                fieldValues.Select(fieldValue => new ElementViewModel(fieldValue, true, () => 0)));
+                fieldValues.Select(fieldValue => 
+                    new ElementViewModel(fieldValue, true, 
+                        () => _indexer.GetIndexCountForComponent(_indexedFieldIndex, fieldValue))));
             
+            _indexer.NewComponentAdded += OnNewComponentAdded;
         }      
 
         private readonly ConcurrentBag<(int componentNumber, IndexKey key)> _newComponentsQueue = new();
@@ -67,7 +70,7 @@ namespace LogGrokCore.Filter
                     ProcessNewComponents();
                     _addComponentDispatcherOperation = null;
                     ProcessNewComponents();
-                }, DispatcherPriority.Normal);
+                });
         }
 
         public string? TextFilter
@@ -76,8 +79,9 @@ namespace LogGrokCore.Filter
             set => SetAndRaiseIfChanged(ref _textFilter, value);
         }
 
-        public ObservableCollection<ElementViewModel> Elements { get; } 
-        
+        public ObservableCollection<ElementViewModel> Elements { get; }
+
+        public bool IsFilterApplied => _filterSettings.HaveExclusions;
         
         // IndexedFilter, 
                     // ndexer : GenericIndexer, 

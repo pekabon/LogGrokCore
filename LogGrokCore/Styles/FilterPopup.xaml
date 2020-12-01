@@ -7,15 +7,17 @@
                     xmlns:local="clr-namespace:LogGrokCore.Filter">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/fonts.xaml"/>
         <ResourceDictionary Source="ResizablePopupContent.xaml"/>
     </ResourceDictionary.MergedDictionaries>
 
-    <DataTemplate x:Key="FilterPopup">
+    <DataTemplate x:Key="FilterPopup" DataType="local:FilterViewModel">
         <filterPopup:ResizablePopup Width="250"
                                     Height="300"
                                     MinWidth="200"
                                     MinHeight="200"
                                     StaysOpen="False"
+                                    TextBlock.FontWeight="Normal"
                                     filterPopup:BindPopupBehavior.ToToggleButton="{Binding 
                                         RelativeSource={RelativeSource FindAncestor, AncestorType=ToggleButton}}"
                                     filterPopup:RoutedCommandBehavior.RoutedCommandToCommandBinding="{filterPopup:RoutedCommandToCommandBinding 
@@ -35,7 +37,7 @@
                             <Grid.Resources>
                                 <CollectionViewSource x:Key="items" Source="{Binding Elements}">
                                     <CollectionViewSource.SortDescriptions>
-                                        <componentModel:SortDescription PropertyName="Category" />
+                                        <componentModel:SortDescription PropertyName="Name" />
                                     </CollectionViewSource.SortDescriptions>
                                 </CollectionViewSource>
                             </Grid.Resources>
