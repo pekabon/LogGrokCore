@@ -59,13 +59,14 @@ namespace LogGrokCore.Controls
             return true;
         }
 
-        public bool ProcessMouseDown()
+        public bool ProcessMouseDown(MouseButton changedButton)
         {
             var item = GetItemUnderMouse();
             if (item == null) return false;
-
+            if (changedButton == MouseButton.Right && item.IsSelected) return false;
+            
             var index = _visibleItems.Single(i => i.Element == item).Index;
-
+            
             if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
             {
                 if (item.IsSelected)

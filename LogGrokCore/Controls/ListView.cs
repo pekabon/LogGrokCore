@@ -42,7 +42,8 @@ namespace LogGrokCore.Controls
 
         private void UpdateReadonlySelectedItems()
         {
-            ReadonlySelectedItems = GetPanel()?.SelectedIndices.Select(index => Items[index]);
+            ReadonlySelectedItems = 
+                GetPanel()?.SelectedIndices.Select(index => Items[index]).ToList();
         }
 
         public void PrepareItemContainer(ListViewItem container, object item)
@@ -76,7 +77,7 @@ namespace LogGrokCore.Controls
 
         protected override void OnMouseDown(MouseButtonEventArgs e)
         {
-            if (GetPanel()?.ProcessMouseDown() == true)
+            if (GetPanel()?.ProcessMouseDown(e.ChangedButton) == true)
             {
                 e.Handled = true;
             }
