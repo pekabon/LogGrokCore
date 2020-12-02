@@ -10,8 +10,7 @@ namespace LogGrokCore.Filter
     {
         private readonly Dictionary<int, HashSet<string>> _exclusions = new();
         private readonly Indexer _indexer;
-        private readonly LogMetaInformation _metaInformation;
-        
+
         public bool HaveExclusions => _exclusions.Count > 0;
         
         public event Action? ExclusionsChanged;
@@ -19,7 +18,6 @@ namespace LogGrokCore.Filter
         public FilterSettings(Indexer indexer, LogMetaInformation metaInformation)
         {
             _indexer = indexer;
-            _metaInformation = metaInformation;
         }
 
         public IReadOnlyDictionary<int, IEnumerable<string>> Exclusions
@@ -65,10 +63,8 @@ namespace LogGrokCore.Filter
             }
         }
 
-        public void AddExclusions(int component, IEnumerable<string> componentValuesToExclude)
+        public void AddExclusions(int indexedComponent, IEnumerable<string> componentValuesToExclude)
         {
-            var indexedComponent = GetIndexedComponent(component);
-
             if (!_exclusions.TryGetValue(indexedComponent, out var currentExclusions))
             {
                 currentExclusions = new HashSet<string>();
@@ -77,10 +73,8 @@ namespace LogGrokCore.Filter
             SetExclusions(indexedComponent, currentExclusions.Concat(componentValuesToExclude));
         }
 
-        public void ExcludeAllExcept(int component, IEnumerable<string> componentValuesToInclude)
+        public void ExcludeAllExcept(int indexedComponent, IEnumerable<string> componentValuesToInclude)
         {
-            var indexedComponent = GetIndexedComponent(component);
-
             var exclusions = _indexer.GetAllComponents(indexedComponent).Except(componentValuesToInclude);
             SetExclusions(indexedComponent , exclusions);
         }
@@ -96,8 +90,5 @@ namespace LogGrokCore.Filter
             _exclusions[indexedComponent] = componentValuesToExclude.ToHashSet();
             ExclusionsChanged?.Invoke();
         }
-
-        private int GetIndexedComponent(int component) =>
-            Array.IndexOf(_metaInformation.IndexedFieldNumbers, component);
     }
 }

@@ -72,14 +72,17 @@ namespace LogGrokCore
 
             ExcludeCommand = DelegateCommand.Create(
                     (int componentIndex) => {
-                        _filterSettings.AddExclusions(componentIndex,
+                        _filterSettings.AddExclusions(
+                            logModelFacade.MetaInformation.GetIndexedFieldIndexByFieldIndex(componentIndex),
                             GetComponentsInSelectedLines(componentIndex));
                     });    
             
             ExcludeAllButCommand = DelegateCommand.Create(
                 (int componentIndex) =>
                 {
-                    _filterSettings.ExcludeAllExcept(componentIndex,
+                    
+                    _filterSettings.ExcludeAllExcept(
+                        logModelFacade.MetaInformation.GetIndexedFieldIndexByFieldIndex(componentIndex),
                         GetComponentsInSelectedLines(componentIndex));
                 });
             

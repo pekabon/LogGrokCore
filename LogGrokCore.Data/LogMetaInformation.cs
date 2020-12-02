@@ -19,8 +19,11 @@ namespace LogGrokCore.Data
         public int GetFieldIndexByName(string fieldName) => Array.IndexOf(FieldNames, fieldName);
 
         public int GetIndexedFieldIndexByName(string fieldName) =>
-            Array.IndexOf(IndexedFieldNumbers, GetFieldIndexByName(fieldName));
+            GetIndexedFieldIndexByFieldIndex(GetFieldIndexByName(fieldName));
         
+        public int GetIndexedFieldIndexByFieldIndex(int index) =>
+            Array.IndexOf(IndexedFieldNumbers, index);
+
         public bool IsFieldIndexed(string fieldName)
         {
             var index = Array.IndexOf(FieldNames, fieldName);
