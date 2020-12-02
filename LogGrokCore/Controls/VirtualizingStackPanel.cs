@@ -48,6 +48,7 @@ namespace LogGrokCore.Controls
         {
             UpdateViewPort(availableSize);
             UpdateExtent();
+            
             var count = Items.Count;
             if (count > 0)
                 BuildVisibleItems(availableSize, VerticalOffset);
@@ -127,7 +128,10 @@ namespace LogGrokCore.Controls
         {
             var firstVisibleItemIndex = (int) Math.Floor(verticalOffset);
             var startOffset = firstVisibleItemIndex - verticalOffset;
-
+            
+            if (InternalChildren.Count == 0)
+                _visibleItems.Clear();
+            
             var (newVisibleItems, itemsToRecycle, _) =
                 GenerateItemsDownWithRelativeOffset(
                     startOffset, firstVisibleItemIndex, availableSize.Height, _visibleItems);
