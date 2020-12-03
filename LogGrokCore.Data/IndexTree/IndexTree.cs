@@ -94,7 +94,9 @@ namespace LogGrokCore.Data.IndexTree
             get
             {
                 Debug.Assert(idx <= _count);
-                return GetEnumerableFromIndex(idx).First();
+                if (_head == null) 
+                    throw new InvalidOperationException("Unable to get element from empty tree.");
+                return _head.GetValue(idx);
             }
         }
     }

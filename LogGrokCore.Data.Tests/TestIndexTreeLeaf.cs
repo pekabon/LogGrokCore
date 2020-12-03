@@ -43,6 +43,11 @@ namespace LogGrokCore.Data.Tests
         {
             return this.GetEnumerableFromIndex<int, TestIndexTreeLeaf>(index);
         }
+        
+        public override int GetValue(int index)
+        {
+            return this.GetValue<int, TestIndexTreeLeaf>(index);
+        }
 
         public override (int index, TestIndexTreeLeaf leaf) FindByValue(int value)
         {

@@ -41,6 +41,11 @@ namespace LogGrokCore.Data.IndexTree
         {
             return this.GetEnumerableFromIndex<T, SimpleLeaf<T>>(index);
         }
+        
+        public override T GetValue(int index)
+        {
+            return this.GetValue<T, SimpleLeaf<T>>(index);
+        }
 
         public override (int index, SimpleLeaf<T> leaf) FindByValue(T value)
         {

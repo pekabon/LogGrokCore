@@ -34,6 +34,21 @@ namespace LogGrokCore.Data.IndexTree
             return null;
         }
 
+        public override T GetValue(int index)
+        {
+            var leafOrNode = _subnodes[0];
+            for (var idx = 1; idx < _subnodes.Count; idx++)
+            {
+                var candidate = _subnodes[idx];
+                if (candidate.MinIndex <= index)
+                    leafOrNode = candidate;
+                else
+                    return leafOrNode.GetValue(index);
+            }
+
+            return leafOrNode.GetValue(index);
+        }
+
         public override IEnumerable<T> GetEnumerableFromIndex(int index)
         {
             var leafOrNode = _subnodes[0];

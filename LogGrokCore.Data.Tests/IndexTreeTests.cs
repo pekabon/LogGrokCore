@@ -26,6 +26,11 @@ namespace LogGrokCore.Data.Tests
                     enumerable.SequenceEqual(Enumerable.Range(i, maxCount - i)),
                     $"Sequence not equal for {i}.");
             }
+
+            for (var i = 0; i < maxCount; i++)
+            {
+                Assert.AreEqual(indexTree[i], i);
+            }
         }
     }
 }
