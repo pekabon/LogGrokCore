@@ -11,7 +11,6 @@ namespace LogGrokCore.Controls
 {
     public partial class VirtualizingStackPanel : VirtualizingPanel, IScrollInfo
     {
-        private readonly TranslateTransform _trans = new();
         private List<VisibleItem> _visibleItems = new();
         private readonly Stack<ListViewItem> _recycled = new();
 
@@ -23,19 +22,16 @@ namespace LogGrokCore.Controls
 
         public VirtualizingStackPanel()
         {
-            RenderTransform = _trans;
-
-            Loaded += (o, e) =>
+            Loaded += (_, _) =>
             {
                 // ReSharper disable once UnusedVariable
-                var necessaryChildrenTouch = this.Children;
+                var necessaryChildrenTouch = Children;
                 var itemContainerGenerator = (ItemContainerGenerator) ItemContainerGenerator;
-                itemContainerGenerator.ItemsChanged += (obj, ea) =>
+                itemContainerGenerator.ItemsChanged += (_, _) =>
                 {
                     if (Items.Count <= 0) return;
                     _currentPosition = Math.Min(_currentPosition, Items.Count - 1);
                     Items.MoveCurrentToPosition(_currentPosition);
-                    
                 };
 
                 Items.CurrentChanged += OnCurrentItemChanged;
@@ -62,54 +58,22 @@ namespace LogGrokCore.Controls
 
         protected override Size ArrangeOverride(Size finalSize)
         {
-            var firstVisibleIndex = (int) Math.Floor(VerticalOffset);
-
-            var elementsBefore = _visibleItems.TakeWhile(item => item.Index < firstVisibleIndex);
-            var visibleElements =
-                _visibleItems.SkipWhile(item => item.Index < firstVisibleIndex).ToList();
-
-            var renderOffset = visibleElements.TakeFirst() switch
+            foreach (var (item, _, upperBound, lowerBound) in _visibleItems)
             {
-                var (firstItem, firstIndex, _, _) => (firstIndex - VerticalOffset) * firstItem.DesiredSize.Height,
-                _ => 0
-            };
-
-            _trans.Y = renderOffset;
-            
-            foreach (var (item, _, upperBound, lowerBound) in visibleElements)
-            {
-                var top = upperBound - renderOffset;
-                var bottom = lowerBound - renderOffset;
-                var childRect = new Rect(-_offset.X, top, item.DesiredSize.Width, bottom - top);
+                var childRect = new Rect(-_offset.X, upperBound, item.DesiredSize.Width, lowerBound - upperBound);
                 item.Arrange(childRect);
-            }
-
-            var itemOffsets = visibleElements.Select(item => (item.Index, item.UpperBound, item.LowerBound)).ToList();
-
-            var offset = 0.0;
-
-            itemOffsets.Reverse();
-            foreach (var v in elementsBefore.Reverse())
-            {
-                var (item, index, _, _) = v;
-                var height = item.DesiredSize.Height;
-                var childRect = new Rect(-_offset.X, offset - height, _extent.Width, height);
-                item.Arrange(childRect);
-
-                var newOffset = offset - height;
-                itemOffsets.Add((index, newOffset + renderOffset, offset + renderOffset));
-                offset = newOffset;
             }
 
             var screenBound = finalSize.Height;
-            
+
+            var invisibleItemOffset = screenBound;
             foreach (var recycledItem in _recycled)
             {
-                var childRect = new Rect(0, screenBound - renderOffset, recycledItem.DesiredSize.Width, recycledItem.DesiredSize.Height);
+                var desiredSizeHeight = recycledItem.DesiredSize.Height;
+                var childRect = new Rect(0, invisibleItemOffset, recycledItem.DesiredSize.Width, desiredSizeHeight);
                 recycledItem.Arrange(childRect);
+                invisibleItemOffset += desiredSizeHeight;
             }
-            
-            itemOffsets.Reverse();
 
             var onScreenCount = _visibleItems
                 .Where(v =>
@@ -132,7 +96,7 @@ namespace LogGrokCore.Controls
             if (InternalChildren.Count == 0)
                 _visibleItems.Clear();
             
-            var (newVisibleItems, itemsToRecycle, _) =
+            var (newVisibleItems, itemsToRecycle) =
                 GenerateItemsDownWithRelativeOffset(
                     startOffset, firstVisibleItemIndex, availableSize.Height, _visibleItems);
 
@@ -144,14 +108,14 @@ namespace LogGrokCore.Controls
 
         private void RecycleItems(IEnumerable<VisibleItem> itemsToRecycle)
         {
-            foreach (var item  in itemsToRecycle)
+            foreach (var (uiElement, _, _, _)  in itemsToRecycle)
             {
-                item.Element.Visibility = Visibility.Collapsed;
-                _recycled.Push(item.Element);
+                uiElement.Visibility = Visibility.Collapsed;
+                _recycled.Push(uiElement);
             }
         }
 
-        private (List<VisibleItem> newVisibleItems, List<VisibleItem> newItemsToRecycle, double? resultOffset)
+        private (List<VisibleItem> newVisibleItems, List<VisibleItem> newItemsToRecycle)
             GenerateItemsDownWithRelativeOffset(
                 double relativeOffset, int startIndex,
                 double heightToBuild, List<VisibleItem> currentVisibleItems)
@@ -190,13 +154,7 @@ namespace LogGrokCore.Controls
                 currentIndex++;
             }
 
-            return (newItems, oldItems.ToList(), currentOffset);
-        }
-
-        private void RecycleItem(ListViewItem item)
-        {
-            item.Visibility = Visibility.Collapsed;
-            _recycled.Push(item);
+            return (newItems, oldItems.ToList());
         }
 
         private ItemCollection Items => ItemsControl.GetItemsOwner(this).Items;
@@ -223,7 +181,6 @@ namespace LogGrokCore.Controls
 
             if (isNewElement)
             {
-                
                 ListView.PrepareItemContainer(item, Items[itemIndex]);
                 UpdateItem(item);
             }
