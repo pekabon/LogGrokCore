@@ -45,7 +45,6 @@ namespace LogGrokCore.Data.Index
 
         public void Fetch(int start, Span<int> values)
         {
-            
             var idx = 0;
             foreach (var lineNumber in GetEnumerableFrom(start).Take(values.Length))
             {
@@ -75,7 +74,8 @@ namespace LogGrokCore.Data.Index
             var indices = _filteredCountIndicesProvider.GetAllKeys().Select(key =>
             {
                 var index = _indexer.GetIndex(key);
-                return index.GetEnumerableFromValue(
+               
+                return index.GetEnumerableFromIndex(
                     startIndices.TryGetValue(key, out var startPosition) 
                         ? startPosition 
                         : 0); 
