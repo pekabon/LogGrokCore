@@ -7,6 +7,6 @@ namespace LogGrokCore.Controls.FilterPopup
     {
         public static ICommand Clear = new DelegateCommand(
             textBox => ((TextBox)textBox).Text = string.Empty,
-            textBox => !string.IsNullOrEmpty(((TextBox)textBox).Text));
+            textBox => !string.IsNullOrEmpty((textBox as TextBox)?.Text));
     }
 }

@@ -9,23 +9,28 @@ namespace LogGrokCore
         private readonly Func<object?, bool>? _canExecute;
 
         public DelegateCommand(Action execute, Func<bool> canExecute)
+            : this(execute)
         {
-            _execute = _ => execute();
             _canExecute = _ => canExecute();
         }
+        
+        public DelegateCommand(Action execute)
+        {
+            _execute = _ => execute();
+        }
 
-        public DelegateCommand(Action<object> execute, Func<object, bool> canExecute)
+        public DelegateCommand(Action<object> execute, Func<object?, bool> canExecute)
+            : this(execute)
+        {
+            _canExecute = canExecute;
+        }
+        
+        public DelegateCommand(Action<object> execute)
         {
             _execute = o =>
             {
                 if (o == null) throw new NullReferenceException("Execute: parameter is null.");
                 execute(o);
-            };
-            
-            _canExecute = o =>
-            {
-                if (o == null) throw new NullReferenceException("CanExecute: parameter is null.");
-                return canExecute(o);
             };
         }
 
@@ -36,13 +41,13 @@ namespace LogGrokCore
                 if (o is T t)
                     execute(t);
                 else
-                    throw new InvalidOperationException();
+                    throw new InvalidOperationException($"Unexpected parameter: {o}");
             }
 
             bool CanExecute(object? o)
             {
                 if (o is T t) return canExecute(t);
-                throw new InvalidOperationException();
+                return false;
             }
 
             return new DelegateCommand(Execute, CanExecute);
@@ -50,12 +55,15 @@ namespace LogGrokCore
 
         public static DelegateCommand Create<T>(Action<T> execute)
         {
-            return Create(execute, _ => true);
-        }
+            void Execute(object? o)
+            {
+                if (o is T t)
+                    execute(t);
+                else
+                    throw new InvalidOperationException($"Unexpected parameter: {o}");
+            }
 
-        public DelegateCommand(Action execute)
-        {
-            _execute = _ => execute();
+            return new DelegateCommand(Execute, _ => true);
         }
 
         public bool CanExecute(object? parameter)

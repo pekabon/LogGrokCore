@@ -7,6 +7,6 @@ namespace LogGrokCore.Controls.FilterPopup
     {
         public static ICommand Close  = new DelegateCommand(
             popup => ((Popup)popup).IsOpen = false,
-            popup => ((Popup)popup).IsOpen);
+            popup => (popup as Popup)?.IsOpen is true);
     }
 }

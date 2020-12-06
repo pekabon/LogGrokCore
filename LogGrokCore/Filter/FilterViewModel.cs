@@ -1,23 +1,23 @@
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
-using System.Windows.Input;
 using System.Windows.Threading;
 using LogGrokCore.Data;
 using LogGrokCore.Data.Index;
 
 namespace LogGrokCore.Filter
 {
-    internal class FilterViewModel : ViewModelBase 
+    internal class FilterViewModel : ViewModelBase
     {
         private readonly FilterSettings _filterSettings;
         private readonly Indexer _indexer;
         private string? _textFilter;
         private readonly int _indexedFieldIndex;
-        
+
         public FilterViewModel(
-            string fieldName, 
+            string fieldName,
             FilterSettings filterSettings,
             Indexer indexer,
             LogMetaInformation metaInformation)
@@ -26,16 +26,16 @@ namespace LogGrokCore.Filter
             _indexer = indexer;
 
             _indexedFieldIndex = metaInformation.GetIndexedFieldIndexByName(fieldName);
-                       
-            var fieldValues = 
+
+            var fieldValues =
                 _indexer.GetAllComponents(_indexedFieldIndex);
 
-            
+
             Elements = new ObservableCollection<ElementViewModel>(
                 fieldValues.Select(CreateElementViewModel));
-            
+
             _indexer.NewComponentAdded += OnNewComponentAdded;
-        }      
+        }
 
         private readonly ConcurrentBag<(int componentNumber, IndexKey key)> _newComponentsQueue = new();
         private DispatcherOperation? _addComponentDispatcherOperation;
@@ -48,7 +48,7 @@ namespace LogGrokCore.Filter
                     _indexedFieldIndex,
                     _filterSettings,
                     () => _indexer.GetIndexCountForComponent(_indexedFieldIndex, fieldValue));
-            
+
             return newElementViewModel;
         }
 
@@ -61,7 +61,7 @@ namespace LogGrokCore.Filter
             }
 
             _newComponentsQueue.Add(newComponent);
-            
+
             void ProcessNewComponents()
             {
                 while (_newComponentsQueue.TryTake(out var valueTuple))
@@ -90,18 +90,31 @@ namespace LogGrokCore.Filter
         public ObservableCollection<ElementViewModel> Elements { get; }
 
         public bool IsFilterApplied => _filterSettings.HaveExclusions;
-        
-        public DelegateCommand DeselectAll =>
-            new(() => _filterSettings.ExcludeAllExcept(_indexedFieldIndex, 
+
+        public DelegateCommand DeselectAllCommand =>
+            new(() => _filterSettings.ExcludeAllExcept(_indexedFieldIndex,
                 Enumerable.Empty<string>()));
 
-        public DelegateCommand SelectAll =>
-            new DelegateCommand(() => _filterSettings.SetExclusions(_indexedFieldIndex, 
+        public DelegateCommand SelectAllCommand =>
+            new(() => _filterSettings.SetExclusions(_indexedFieldIndex,
                 Enumerable.Empty<string>()));
-        
+
+        public DelegateCommand SelectOnlySearchResultsCommand =>
+            DelegateCommand.Create<IEnumerable>(SelectOnlySearchResults);
+
+        private void SelectOnlySearchResults(IEnumerable items)
+        {
+            var resultItems = items.Cast<ElementViewModel>().ToHashSet();
+
+            foreach (var elementViewModel in Elements)
+            {
+                elementViewModel.IsActive = resultItems.Contains(elementViewModel);
+            }
+        }
+
         // IndexedFilter, 
-                    // ndexer : GenericIndexer, 
-                    // [NotNull] syncContext : SynchronizationContext)
+        // ndexer : GenericIndexer, 
+        // [NotNull] syncContext : SynchronizationContext)
         // {
         //     _componentKey = componentKey;
         //     _indexedFilter = indexedFilter;
