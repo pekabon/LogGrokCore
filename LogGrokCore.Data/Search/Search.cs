@@ -63,6 +63,7 @@ namespace LogGrokCore.Data.Search
             {
                 var (firstLineOffset, firstLineLength) = sourceLineIndex.GetLine(start);
                 var (lastLineOffset, lastLineLength) = sourceLineIndex.GetLine(end);
+                
                 var size = lastLineOffset + lastLineLength - firstLineOffset;
                 using var memoryOwner = MemoryPool<byte>.Shared.Rent((int) size);
                 var memorySpan = memoryOwner.Memory.Span;
@@ -102,14 +103,17 @@ namespace LogGrokCore.Data.Search
                     SearchStringPool.Return(tempString);
                     index++;
 
+                    if (index > end)
+                        break;
+                    
                     (currentLineOffset, currentLineLength) = sourceLineIndex.GetLine(index);
-                } while (index < end && !cancellationToken.IsCancellationRequested);
+                    
+                } while (!cancellationToken.IsCancellationRequested);
             }
 
             var progress = new Progress();
             Task.Run(async () =>
                 {
-
                     await foreach (var (start, count) in
                         sourceLineIndex.FetchRanges(cancellationToken))
                     {
@@ -123,7 +127,7 @@ namespace LogGrokCore.Data.Search
                             current += MaxSearchSizeLines;
                         }
                     }
-                })
+                }, cancellationToken)
                 .ContinueWith(_ =>
                 {
                     return progress.IsFinished = true;

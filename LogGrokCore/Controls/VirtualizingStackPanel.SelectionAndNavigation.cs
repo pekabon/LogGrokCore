@@ -13,7 +13,7 @@ namespace LogGrokCore.Controls
     {
         public static readonly DependencyProperty CurrentPositionProperty = DependencyProperty.Register(
             "CurrentPosition", typeof(int), typeof(VirtualizingStackPanel), 
-            new FrameworkPropertyMetadata(default(int), FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
+            new FrameworkPropertyMetadata(-1, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
                 OnCurrentPositionChanged ));
 
         private static void OnCurrentPositionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -98,7 +98,6 @@ namespace LogGrokCore.Controls
             FocusManager.SetFocusedElement(item, item);
             return true;
         }
-
         
         private Point? GetMousePosition()
         {
@@ -159,6 +158,7 @@ namespace LogGrokCore.Controls
         {
             _selection.Clear();
             CurrentPosition = index;
+            _selection.Add(index);
             BringIndexIntoView(CurrentPosition);
             UpdateSelection();
         }

@@ -58,7 +58,7 @@ namespace LogGrokCore.Controls
 
         public IEnumerable<object>? ReadonlySelectedItems
         {
-            get => ((IEnumerable)GetValue(ReadonlySelectedItemsProperty)).Cast<object>();
+            get => (GetValue(ReadonlySelectedItemsProperty) as IEnumerable)?.Cast<object>();
             set => SetValue(ReadonlySelectedItemsProperty, value);
         }
         
