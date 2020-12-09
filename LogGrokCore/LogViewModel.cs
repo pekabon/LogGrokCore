@@ -29,6 +29,7 @@ namespace LogGrokCore
         private Regex? _highlightRegex;
         private Func<int, int> _getIndexByValue = x => x;
         private readonly FilterSettings _filterSettings;
+        private int _currentItemIndex;
 
         public LogViewModel(
             LogModelFacade logModelFacade,
@@ -48,7 +49,7 @@ namespace LogGrokCore
             filterSettings.ExclusionsChanged += () =>
             {
                 InvokePropertyChanged(nameof(HaveFilter));
-                UpdateFilteredCollection(_lineViewModelCollectionProvider);
+                UpdateFilteredCollection();
             };
 
             var lineCollection =
@@ -61,14 +62,6 @@ namespace LogGrokCore
             CopyPathToClipboardCommand =
                 new DelegateCommand(() => TextCopy.ClipboardService.SetText(_logModelFacade.FilePath));
             OpenContainingFolderCommand = new DelegateCommand(OpenContainingFolder);
-
-            void UpdateFilteredCollection(LineViewModelCollectionProvider viewModelCollectionProvider)
-            {
-                var (lineViewModelCollection, getIndexByValue) = 
-                    lineViewModelCollectionProvider.GetLogLinesCollection(_filterSettings.Exclusions);
-                Lines = lineViewModelCollection;
-                _getIndexByValue = getIndexByValue;
-            }
 
             ExcludeCommand = DelegateCommand.Create(
                     (int componentIndex) => {
@@ -95,6 +88,30 @@ namespace LogGrokCore
             _viewFactory = viewFactory;
             UpdateDocumentWhileLoading();
             UpdateProgress();
+        }
+
+        private void UpdateFilteredCollection()
+        {
+            var currentItemIndex = CurrentItemIndex;
+            var item = Lines?[currentItemIndex];
+            var originalLineIndex = (item as LineViewModel)?.Index; 
+
+            var (lineViewModelCollection, getIndexByValue) = 
+                _lineViewModelCollectionProvider.GetLogLinesCollection(_filterSettings.Exclusions);
+
+            _getIndexByValue = getIndexByValue;
+            Lines = lineViewModelCollection;
+
+            if (originalLineIndex is {} index)
+            {
+                NavigateTo(index);
+            }
+        }
+
+        public int CurrentItemIndex
+        {
+            get => _currentItemIndex;
+            set => SetAndRaiseIfChanged(ref _currentItemIndex, value);
         }
 
         public bool CanFilter => true;

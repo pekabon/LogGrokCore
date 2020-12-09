@@ -18,7 +18,6 @@ namespace LogGrokCore.Controls
         private Size _extent;
         private Point _offset;
         private double _viewPortHeightInPixels;
-        private int _currentPosition;
 
         public VirtualizingStackPanel()
         {
@@ -30,8 +29,9 @@ namespace LogGrokCore.Controls
                 itemContainerGenerator.ItemsChanged += (_, _) =>
                 {
                     if (Items.Count <= 0) return;
-                    _currentPosition = Math.Min(_currentPosition, Items.Count - 1);
-                    Items.MoveCurrentToPosition(_currentPosition);
+                    
+                    CurrentPosition = Math.Min(CurrentPosition, Items.Count - 1);
+                    Items.MoveCurrentToPosition(CurrentPosition);
                 };
 
                 Items.CurrentChanged += OnCurrentItemChanged;

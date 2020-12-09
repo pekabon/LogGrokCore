@@ -2,6 +2,7 @@ using System;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using LogGrokCore.Controls.GridView;
@@ -91,7 +92,12 @@ namespace LogGrokCore.Search
             {
                 if (_selectedValue == value || value == null) return;
                 _selectedValue = value;
-                if (_selectedValue is LineViewModel lineViewModel)
+
+                var lineViewModel =
+                    _selectedValue as LineViewModel ??
+                    (_selectedValue as FrameworkElement)?.DataContext as LineViewModel;
+
+                if (lineViewModel != null)
                 {
                     SelectedIndexChanged?.Invoke(lineViewModel.Index);
                 }

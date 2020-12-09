@@ -61,6 +61,7 @@
                 <ListView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <localControls:VirtualizingStackPanel
+                            CurrentPosition="{Binding CurrentItemIndex}" 
                             localControls:HighlightedTextBlock.HighlightRegex="{Binding HighlightRegex}">
                             <localControls:VirtualizingStackPanel.ContextMenu>
                                 <ContextMenu>

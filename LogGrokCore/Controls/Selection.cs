@@ -12,7 +12,7 @@ namespace LogGrokCore.Controls
         public int Min => _indices.Min();
 
         public int Max => _indices.Max();
-
+        
         public void Add(int index)
         {
             _indices.Add(index);

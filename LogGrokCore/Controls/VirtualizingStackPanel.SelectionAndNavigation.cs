@@ -11,19 +11,27 @@ namespace LogGrokCore.Controls
 {
     public partial class VirtualizingStackPanel
     {
+        public static readonly DependencyProperty CurrentPositionProperty = DependencyProperty.Register(
+            "CurrentPosition", typeof(int), typeof(VirtualizingStackPanel), 
+            new FrameworkPropertyMetadata(default(int), FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
+                OnCurrentPositionChanged ));
+
+        private static void OnCurrentPositionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var panel = (VirtualizingStackPanel) d;
+            var newValue = (int) e.NewValue;
+            panel._selection.Add(newValue);
+            panel.UpdateSelection();
+        }
+
+        public int CurrentPosition
+        {
+            get => (int) GetValue(CurrentPositionProperty);
+            set => SetValue(CurrentPositionProperty, value);
+        }
+        
         private readonly Selection _selection = new();
         private ScrollContentPresenter? _scrollContentPresenter;
-
-        private int CurrentPosition
-        {
-            get => Items.CurrentPosition;
-            set
-            {
-                Items.MoveCurrentToPosition(value);
-                _selection.Add(value);
-                UpdateSelection();
-            }
-        }
 
         public IEnumerable<int> SelectedIndices => _selection;
 

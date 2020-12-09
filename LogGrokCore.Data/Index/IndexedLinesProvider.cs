@@ -58,7 +58,7 @@ namespace LogGrokCore.Data.Index
             var index = countIndicesItem.TotalCount;
             foreach (var v in GetEnumerable(countIndicesItem))
             {
-                if (v == value) return index;
+                if (v >= value) return index;
                 index++;
             }
 
