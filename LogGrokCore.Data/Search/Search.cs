@@ -1,10 +1,14 @@
 using System;
 using System.Buffers;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using LogGrokCore.Data.Index;
+using NLog;
 
 namespace LogGrokCore.Data.Search
 {
@@ -13,7 +17,8 @@ namespace LogGrokCore.Data.Search
         private static readonly StringPool SearchStringPool = new();
         private const int MaxSearchSizeLines = 256;
         private const double Throttle = 0.01;
-
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+        
         public class Progress
         {
             public double Value
@@ -52,14 +57,18 @@ namespace LogGrokCore.Data.Search
             private bool _isFinished;
         }
 
-        public static (Progress, SearchLineIndex) CreateSearchIndex(
-            Stream stream, Encoding encoding,
-            LineIndex sourceLineIndex, Regex regex,
+        public static (Progress, Indexer) CreateSearchIndex(
+            Stream stream, 
+            Encoding encoding,
+            Indexer sourceIndexer,
+            LineIndex sourceLineIndex,
+            Regex regex,
             CancellationToken cancellationToken)
         {
             SearchLineIndex lineIndex = new(sourceLineIndex);
-
-            void ProcessLines(int start, int end)
+            var searchIndexer = new Indexer();
+            
+            void ProcessLines(IEnumerator<Indexer.LineAndKey> lineAndKeyEnumerator, int start, int end)
             {
                 var (firstLineOffset, firstLineLength) = sourceLineIndex.GetLine(start);
                 var (lastLineOffset, lastLineLength) = sourceLineIndex.GetLine(end);
@@ -78,6 +87,11 @@ namespace LogGrokCore.Data.Search
 
                 do
                 {
+                    var enumerateResult = lineAndKeyEnumerator.MoveNext();
+                    Debug.Assert(enumerateResult);
+                    var (lineNum, indexKey) = lineAndKeyEnumerator.Current;
+                    Debug.Assert(lineNum == index);
+                    
                     var charCount = encoding.GetMaxCharCount(currentLineLength);
 
                     var tempString = SearchStringPool.Rent(charCount);
@@ -97,6 +111,7 @@ namespace LogGrokCore.Data.Search
                     // get rid of regex.Match 
                     if (regex.Match(tempString, 0, stringLength).Success)
                     {
+                        searchIndexer.Add(indexKey, index);
                         lineIndex.Add(index);
                     }
 
@@ -117,12 +132,16 @@ namespace LogGrokCore.Data.Search
                     await foreach (var (start, count) in
                         sourceLineIndex.FetchRanges(cancellationToken))
                     {
+                        Logger.Info($"Searching '{regex}'; Current range: {start}, count={count}");
                         var totalCount = sourceLineIndex.Count;
-
+                        
+                        var sourceIndexedSequence = sourceIndexer.GetIndexedSequenceFrom(start);
+                        
+                        using var sourceIndexedSequenceEnumerator = sourceIndexedSequence.GetEnumerator();
                         var current = start;
                         while (current < start + count && !cancellationToken.IsCancellationRequested)
                         {
-                            ProcessLines(current, Math.Min(current + MaxSearchSizeLines, start + count - 1));
+                            ProcessLines(sourceIndexedSequenceEnumerator, current, Math.Min(current + MaxSearchSizeLines, start + count) - 1);
                             progress.Value = (double) current / totalCount;
                             current += MaxSearchSizeLines;
                         }
@@ -130,11 +149,12 @@ namespace LogGrokCore.Data.Search
                 }, cancellationToken)
                 .ContinueWith(_ =>
                 {
+                    searchIndexer.Finish();
                     return progress.IsFinished = true;
                 }, cancellationToken);
         
 
-        return (progress, lineIndex);
+        return (progress, searchIndexer);
         }
     }
 }

@@ -4,7 +4,7 @@ using LogGrokCore.Data.IndexTree;
 
 namespace LogGrokCore.Data.Tests
 {
-    public class TestIndexTreeLeaf : LeafOrNode<int, TestIndexTreeLeaf >, ILeaf<int, TestIndexTreeLeaf>
+    public sealed class TestIndexTreeLeaf : LeafOrNode<int, TestIndexTreeLeaf >, ILeaf<int, TestIndexTreeLeaf>
     {
         private const int Capacity = 2;
         private readonly List<int> _storage = new List<int>(Capacity);
@@ -52,7 +52,7 @@ namespace LogGrokCore.Data.Tests
         public override (int index, TestIndexTreeLeaf leaf) FindByValue(int value)
         {
             var index = _storage.BinarySearch((int) (value));
-            return (index, this);
+            return (_firstValueIndex + (index > 0 ? index : ~index), this);
         }
 
         public int this[int index] => _storage[index];

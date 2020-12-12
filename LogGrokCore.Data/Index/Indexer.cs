@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using LogGrokCore.Data.IndexTree;
+using NLog;
 
 namespace LogGrokCore.Data.Index
 {
@@ -17,6 +18,7 @@ namespace LogGrokCore.Data.Index
             = new();
 
         private readonly object _componentsLocker = new();
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
         
         public IEnumerable<string> GetAllComponents(int componentNumber)
         {
@@ -30,7 +32,9 @@ namespace LogGrokCore.Data.Index
 
         public IIndexedLinesProvider GetIndexedLinesProvider(IReadOnlyDictionary<int, IEnumerable<string>> excludedComponents)
         {
-            return new IndexedLinesProvider(this, _countIndex.Counts, 
+            var updatableCounts = 
+                UpdatableValue.Create(() => _countIndex.Counts);
+            return new IndexedLinesProvider(this, updatableCounts, 
                 CountIndex<IndexTree<int, SimpleLeaf<int>>>.Granularity, excludedComponents);
         }
 
@@ -110,6 +114,50 @@ namespace LogGrokCore.Data.Index
             _countIndex.Finish(_indices);
         }
 
+        public readonly struct LineAndKey : IComparable<LineAndKey>
+        {
+            public readonly int LineNumber;
+            public readonly IndexKey Key;
+
+            public LineAndKey(int lineNumber, IndexKey key)
+            {
+                LineNumber = lineNumber;
+                Key = key;
+            }
+
+            public int CompareTo(LineAndKey other)
+            {
+                return LineNumber.CompareTo(other.LineNumber);
+            }
+
+            public void Deconstruct(out int lineAndNumber, out IndexKey indexKey)
+            {
+                lineAndNumber = LineNumber;
+                indexKey = Key;
+            }
+
+        }
+
+        public IEnumerable<LineAndKey> GetIndexedSequenceFrom(int from)
+        {
+            Logger.Info($"GetIndexedSequenceFrom({from})");
+            static bool IsNext(LineAndKey lk1, LineAndKey lk2)
+            {
+                return lk2.LineNumber == lk1.LineNumber + 1;
+            }
+
+            var cursors = _indices
+                .Select(kv
+                    => kv.Value.GetEnumerableFromValue(from).Select(ln => new LineAndKey(ln, kv.Key)).GetEnumerator())
+                .Where(enumerator => enumerator.MoveNext()).ToList();
+
+            var startValues = string.Join(",", cursors.Select(c => c.Current.LineNumber).OrderBy(i => i)
+                .Select(j => j.ToString()));
+
+            Logger.Debug($"Start values: {startValues}"); 
+            return CollectionUtlis.MergeSorted(cursors, IsNext);
+        }
+    
         public Indexer CreateFilteredIndexer(IAsyncEnumerable<IEnumerable<int>> filterSequence)
         {
             var filteredIndexer = new Indexer();

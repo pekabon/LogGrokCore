@@ -11,7 +11,7 @@ namespace LogGrokCore.Data.Index
 
         public IndexedLinesProvider(
             Indexer indexer, 
-            IReadOnlyList<List<(IndexKey, int)>> countIndices,
+            UpdatableValue<IReadOnlyList<List<(IndexKey, int)>>> countIndices,
             int countIndexGranularity,
             IReadOnlyDictionary<int, IEnumerable<string>> excludedComponents)
         {

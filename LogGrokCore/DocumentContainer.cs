@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Windows.Controls;
 using DryIoc;
 using LogGrokCore.Controls.GridView;
 using LogGrokCore.Data;
@@ -10,22 +9,26 @@ using LogGrokCore.Search;
 
 namespace LogGrokCore
 {
-    public enum ParserType
-    {
-        Full,
-        OnlyIndexed
-    }
-
-    public enum GridViewType
-    {
-        FilteringGirdViewType,
-        NotFilteringGridViewType
-    }
-
     internal class DocumentContainer : IDisposable
     {
-        private readonly Container _container;
+        private enum ParserType
+        {
+            Full,
+            OnlyIndexed
+        }
 
+        private enum GridViewType
+        {
+            FilteringGirdViewType,
+            NotFilteringGridViewType
+        }
+
+        private enum LineViewModelCollectionType
+        {
+            NotHeadered
+        }
+        
+        private readonly Container _container;
         public DocumentContainer(string fileName)
         {
             var regex =
@@ -68,12 +71,25 @@ namespace LogGrokCore
             
             _container.Register<StringPool>(Reuse.Singleton);
             
-            _container.RegisterDelegate(r => new LogFile(fileName));
-            _container.RegisterDelegate(r => new LogMetaInformation(regex, new[] {1, 2, 3}));
+            
+            _container.RegisterDelegate(_ => new LogFile(fileName));
+            _container.RegisterDelegate(_ => new LogMetaInformation(regex, new[] {1, 2, 3}));
             
             _container.Register<Indexer>(Reuse.Singleton);
+            
             _container.Register<LineViewModelCollectionProvider>(Reuse.Singleton, 
-                made: Parameters.Of.Type<ILineParser>(serviceKey: ParserType.Full));
+                made: Parameters.Of
+                    .Type<ILineParser>(serviceKey: ParserType.Full)
+                    .Type<Func<string?>>(request =>
+                    {
+                        var headerProvider = request.Container.Resolve<HeaderProvider>();
+                        return () => headerProvider.Header;
+                    }));
+            
+            _container.Register<LineViewModelCollectionProvider>(Reuse.Singleton, 
+                made: Parameters.Of
+                    .Type<ILineParser>(serviceKey: ParserType.Full)
+                    .Type<Func<string?>>(request => () =>  null), serviceKey: LineViewModelCollectionType.NotHeadered);
 
             _container.Register<FilterSettings>(Reuse.Singleton);
             
@@ -102,9 +118,12 @@ namespace LogGrokCore
             {
                 var logFile = r.Resolve<LogFile>();
                 var lineIndex = r.Resolve<LineIndex>();
-                var lineParser = r.Resolve<ILineParser>(ParserType.Full);
+                var indexer = r.Resolve<Indexer>();
+                var lineViewModelCollectionProvider = r.Resolve<LineViewModelCollectionProvider>(serviceKey: LineViewModelCollectionType.NotHeadered);
+                var filterSettings = r.Resolve<FilterSettings>();
                 var viewFactory = r.Resolve<GridViewFactory>(GridViewType.NotFilteringGridViewType);
-                return pattern => new SearchDocumentViewModel(logFile, lineIndex, lineParser, viewFactory, pattern);
+                return pattern => new SearchDocumentViewModel(logFile, lineIndex, indexer, filterSettings, 
+                    lineViewModelCollectionProvider, viewFactory, pattern);
             });
             
         }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace LogGrokCore.Data.IndexTree
 {
-    public class LongsLeaf
+    public sealed class LongsLeaf
         : LeafOrNode<long, LongsLeaf>,
             ILeaf<long, LongsLeaf>
     {
@@ -52,7 +52,7 @@ namespace LogGrokCore.Data.IndexTree
         public override (int index, LongsLeaf leaf) FindByValue(long value)
         {
             var index = _storage.BinarySearch((int) (value - _firstIndex));
-            return (index, this);
+            return (_firstIndex + (index > 0 ? index : ~index), this);
         }
 
         public IEnumerator<long> GetEnumerator()

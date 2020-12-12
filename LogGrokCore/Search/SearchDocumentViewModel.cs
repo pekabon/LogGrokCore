@@ -5,10 +5,11 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using LogGrokCore.Controls.GridView;
 using LogGrokCore.Data;
-using LogGrokCore.Data.Search;
-using LogGrokCore.Data.Virtualization;
+using LogGrokCore.Data.Index;
+using LogGrokCore.Filter;
 
 namespace LogGrokCore.Search
 {
@@ -18,7 +19,7 @@ namespace LogGrokCore.Search
         private SearchPattern _searchPattern;
         private readonly LogFile _logFile;
         private readonly LineIndex _lineIndex;
-        private readonly ILineParser _lineParser;
+        
         private GrowingLogLinesCollection? _lines;
         public Action<int>? SelectedIndexChanged;
         private object? _selectedValue;
@@ -30,11 +31,17 @@ namespace LogGrokCore.Search
         private bool _isSearching;
         private double _progress;
         private Regex? _highlightRegex;
+        private readonly Indexer _indexer;
+        private readonly FilterSettings _filterSettings;
+        private readonly LineViewModelCollectionProvider _lineViewModelCollectionProvider;
+        private Indexer? _currentSearchIndexer;
 
         public SearchDocumentViewModel(
             LogFile logFile,
             LineIndex lineIndex,
-            ILineParser lineParser,
+            Indexer indexer,
+            FilterSettings filterSettings,
+            LineViewModelCollectionProvider lineViewModelCollectionProvider,
             GridViewFactory viewFactory, 
             SearchPattern searchPattern)
         {
@@ -42,8 +49,12 @@ namespace LogGrokCore.Search
 
             _logFile = logFile;
             _lineIndex = lineIndex;
-            _lineParser = lineParser;    
             _title = searchPattern.Pattern;
+            _indexer = indexer;
+            
+            _filterSettings = filterSettings;
+            _filterSettings.ExclusionsChanged += UpdateLines;
+            _lineViewModelCollectionProvider = lineViewModelCollectionProvider;
             AddToScratchPadCommand = new DelegateCommand(() => throw new NotImplementedException());
             SearchPattern = searchPattern;
         }
@@ -133,53 +144,47 @@ namespace LogGrokCore.Search
             IsIndeterminateProgress = true;
             IsSearching = true;
             
-            var (progress, searchLineIndex) = Data.Search.Search.CreateSearchIndex(
+            var (progress, searchIndexer) = Data.Search.Search.CreateSearchIndex(
                 _logFile.OpenForSequentialRead(),
                 _logFile.Encoding,
+                _indexer,
                 _lineIndex,
                 _searchPattern.GetRegex(RegexOptions.Compiled),
                 _currentSearchCancellationTokenSource.Token);
+
+            _currentSearchIndexer = searchIndexer;
             
-            var lineProvider =  new SearchLineProvider(searchLineIndex, _logFile);
-            var lineCollection =
-                new VirtualList<(int, string), ItemViewModel>(lineProvider,
-                    (value) =>
-                    {
-                        var (originalIndex, str) = value;
-                        return new LineViewModel(originalIndex, str, _lineParser);
-                    });
+            UpdateLines();
 
-            Lines = new GrowingLogLinesCollection(() => null,
-                lineCollection);
-
-
-            var context = SynchronizationContext.Current;
-
-            var updateScheduled = 0;
-            void UpdateCount(Data.Search.Search.Progress progress, bool force)
+            UpdateDocumentWhileLoading(progress);
+        }
+        
+        private async void UpdateDocumentWhileLoading(Data.Search.Search.Progress progress)
+        {
+            var delay = 10;
+            IsSearching = true;
+            while (!progress.IsFinished)
             {
-                if (force)
-                {
-                    context?.Post(n => { Lines?.UpdateCount(); }, null);
-                } 
-                else if (0 == Interlocked.CompareExchange(ref updateScheduled, 1, 0))
-                {
-                    context?.Post(n =>
-                    {
-                        Lines?.UpdateCount();
-                        Task.Delay(TimeSpan.FromMilliseconds(150)).ContinueWith(t =>
-                            Interlocked.Exchange(ref updateScheduled, 0));
-                        
-                    }, null);
-                }
-
-                SearchProgress = progress.Value * 100.0;
-                IsSearching = !progress.IsFinished;
+                await Task.Delay(delay);
+                if (delay < 150)
+                    delay *= 2;
+                Lines?.UpdateCount();
                 IsIndeterminateProgress = false;
+                SearchProgress = progress.Value * 100.0;
             }
 
-            progress.Changed += _ => UpdateCount(progress, false);
-            progress.IsFinishedChanged += () => UpdateCount(progress, true);
+            Lines?.UpdateCount();
+            SearchProgress = progress.Value * 100.0;
+            IsSearching = false;
+        }
+
+        private void UpdateLines()
+        {
+            if (_currentSearchIndexer == null) return;
+            var (lineViewModelsCollection, _)
+                = _lineViewModelCollectionProvider.GetLogLinesCollection(_currentSearchIndexer, _filterSettings.Exclusions);
+
+            Lines = lineViewModelsCollection;
         }
 
         public void Dispose()

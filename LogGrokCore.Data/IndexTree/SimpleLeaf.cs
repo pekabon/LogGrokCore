@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace LogGrokCore.Data.IndexTree
 {
-    public class SimpleLeaf<T> :
+    public sealed class SimpleLeaf<T> :
         LeafOrNode<T, SimpleLeaf<T>>,
         ILeaf<T, SimpleLeaf<T>>, ITreeNode<T>
     {
@@ -50,7 +50,7 @@ namespace LogGrokCore.Data.IndexTree
         public override (int index, SimpleLeaf<T> leaf) FindByValue(T value)
         {
             var index = _storage.BinarySearch(value);
-            return (index, this);
+            return ((index > 0 ? index : ~index) + _firstValueIndex, this);
         }
 
         public SimpleLeaf<T>? Next { get; private set; }

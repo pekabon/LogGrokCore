@@ -1,10 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading;
 
 namespace LogGrokCore.Data.Index
 {
-    public class CountIndex<TIndex> where TIndex : IIndex<int>
+   public class CountIndex<TIndex> where TIndex : IIndex<int>
     {
         public const int Granularity = 16384;
         private ImmutableList<List<(IndexKey, int)>> _counts = ImmutableList<List<(IndexKey, int)>>.Empty;

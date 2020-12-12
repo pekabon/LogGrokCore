@@ -1,7 +1,6 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
-using ImTools;
 using LogGrokCore.Data;
 using LogGrokCore.Data.Index;
 using LogGrokCore.Data.Virtualization;
@@ -10,12 +9,10 @@ namespace LogGrokCore
 {
     public class LineViewModelCollectionProvider
     {
-        private readonly Indexer _indexer;
         private readonly IItemProvider<(int index, string str)> _lineProvider;
         private readonly ILineParser _lineParser;
-        private readonly HeaderProvider _headerProvider;
-        private readonly LogMetaInformation _metaInformation;
-        
+        private readonly Func<string?> _headerProvider;
+
         private class FilteredLineProvider: IItemProvider<(int index, string str)>
         {
             private readonly IItemProvider<int> _lineNumbersProvider;
@@ -73,39 +70,35 @@ namespace LogGrokCore
         }
 
         public LineViewModelCollectionProvider(
-            Indexer indexer,
             IItemProvider<(int index, string str)> lineProvider,
             ILineParser lineParser,
-            HeaderProvider headerProvider,
-            LogMetaInformation metaInformation)
+            Func<string?> headerProvider)
         {
-            _indexer = indexer;
             _lineProvider = lineProvider;
             _lineParser = lineParser;
             _headerProvider = headerProvider;
-            _metaInformation = metaInformation;
         }
 
-        public (GrowingLogLinesCollection lineViewModelsCollectins, Func<int, int> getIndexByValue) 
-            GetLogLinesCollection(IReadOnlyDictionary<int, IEnumerable<string>> exclusions)
+        public (GrowingLogLinesCollection lineViewModelsCollection, Func<int, int> getIndexByValue) 
+            GetLogLinesCollection(
+                Indexer indexer,
+                IReadOnlyDictionary<int, IEnumerable<string>> exclusions)
         {
-            var lineProviderAndGetIndexByValue = GetLineProvider(exclusions);
+            var (itemProvider, getIndexByValue) = GetLineProvider(indexer,exclusions);
             var lineCollection =
-                new VirtualList<(int index, string str), ItemViewModel>(lineProviderAndGetIndexByValue.itemProvider,
+                new VirtualList<(int index, string str), ItemViewModel>(itemProvider,
                     indexAndString => 
                         new LineViewModel(indexAndString.index, indexAndString.str, _lineParser));
-
-            return (new GrowingLogLinesCollection(() => _headerProvider.Header, lineCollection),
-                        lineProviderAndGetIndexByValue.GetIndexByValue);
+            return (new GrowingLogLinesCollection(() => _headerProvider(), lineCollection),
+                        getIndexByValue);
         }
-
-        private int GetIndexedComponent(int component) => _metaInformation.IndexedFieldNumbers.IndexOf(component);
         
         private (IItemProvider<(int index, string str)> itemProvider, Func<int, int> GetIndexByValue) GetLineProvider(
+            Indexer indexer,
             IReadOnlyDictionary<int, IEnumerable<string>> exclusions)
         {
-            if (exclusions.Count == 0) return (_lineProvider, x=> x);
-            var lineNumbersProvider = _indexer.GetIndexedLinesProvider(exclusions);
+            //if (exclusions.Count == 0) return (_lineProvider, x=> x);
+            var lineNumbersProvider = indexer.GetIndexedLinesProvider(exclusions);
             return (new FilteredLineProvider(lineNumbersProvider, _lineProvider),
                 value => lineNumbersProvider.GetIndexByValue(value));
         }

@@ -19,7 +19,7 @@ namespace LogGrokCore
         private readonly Lazy<string?> _header;
         
         private readonly Lazy<LogHeaderViewModel?> _headerViewModel;
-        private int _headerCount;
+        
         private IList SourceList => (IList)_sourceCollection;
 
         public GrowingLogLinesCollection(Func<string?> headerProvider, IList<ItemViewModel> sourceCollection)
@@ -32,6 +32,7 @@ namespace LogGrokCore
                 () => _header.Value == null ? null : new LogHeaderViewModel(_header.Value));
             
             _logLinesCount = sourceCollection.Count;
+          
         }
         
         public void UpdateCount()
@@ -39,7 +40,6 @@ namespace LogGrokCore
             if (_logLinesCount == _sourceCollection.Count)
                 return;
 
-            _headerCount = _header.Value != null ? 1 : 0;
             _logLinesCount= _sourceCollection.Count;
             //CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Count)));
@@ -71,7 +71,7 @@ namespace LogGrokCore
             {
                 if (_logLinesCount  == 0)
                     return 0;
-                return _logLinesCount + _headerCount;
+                return _logLinesCount + HeaderCount;
             }
         }
 
@@ -114,9 +114,9 @@ namespace LogGrokCore
             }
         }
 
-        public int IndexOf(ItemViewModel item) => _sourceCollection.IndexOf(item) + _headerCount;
+        public int IndexOf(ItemViewModel item) => _sourceCollection.IndexOf(item) + HeaderCount;
 
-        public int IndexOf(object? value) => SourceList.IndexOf(value) + _headerCount;
+        public int IndexOf(object? value) => SourceList.IndexOf(value) + HeaderCount;
 
         public void Insert(int index, ItemViewModel item) => throw new NotSupportedException();
 
@@ -128,6 +128,8 @@ namespace LogGrokCore
 
         public void RemoveAt(int index) => throw new NotSupportedException();
 
+        private int HeaderCount => _header.Value != null ? 1 : 0; 
+        
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         
         public event Action<int>? CollectionGrown;

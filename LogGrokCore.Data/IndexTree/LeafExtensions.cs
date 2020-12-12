@@ -26,12 +26,14 @@ namespace LogGrokCore.Data.IndexTree
             var next = leaf.Next;
             while (next != null)
             {
-                foreach (var value in next)
+                var tempNext = next.Next;
+                var count = next.Count;
+                for (var j = 0; j < count; j++)
                 {
-                    yield return value;
+                    yield return next[j];
                 }
 
-                next = next.Next;
+                next = tempNext;
             }
         }
     }

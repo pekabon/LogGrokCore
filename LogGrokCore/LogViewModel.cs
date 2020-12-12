@@ -97,7 +97,8 @@ namespace LogGrokCore
             var originalLineIndex = (item as LineViewModel)?.Index; 
 
             var (lineViewModelCollection, getIndexByValue) = 
-                _lineViewModelCollectionProvider.GetLogLinesCollection(_filterSettings.Exclusions);
+                _lineViewModelCollectionProvider.GetLogLinesCollection(_logModelFacade.Indexer, 
+                    _filterSettings.Exclusions);
 
             _getIndexByValue = getIndexByValue;
             Lines = lineViewModelCollection;
