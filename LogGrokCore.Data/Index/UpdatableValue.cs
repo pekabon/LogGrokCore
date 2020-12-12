@@ -26,7 +26,7 @@ namespace LogGrokCore.Data.Index
                 _cachedResult = converter(_source);
             }
 
-            public TResult? Value
+            public TResult Value
             {
                 get
                 {
@@ -45,7 +45,7 @@ namespace LogGrokCore.Data.Index
             _impl = impl;
         }
         
-        public static UpdatableValue<TResult> Create<TSource>(Func<TSource?> getter, Func<TSource?, TResult?> converter)
+        public static UpdatableValue<TResult> Create<TSource>(Func<TSource> getter, Func<TSource, TResult> converter)
         {
             return new(new UpdatableValueCoreImpl<TSource>(getter, converter));
         }
@@ -59,7 +59,7 @@ namespace LogGrokCore.Data.Index
             return UpdatableValue<TResult>.Create(getter, converter);
         }
         
-        public static UpdatableValue<TSource> Create<TSource>(Func<TSource?> getter)
+        public static UpdatableValue<TSource> Create<TSource>(Func<TSource> getter)
         {
             return UpdatableValue<TSource>.Create(getter, i=> i);
         }
