@@ -2,10 +2,7 @@ using System;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Threading;
 using LogGrokCore.Controls.GridView;
 using LogGrokCore.Data;
 using LogGrokCore.Data.Index;
@@ -22,7 +19,6 @@ namespace LogGrokCore.Search
         
         private GrowingLogLinesCollection? _lines;
         public Action<int>? SelectedIndexChanged;
-        private object? _selectedValue;
         private string _title;
         private  bool _isIndeterminateProgress;
 
@@ -35,6 +31,7 @@ namespace LogGrokCore.Search
         private readonly FilterSettings _filterSettings;
         private readonly LineViewModelCollectionProvider _lineViewModelCollectionProvider;
         private Indexer? _currentSearchIndexer;
+        private int _currentItemIndex;
 
         public SearchDocumentViewModel(
             LogFile logFile,
@@ -55,7 +52,6 @@ namespace LogGrokCore.Search
             _filterSettings = filterSettings;
             _filterSettings.ExclusionsChanged += UpdateLines;
             _lineViewModelCollectionProvider = lineViewModelCollectionProvider;
-            AddToScratchPadCommand = new DelegateCommand(() => throw new NotImplementedException());
             SearchPattern = searchPattern;
         }
 
@@ -96,28 +92,7 @@ namespace LogGrokCore.Search
             private set => SetAndRaiseIfChanged(ref _lines,  value);
         }
 
-        public object? SelectedValue
-        {
-            get => _selectedValue;
-            set
-            {
-                if (_selectedValue == value || value == null) return;
-                _selectedValue = value;
-
-                var lineViewModel =
-                    _selectedValue as LineViewModel ??
-                    (_selectedValue as FrameworkElement)?.DataContext as LineViewModel;
-
-                if (lineViewModel != null)
-                {
-                    SelectedIndexChanged?.Invoke(lineViewModel.Index);
-                }
-            }
-        }
-
         public ViewBase CustomView => _viewFactory.CreateView();
-
-        public ICommand AddToScratchPadCommand { get; private set; }
 
         public SearchPattern SearchPattern
         {
@@ -129,6 +104,18 @@ namespace LogGrokCore.Search
                 Title = _searchPattern.Pattern;
                 HighlightRegex = _searchPattern.GetRegex(RegexOptions.None);
                 StartSearch();
+            }
+        }
+
+        public int CurrentItemIndex
+        {
+            get => _currentItemIndex;
+            set
+            {
+                SetAndRaiseIfChanged(ref _currentItemIndex, value);
+                var lineIndex = (Lines?[_currentItemIndex] as LineViewModel)?.Index;
+                if (lineIndex is {} index)
+                    SelectedIndexChanged?.Invoke(index);
             }
         }
 

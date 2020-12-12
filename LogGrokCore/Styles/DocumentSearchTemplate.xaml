@@ -38,13 +38,13 @@
                                IsTextSearchEnabled="False"
                                ItemContainerStyle="{StaticResource ItemContainerStyle}"
                                ItemsSource="{Binding Lines}"
-                               SelectedValue="{Binding SelectedValue}"
                                View="{Binding CustomView}"
                                VirtualizingStackPanel.IsVirtualizing="True"
                                VirtualizingStackPanel.VirtualizationMode="Recycling">
                 <controls:ListView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <controls:VirtualizingStackPanel
+                            CurrentPosition="{Binding CurrentItemIndex}" 
                             controls:HighlightedTextBlock.HighlightRegex="{Binding HighlightRegex}"
                             Tag="{Binding SelectedItems, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type controls:ListView}}}">
                             <controls:VirtualizingStackPanel.ContextMenu>
