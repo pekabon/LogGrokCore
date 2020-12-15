@@ -22,11 +22,13 @@ namespace LogGrokCore.Data.Index
         
         public IEnumerable<string> GetAllComponents(int componentNumber)
         {
-            var componentSet = _components[componentNumber];
+            if (!_components.TryGetValue(componentNumber, out var componentSet))
+                return Enumerable.Empty<string>();
+
             lock (_componentsLocker)
             {
                 return componentSet
-                    .Select(key => key.GetComponent(componentNumber).ToString());
+                    .Select(key => key.GetComponent(componentNumber).ToString()).ToList();
             }
         }
 

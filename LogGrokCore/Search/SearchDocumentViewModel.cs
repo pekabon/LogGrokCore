@@ -14,8 +14,6 @@ namespace LogGrokCore.Search
     {
         private readonly GridViewFactory _viewFactory;
         private SearchPattern _searchPattern;
-        private readonly LogFile _logFile;
-        private readonly LineIndex _lineIndex;
         
         private GrowingLogLinesCollection? _lines;
         public Action<int>? SelectedIndexChanged;
@@ -27,31 +25,29 @@ namespace LogGrokCore.Search
         private bool _isSearching;
         private double _progress;
         private Regex? _highlightRegex;
-        private readonly Indexer _indexer;
         private readonly FilterSettings _filterSettings;
         private readonly LineViewModelCollectionProvider _lineViewModelCollectionProvider;
         private Indexer? _currentSearchIndexer;
         private int _currentItemIndex;
+        private readonly LogModelFacade _logModelFacade;
 
         public SearchDocumentViewModel(
-            LogFile logFile,
-            LineIndex lineIndex,
-            Indexer indexer,
+            LogModelFacade logModelFacade,
             FilterSettings filterSettings,
             LineViewModelCollectionProvider lineViewModelCollectionProvider,
-            GridViewFactory viewFactory, 
+            GridViewFactory viewFactory,
             SearchPattern searchPattern)
         {
+            
             _viewFactory = viewFactory;
 
-            _logFile = logFile;
-            _lineIndex = lineIndex;
+            _logModelFacade = logModelFacade;
             _title = searchPattern.Pattern;
-            _indexer = indexer;
             
             _filterSettings = filterSettings;
             _filterSettings.ExclusionsChanged += UpdateLines;
             _lineViewModelCollectionProvider = lineViewModelCollectionProvider;
+            
             SearchPattern = searchPattern;
         }
 
@@ -131,11 +127,9 @@ namespace LogGrokCore.Search
             IsIndeterminateProgress = true;
             IsSearching = true;
             
+            
             var (progress, searchIndexer) = Data.Search.Search.CreateSearchIndex(
-                _logFile.OpenForSequentialRead(),
-                _logFile.Encoding,
-                _indexer,
-                _lineIndex,
+                _logModelFacade,
                 _searchPattern.GetRegex(RegexOptions.Compiled),
                 _currentSearchCancellationTokenSource.Token);
 

@@ -60,7 +60,7 @@ namespace LogGrokCore
             Lines = new GrowingLogLinesCollection(() => headerProvider.Header, lineCollection);
             
             CopyPathToClipboardCommand =
-                new DelegateCommand(() => TextCopy.ClipboardService.SetText(_logModelFacade.FilePath));
+                new DelegateCommand(() => TextCopy.ClipboardService.SetText(_logModelFacade.LogFile.FilePath));
             OpenContainingFolderCommand = new DelegateCommand(OpenContainingFolder);
 
             ExcludeCommand = DelegateCommand.Create(
@@ -207,7 +207,7 @@ namespace LogGrokCore
 
         private void OpenContainingFolder()
         {
-            var filePath = _logModelFacade.FilePath;
+            var filePath = _logModelFacade.LogFile.FilePath;
 
             var cmdLine = File.Exists(filePath)
                 ? $"/select, {filePath}"

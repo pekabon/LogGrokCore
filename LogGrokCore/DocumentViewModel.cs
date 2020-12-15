@@ -15,8 +15,8 @@ namespace LogGrokCore
             SearchViewModel searchViewModel)
         {
             Title = 
-                Path.GetFileName(logModelFacade.FilePath) 
-                    ?? throw new InvalidOperationException($"Invalid path: {logModelFacade.FilePath}");
+                Path.GetFileName(logModelFacade.LogFile.FilePath) 
+                    ?? throw new InvalidOperationException($"Invalid path: {logModelFacade.LogFile.FilePath}");
 
             LogViewModel = logViewModel;
             SearchViewModel = searchViewModel;

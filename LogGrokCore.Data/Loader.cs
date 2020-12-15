@@ -9,7 +9,6 @@ namespace LogGrokCore.Data
     {
         private readonly Task _loadingTask;
         private readonly CancellationTokenSource _cancellationTokenSource;
-        private ILogger _logger;
         private const int BufferSize = 1024*1024;
 
         public Loader(
@@ -17,7 +16,6 @@ namespace LogGrokCore.Data
             ILineDataConsumer lineProcessor,
             ILogger logger)
         {
-            _logger = logger;
             var encoding = logFile.Encoding;
             var loaderImpl = new LoaderImpl(BufferSize, lineProcessor);
             _cancellationTokenSource = new CancellationTokenSource();

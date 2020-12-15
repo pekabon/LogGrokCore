@@ -41,7 +41,7 @@ namespace LogGrokCore
 
             LoggerRegistrationHelper.Register(_container);
             
-            _container.Register<Loader>();
+            _container.Register<Loader>(Reuse.Singleton);
             
             _container.Register<LineIndex>();
             _container.RegisterMapping<ILineIndex, LineIndex>();
@@ -115,17 +115,17 @@ namespace LogGrokCore
 
             _container.RegisterDelegate<Func<SearchPattern, SearchDocumentViewModel>>(
                 r =>
-            {
-                var logFile = r.Resolve<LogFile>();
-                var lineIndex = r.Resolve<LineIndex>();
-                var indexer = r.Resolve<Indexer>();
+                {
+                    var logModelFacade = r.Resolve<LogModelFacade>();
                 var lineViewModelCollectionProvider = r.Resolve<LineViewModelCollectionProvider>(serviceKey: LineViewModelCollectionType.NotHeadered);
                 var filterSettings = r.Resolve<FilterSettings>();
                 var viewFactory = r.Resolve<GridViewFactory>(GridViewType.NotFilteringGridViewType);
-                return pattern => new SearchDocumentViewModel(logFile, lineIndex, indexer, filterSettings, 
+                return pattern => new SearchDocumentViewModel(logModelFacade, filterSettings, 
                     lineViewModelCollectionProvider, viewFactory, pattern);
             });
-            
+
+            // start loading
+            _ = _container.Resolve<Loader>();
         }
 
         public DocumentViewModel GetDocumentViewModel() => _container.Resolve<DocumentViewModel>(); 

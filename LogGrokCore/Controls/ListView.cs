@@ -42,10 +42,10 @@ namespace LogGrokCore.Controls
 
         private void UpdateReadonlySelectedItems()
         {
-            ReadonlySelectedItems = 
+            ReadonlySelectedItems =
                 GetPanel()?.SelectedIndices
                     .Where(index => index < Items.Count)
-                    .Select(index => Items[index]).ToList();
+                    .Select(index => Items[index]);
         }
 
         public void PrepareItemContainer(ListViewItem container, object item)

@@ -5,22 +5,16 @@ namespace LogGrokCore.Data
 {
     public class LogModelFacade
     {
-        private readonly Loader _loader;
-        private readonly long _fileSize;
-
         public LogModelFacade(
             LogFile logFile,
-            Loader loader,
             LineIndex lineIndex,
             LineProvider lineProvider,
             ILineParser lineParser,
             Indexer indexer,
             LogMetaInformation metaInformation)
         {
-            FilePath = logFile.FilePath;
-            _fileSize = logFile.FileSize;
+            LogFile = logFile;
             LineIndex = lineIndex;
-            _loader = loader;
             LineProvider = lineProvider;
             LineParser = lineParser;
             Indexer = indexer;
@@ -35,9 +29,7 @@ namespace LogGrokCore.Data
         
         public IItemProvider<(int, string)> LineProvider { get; }
         
-        public string FilePath { get; }
-        
-        private LineIndex LineIndex { get; }
+        internal LineIndex LineIndex { get; }
 
         public double LoadProgress
         {
@@ -49,9 +41,11 @@ namespace LogGrokCore.Data
                     return 100;
                 
                 var (lastLineOffset, _) = LineIndex.GetLine(LineIndex.Count - 1);
-                return (double) lastLineOffset / _fileSize * 100.0;
+                return (double) lastLineOffset / LogFile.FileSize * 100.0;
             }
         }
+        
+        public LogFile LogFile { get; }
 
         public bool IsLoaded => LineIndex.IsFinished;
     }

@@ -3,7 +3,6 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -58,17 +57,18 @@ namespace LogGrokCore.Data.Search
         }
 
         public static (Progress, Indexer) CreateSearchIndex(
-            Stream stream, 
-            Encoding encoding,
-            Indexer sourceIndexer,
-            LineIndex sourceLineIndex,
+            LogModelFacade logModelFacade,
             Regex regex,
             CancellationToken cancellationToken)
         {
-            SearchLineIndex lineIndex = new(sourceLineIndex);
+            var encoding = logModelFacade.LogFile.Encoding;
+            var sourceIndexer = logModelFacade.Indexer;
+            var sourceLineIndex = logModelFacade.LineIndex;
+            
+                SearchLineIndex lineIndex = new(sourceLineIndex);
             var searchIndexer = new Indexer();
             
-            void ProcessLines(IEnumerator<Indexer.LineAndKey> lineAndKeyEnumerator, int start, int end)
+            void ProcessLines(Stream stream, IEnumerator<Indexer.LineAndKey> lineAndKeyEnumerator, int start, int end)
             {
                 var (firstLineOffset, firstLineLength) = sourceLineIndex.GetLine(start);
                 var (lastLineOffset, lastLineLength) = sourceLineIndex.GetLine(end);
@@ -129,11 +129,13 @@ namespace LogGrokCore.Data.Search
             var progress = new Progress();
             Task.Run(async () =>
                 {
+                    await using var stream = logModelFacade.LogFile.OpenForSequentialRead();
                     await foreach (var (start, count) in
                         sourceLineIndex.FetchRanges(cancellationToken))
                     {
                         Logger.Info($"Searching '{regex}'; Current range: {start}, count={count}");
-                        var totalCount = sourceLineIndex.Count;
+                        var loadedCount = sourceLineIndex.Count;
+                        var totalCountEstimate = loadedCount / logModelFacade.LoadProgress * 100.0;
                         
                         var sourceIndexedSequence = sourceIndexer.GetIndexedSequenceFrom(start);
                         
@@ -141,8 +143,9 @@ namespace LogGrokCore.Data.Search
                         var current = start;
                         while (current < start + count && !cancellationToken.IsCancellationRequested)
                         {
-                            ProcessLines(sourceIndexedSequenceEnumerator, current, Math.Min(current + MaxSearchSizeLines, start + count) - 1);
-                            progress.Value = (double) current / totalCount;
+                            ProcessLines(stream, sourceIndexedSequenceEnumerator, 
+                                current, Math.Min(current + MaxSearchSizeLines, start + count) - 1);
+                            progress.Value = (double) current / totalCountEstimate;
                             current += MaxSearchSizeLines;
                         }
                     }
@@ -153,8 +156,7 @@ namespace LogGrokCore.Data.Search
                     return progress.IsFinished = true;
                 }, cancellationToken);
         
-
-        return (progress, searchIndexer);
+            return (progress, searchIndexer);
         }
     }
 }
