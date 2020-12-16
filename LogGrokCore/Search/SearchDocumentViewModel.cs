@@ -119,34 +119,46 @@ namespace LogGrokCore.Search
         {
             lock (_cancellationTokenSourceLock)
             {
+                if (_currentSearchCancellationTokenSource != null &&
+                    _currentSearchCancellationTokenSource.IsCancellationRequested)
+                    return;
+                
                 _currentSearchCancellationTokenSource?.Cancel();
-                _currentSearchCancellationTokenSource = new CancellationTokenSource();
             }
+
+            var newCancellationTokenSource = new CancellationTokenSource();
 
             SearchProgress = 0;
             IsIndeterminateProgress = true;
             IsSearching = true;
             
-            
             var (progress, searchIndexer) = Data.Search.Search.CreateSearchIndex(
                 _logModelFacade,
                 _searchPattern.GetRegex(RegexOptions.Compiled),
-                _currentSearchCancellationTokenSource.Token);
-
+                newCancellationTokenSource.Token);
+            
             _currentSearchIndexer = searchIndexer;
+
+            lock (_cancellationTokenSourceLock)
+            {
+                _currentSearchCancellationTokenSource = newCancellationTokenSource;
+            }
             
             UpdateLines();
-
-            UpdateDocumentWhileLoading(progress);
+            UpdateDocumentWhileLoading(progress, newCancellationTokenSource.Token);
         }
         
-        private async void UpdateDocumentWhileLoading(Data.Search.Search.Progress progress)
+        private async void UpdateDocumentWhileLoading(Data.Search.Search.Progress progress,
+            CancellationToken cancellationToken)
         {
             var delay = 10;
             IsSearching = true;
             while (!progress.IsFinished)
             {
                 await Task.Delay(delay);
+                if (cancellationToken.IsCancellationRequested)
+                    return;
+
                 if (delay < 150)
                     delay *= 2;
                 Lines?.UpdateCount();
@@ -154,6 +166,9 @@ namespace LogGrokCore.Search
                 SearchProgress = progress.Value * 100.0;
             }
 
+            if (cancellationToken.IsCancellationRequested)
+                return;
+            
             Lines?.UpdateCount();
             SearchProgress = progress.Value * 100.0;
             IsSearching = false;
