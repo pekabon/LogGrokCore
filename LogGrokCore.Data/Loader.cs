@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -20,7 +21,7 @@ namespace LogGrokCore.Data
             var loaderImpl = new LoaderImpl(BufferSize, lineProcessor);
             _cancellationTokenSource = new CancellationTokenSource();
             
-            logger.LogInformation($"Start loading {logFile.FilePath}.");
+            Trace.TraceInformation($"Start loading {logFile.FilePath}.");
             var timeStamp = DateTime.Now;
             _loadingTask = Task.Factory.StartNew(
                 () => loaderImpl.Load(logFile.OpenForSequentialRead(), 
@@ -31,12 +32,12 @@ namespace LogGrokCore.Data
                     switch(t.Status)
                     {
                         case TaskStatus.RanToCompletion: 
-                            logger.LogInformation($"Loaded {logFile.FilePath}, time spent: {DateTime.Now - timeStamp}.");
-                            
+                            Trace.TraceInformation($"Loaded {logFile.FilePath}, time spent: {DateTime.Now - timeStamp}.");
                             break; 
                         case TaskStatus.Canceled: logger.LogInformation($"Loading of {logFile.FilePath} was cancelled.");
                             break;
-                        default: logger.LogError($"Unexpected loading result {t.Status} while loading {logFile.FilePath}.");
+                        default: 
+                            Trace.TraceError($"Unexpected loading result {t.Status} while loading {logFile.FilePath}.");
                             break;
                     }
                 });

@@ -1,5 +1,7 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Text;
 using DryIoc;
+using LogGrokCore.Diagnostics;
 using Splat.DryIoc;
 
 namespace LogGrokCore
@@ -8,11 +10,15 @@ namespace LogGrokCore
     {
         public App()
         {
+            TracesLogger.Initialize();
+            ExceptionsLogger.Initialize();
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             var container = new Container();
             LoggerRegistrationHelper.Register(container);
             container.UseDryIocDependencyResolver();
             RegisterDependencies(container);
+
+            Trace.TraceInformation("Initialization complete.");
         }
 
         private static void RegisterDependencies(IRegistrator container)

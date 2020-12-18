@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Windows.Input;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
@@ -58,7 +59,7 @@ namespace LogGrokCore
             {
                 foreach (var fileName in dialog.FileNames)
                 {
-                    _logger.LogInformation($"Open document {fileName}.");
+                    Trace.TraceInformation($"Open document {fileName}.");
                     AddDocument(fileName);
                 }
             }

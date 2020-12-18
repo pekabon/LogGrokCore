@@ -43,4 +43,9 @@
     <ProjectReference Include="..\LogGrokCore.Data\LogGrokCore.Data.csproj" CopyLocal="True" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <Folder Include="Diagnostics" />
+  </ItemGroup>
+
 </Project>

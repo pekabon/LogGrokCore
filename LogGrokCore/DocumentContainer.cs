@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using DryIoc;
 using LogGrokCore.Controls.GridView;
 using LogGrokCore.Data;
@@ -126,6 +127,7 @@ namespace LogGrokCore
 
             // start loading
             _ = _container.Resolve<Loader>();
+            Trace.TraceInformation($"Start loading {fileName}");
         }
 
         public DocumentViewModel GetDocumentViewModel() => _container.Resolve<DocumentViewModel>(); 
