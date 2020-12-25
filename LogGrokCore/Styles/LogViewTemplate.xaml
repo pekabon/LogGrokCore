@@ -57,7 +57,8 @@
                                     VirtualizingStackPanel.IsVirtualizing="True"
                                     VirtualizingStackPanel.VirtualizationMode="Recycling"
                                     localControls:NavigateToLineBehavior.NavigateToLineRequest=
-                                        "{Binding NavigateToLineRequest}">
+                                        "{Binding NavigateToLineRequest}"
+                                    localControls:NavigateToLineBehavior.ChangeCurrentItem="True">
                 <ListView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <localControls:VirtualizingStackPanel

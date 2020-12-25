@@ -63,10 +63,15 @@ namespace LogGrokCore.Controls
             get => (GetValue(ReadonlySelectedItemsProperty) as IEnumerable)?.Cast<object>();
             set => SetValue(ReadonlySelectedItemsProperty, value);
         }
-        
-        public void BringIndexIntoView(in int lineNumber)
+
+        public void NavigateTo(int lineNumber)
         {
             GetPanel()?.NavigateTo(lineNumber);
+        }
+
+        public void BringIndexIntoView(in int lineNumber)
+        {
+            GetPanel()?.BringIndexIntoViewPublic(lineNumber);
         }
 
         protected override void OnKeyDown(KeyEventArgs e)

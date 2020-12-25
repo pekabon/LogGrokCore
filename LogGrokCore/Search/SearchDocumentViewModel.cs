@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Controls;
+using LogGrokCore.Controls;
 using LogGrokCore.Controls.GridView;
 using LogGrokCore.Data;
 using LogGrokCore.Data.Index;
@@ -28,7 +29,7 @@ namespace LogGrokCore.Search
         private readonly FilterSettings _filterSettings;
         private readonly LineViewModelCollectionProvider _lineViewModelCollectionProvider;
         private Indexer? _currentSearchIndexer;
-        private int _currentItemIndex;
+        private int? _currentItemIndex;
         private readonly LogModelFacade _logModelFacade;
 
         public SearchDocumentViewModel(
@@ -56,6 +57,8 @@ namespace LogGrokCore.Search
             get => _title;
             set => SetAndRaiseIfChanged(ref _title, value);
         }
+        
+        public NavigateToLineRequest NavigateToLineRequest { get; } = new();
 
         public bool IsIndeterminateProgress
         {
@@ -103,14 +106,16 @@ namespace LogGrokCore.Search
             }
         }
 
-        public int CurrentItemIndex
+        public int? CurrentItemIndex
         {
             get => _currentItemIndex;
             set
             {
                 SetAndRaiseIfChanged(ref _currentItemIndex, value);
-                var lineIndex = (Lines?[_currentItemIndex] as LineViewModel)?.Index;
-                if (lineIndex is {} index)
+                if (_currentItemIndex is not { } currentItemIndex) return;
+                
+                var lineIndex = (Lines?[currentItemIndex] as LineViewModel)?.Index;
+                if (lineIndex is { } index)
                     SelectedIndexChanged?.Invoke(index);
             }
         }
@@ -131,7 +136,7 @@ namespace LogGrokCore.Search
             SearchProgress = 0;
             IsIndeterminateProgress = true;
             IsSearching = true;
-            
+            CurrentItemIndex = null;
             var (progress, searchIndexer) = Data.Search.Search.CreateSearchIndex(
                 _logModelFacade,
                 _searchPattern.GetRegex(RegexOptions.Compiled),
@@ -176,11 +181,23 @@ namespace LogGrokCore.Search
 
         private void UpdateLines()
         {
+            var currentItemIndex = CurrentItemIndex;
+            var originalLineIndex = currentItemIndex switch
+            {
+                { } ind => (Lines?[ind] as LineViewModel)?.Index,
+                _ => null
+            };
+            
             if (_currentSearchIndexer == null) return;
-            var (lineViewModelsCollection, _)
+            var (lineViewModelsCollection, getIndexByValue)
                 = _lineViewModelCollectionProvider.GetLogLinesCollection(_currentSearchIndexer, _filterSettings.Exclusions);
 
             Lines = lineViewModelsCollection;
+            
+            if (originalLineIndex is {} index)
+            {
+                NavigateToLineRequest.Raise(getIndexByValue(index));
+            }
         }
 
         public void Dispose()

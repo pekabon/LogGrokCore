@@ -40,7 +40,10 @@
                                ItemsSource="{Binding Lines}"
                                View="{Binding CustomView}"
                                VirtualizingStackPanel.IsVirtualizing="True"
-                               VirtualizingStackPanel.VirtualizationMode="Recycling">
+                               VirtualizingStackPanel.VirtualizationMode="Recycling"
+                               controls:NavigateToLineBehavior.NavigateToLineRequest=
+                               "{Binding NavigateToLineRequest}"
+                               controls:NavigateToLineBehavior.ChangeCurrentItem="False">
                 <controls:ListView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <controls:VirtualizingStackPanel
