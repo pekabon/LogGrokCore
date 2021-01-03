@@ -5,15 +5,23 @@ namespace LogGrokCore.Controls
 {
     public class NotHandlingListViewItem : ListViewItem
     {
-        protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
+        // protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
+        // {
+        //     if (IsSelected)
+        //         base.OnMouseLeftButtonDown(e);
+        //     
+        //     
+        // }
+        //
+        // protected override void OnMouseRightButtonDown(MouseButtonEventArgs e)
+        // {
+        //     if (IsSelected)
+        //         base.OnMouseRightButtonDown(e);
+        // }
+
+        protected override void OnMouseDoubleClick(MouseButtonEventArgs e)
         {
+            base.OnMouseDoubleClick(e);
         }
-
-        protected override void OnMouseRightButtonDown(MouseButtonEventArgs e)
-        {
-            ;
-        }
-
-
     }
 }

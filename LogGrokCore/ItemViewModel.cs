@@ -1,6 +1,6 @@
 namespace LogGrokCore
 {
-    public abstract class ItemViewModel
+    public abstract class ItemViewModel : ViewModelBase
     {
     }
 }

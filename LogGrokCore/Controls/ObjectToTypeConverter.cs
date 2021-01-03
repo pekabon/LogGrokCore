@@ -16,4 +16,4 @@ namespace LogGrokCore.Controls
             throw new NotImplementedException();
         }
     }
-}
+}   

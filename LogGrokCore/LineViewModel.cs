@@ -4,11 +4,18 @@ using LogGrokCore.Data;
 
 namespace LogGrokCore
 {
-    public class LineViewModel : ItemViewModel
+    public enum LogLineMode
+    {
+        Normal,
+        Selectable
+    }
+
+    internal class LineViewModel : ItemViewModel
     {
         private readonly string _sourceString;
         private readonly ParseResult _parseResult;
-        
+        private LogLineMode _mode;
+
         public LineViewModel(int index, string sourceString, ILineParser parser)
         {
             Index = index;
@@ -18,7 +25,16 @@ namespace LogGrokCore
         
         public int Index { get; }
 
+        public LogLineMode Mode
+        {
+            get => _mode;
+            set => SetAndRaiseIfChanged(ref _mode, value);
+        }
+
         public string this[int index] => GetValue(index);
+        
+        public DelegateCommand SwitchToEditModeCommand => 
+            new DelegateCommand(() => { Mode = LogLineMode.Selectable; });
 
         public string GetValue(int index)
         {
