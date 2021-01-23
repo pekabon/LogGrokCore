@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Windows;
-using System.Windows.Controls;
 
 namespace LogGrokCore.Controls.GridView
 {
@@ -27,16 +26,6 @@ namespace LogGrokCore.Controls.GridView
                 typeof(Func<LineViewModel, string>), 
                 typeof(LogGridViewCell),
                 new PropertyMetadata(OnValueGetterChanged));
-
-        public static readonly DependencyProperty LogLineModeProperty = DependencyProperty.Register(
-            "LogLineMode", typeof(LogLineMode), typeof(LogGridViewCell), 
-            new PropertyMetadata(default(LogLineMode)));
-
-        public LogLineMode LogLineMode
-        {
-            get => (LogLineMode) GetValue(LogLineModeProperty);
-            set => SetValue(LogLineModeProperty, value);
-        }
 
         internal Func<LineViewModel, string>? ValueGetter
         {

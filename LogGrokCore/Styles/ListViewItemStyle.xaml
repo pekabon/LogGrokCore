@@ -2,7 +2,6 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:logGrokCore="clr-namespace:LogGrokCore"
                     xmlns:controls="clr-namespace:LogGrokCore.Controls">
-
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/themes/light.blue.xaml" />
