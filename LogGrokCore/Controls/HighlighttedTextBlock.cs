@@ -113,7 +113,8 @@ namespace LogGrokCore.Controls
             {
                 var matches = regex.Matches(line).Cast<Match>().ToList();
                 var ft = 
-                    GetFormattedTextUncached(line, FlowDirection, FontFamily, FontStyle, FontWeight, FontStretch, FontSize, Foreground);
+                    GetFormattedTextUncached(line, FlowDirection, FontFamily, FontStyle, FontWeight, 
+                        FontStretch, FontSize, Foreground, TextOptions.GetTextFormattingMode(this));
                 foreach(var match in matches.Where(m => m.Length > 0))
                 {
                     var geometry = ft.BuildHighlightGeometry(new Point(0, y), match.Index, match.Length);
@@ -125,58 +126,17 @@ namespace LogGrokCore.Controls
             _cachedGetDrawingGeometriesArg = (text, regex);
             _cachedGetDrawingGeometriesResult = accumulatedGeometry;
             return accumulatedGeometry;
-
         }
-
+        
         private FormattedText GetFormattedText()
         {
-            return GetFormattedText(Text, FlowDirection, FontFamily, FontStyle, FontWeight, FontStretch, FontSize, Foreground);
+            return GetFormattedText(Text, FlowDirection, FontFamily, FontStyle, FontWeight, 
+                FontStretch, FontSize, Foreground, TextOptions.GetTextFormattingMode(this));
         }
-
-        readonly struct FormattedTextParams : IEquatable<FormattedTextParams>
-        {
-            private readonly string _value;
-            private readonly FlowDirection _flowDirection;
-            private readonly FontFamily _fontFamily;
-            private readonly FontStyle _fontStyle;
-            private readonly FontWeight _fontWeight;
-            private readonly FontStretch _fontStretch;
-            private readonly double _fontSize;
-            private readonly Brush _foreground;
-
-            public FormattedTextParams(string value, FlowDirection flowDirection, FontFamily fontFamily, FontStyle fontStyle, FontWeight fontWeight, FontStretch fontStretch, double fontSize, Brush foreground)
-            {
-               _value = value;
-               _flowDirection = flowDirection;
-               _fontFamily = fontFamily;
-               _fontStyle = fontStyle;
-               _fontWeight = fontWeight;
-               _fontStretch = fontStretch;
-               _fontSize = fontSize;
-               _foreground = foreground;
-            }
-
-            public bool Equals(FormattedTextParams other)
-            {
-                return _value == other._value && _flowDirection == other._flowDirection && 
-                       _fontFamily.Equals(other._fontFamily) && 
-                       _fontStyle == other._fontStyle && _fontWeight == other._fontWeight &&
-                       _fontStretch.Equals(other._fontStretch) && _fontSize.Equals(other._fontSize) &&
-                       _foreground.Equals(other._foreground);
-            }
-
-            public override bool Equals(object? obj)
-            {
-                return obj is FormattedTextParams other && Equals(other);
-            }
-
-            public override int GetHashCode()
-            {
-                return HashCode.Combine(_value, (int) _flowDirection, _fontFamily, _fontStyle, _fontWeight, _fontStretch, _fontSize, _foreground);
-            }
-        }
-
-        private FormattedTextParams _cachedFormattedTextParams = default;
+        
+        private (string value, FlowDirection, FontFamily, FontStyle, FontWeight, FontStretch, 
+            double, Brush, TextFormattingMode) _cachedFormattedTextParams = default;
+        
         private FormattedText? _cachedFormattedText = null;
 
         private FormattedText GetFormattedText(
@@ -187,17 +147,17 @@ namespace LogGrokCore.Controls
             FontWeight fontWeight,
             FontStretch fontStretch,
             double fontSize,
-            Brush foreground)
+            Brush foreground,
+            TextFormattingMode textFormattingMode)
         {
-            var parameters = new FormattedTextParams(value, flowDirection, fontFamily, fontStyle, fontWeight,
-                fontStretch, fontSize, foreground);
+            var parameters = (value, flowDirection, fontFamily, fontStyle, fontWeight,
+                fontStretch, fontSize, foreground, textFormattingMode);
 
-            if (!parameters.Equals(_cachedFormattedTextParams))
-            {
-                _cachedFormattedTextParams = parameters;
-                _cachedFormattedText = GetFormattedTextUncached(value, flowDirection, fontFamily, fontStyle, fontWeight,
-                    fontStretch, fontSize, foreground);
-            }
+            if (parameters.Equals(_cachedFormattedTextParams)) return _cachedFormattedText!;
+            
+            _cachedFormattedTextParams = parameters;
+            _cachedFormattedText = GetFormattedTextUncached(value, flowDirection, fontFamily, fontStyle, fontWeight,
+                fontStretch, fontSize, foreground, textFormattingMode);
 
             return _cachedFormattedText!;
         }
@@ -210,7 +170,8 @@ namespace LogGrokCore.Controls
             FontWeight fontWeight,
             FontStretch fontStretch,
             double fontSize,
-            Brush foreground) =>
+            Brush foreground,
+            TextFormattingMode textFormattingMode) =>
                 new(value == null ? string.Empty : value,
                     CultureInfo.CurrentUICulture,
                     flowDirection,
@@ -218,6 +179,6 @@ namespace LogGrokCore.Controls
                     fontSize,
                     Foreground,
                     null,
-                    TextFormattingMode.Display);
+                    textFormattingMode);
     }
 }

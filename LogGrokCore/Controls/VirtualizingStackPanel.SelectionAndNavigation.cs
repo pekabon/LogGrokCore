@@ -16,6 +16,19 @@ namespace LogGrokCore.Controls
             new FrameworkPropertyMetadata(-1, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
                 OnCurrentPositionChanged ));
 
+        public static readonly DependencyProperty IsCurrentItemProperty = DependencyProperty.RegisterAttached(
+            "IsCurrentItem", typeof(bool), typeof(VirtualizingStackPanel), new PropertyMetadata(default(bool)));
+
+        public static void SetIsCurrentItem(ListBoxItem listViewItem, bool value)
+        {
+            listViewItem.SetValue(IsCurrentItemProperty, value);
+        }
+
+        public static bool GetIsCurrentItem(ListBoxItem listViewItem)
+        {
+            return (bool) listViewItem.GetValue(IsCurrentItemProperty);
+        }
+
         private static void OnCurrentPositionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var panel = (VirtualizingStackPanel) d;
@@ -151,6 +164,8 @@ namespace LogGrokCore.Controls
                 var isItemSelected = _selection.Contains(visibleItem.Index);
                 if (visibleItem.Element.IsSelected != isItemSelected)
                     visibleItem.Element.IsSelected = isItemSelected;
+                
+                SetIsCurrentItem(visibleItem.Element, visibleItem.Index == CurrentPosition);
             }
         }
 

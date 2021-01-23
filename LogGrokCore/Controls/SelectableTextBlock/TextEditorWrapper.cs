@@ -40,7 +40,7 @@ namespace LogGrokCore.Controls.SelectableTextBlock
 
         private readonly object _editor;
 
-        public TextEditorWrapper(object textContainer, FrameworkElement uiScope, bool isUndoEnabled)
+        private TextEditorWrapper(object textContainer, FrameworkElement uiScope, bool isUndoEnabled)
         {
             _editor = Activator.CreateInstance(TextEditorType, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.CreateInstance, 
                 null, new[] { textContainer, uiScope, isUndoEnabled }, null);

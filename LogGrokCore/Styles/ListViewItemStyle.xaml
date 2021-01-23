@@ -8,8 +8,10 @@
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/themes/light.blue.xaml" />
     </ResourceDictionary.MergedDictionaries>
     <controls:ObjectToTypeConverter x:Key="ObjectToTypeConverter" />
+    
+    <ControlTemplate x:Key="LogLineControlTemplate" 
+                     TargetType="{x:Type ListBoxItem}">
 
-    <ControlTemplate x:Key="LogLineControlTemplate" TargetType="{x:Type ListBoxItem}">
         <Grid MinHeight="{TemplateBinding MinHeight}" Margin="-2,0,0,0" >
             <Border Background="{TemplateBinding Background}"
                     BorderBrush="{TemplateBinding BorderBrush}"
@@ -69,7 +71,7 @@
                     <Condition Property="IsMouseOver" Value="True" />
                     <Condition Property="IsSelected" Value="True" />
                 </MultiTrigger.Conditions>
-                <Setter Property="Background" Value="{StaticResource MahApps.Brushes.Accent}" />
+                <Setter Property="Background" Value="{StaticResource MahApps.Brushes.Accent3}" />
                 <Setter Property="BorderBrush" Value="{StaticResource MahApps.Brushes.Highlight}" />
             </MultiTrigger>
         </Style.Triggers>

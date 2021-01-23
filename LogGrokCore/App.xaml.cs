@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using DryIoc;
 using LogGrokCore.Diagnostics;
@@ -10,6 +11,9 @@ namespace LogGrokCore
     {
         public App()
         {
+#if DEBUG
+            CultureInfo.CurrentUICulture = CultureInfo.InvariantCulture;
+#endif
             TracesLogger.Initialize();
             ExceptionsLogger.Initialize();
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
