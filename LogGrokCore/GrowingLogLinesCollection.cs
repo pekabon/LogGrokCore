@@ -45,7 +45,7 @@ namespace LogGrokCore
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Count)));
             CollectionGrown?.Invoke(_logLinesCount);
         }
-
+        
         public ItemViewModel this[int index]
         {
             get

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Windows;
@@ -42,7 +43,7 @@ namespace LogGrokCore.Controls
         {
             ReadonlySelectedItems =
                 GetPanel()?.SelectedIndices
-                    .Where(index => index < Items.Count)
+                    .Where(index => index < Items.Count && index > 0)
                     .Select(index => Items[index]).ToList();
         }
 
@@ -102,18 +103,11 @@ namespace LogGrokCore.Controls
                 return;
             }
 
-            void ScheduleRemeasure(int _)
-            {
-                var itemsCount = Items.Count;
-                if (itemsCount > 0) ScheduleResetColumnsWidth();
-                _previousItemCount = itemsCount;
-                _panel?.InvalidateMeasure();
-            }
-
             if (newValue is IGrowingCollection growingCollection)
             {
                 growingCollection.CollectionGrown += ScheduleRemeasure;
             }
+            
 
             if (oldValue is IGrowingCollection oldCollection)
             {
@@ -121,6 +115,14 @@ namespace LogGrokCore.Controls
             }
 
             ScheduleRemeasure(0);
+        }
+
+        private void ScheduleRemeasure(int _)
+        {
+            var itemsCount = Items.Count;
+            if (itemsCount > _previousItemCount) ScheduleResetColumnsWidth();
+            _previousItemCount = itemsCount;
+            _panel?.InvalidateMeasure();
         }
 
         protected override void OnItemsChanged(NotifyCollectionChangedEventArgs e)
@@ -157,6 +159,7 @@ namespace LogGrokCore.Controls
                       
             void ResetWidth(System.Windows.Controls.GridView view)
             {
+                Trace.TraceInformation($"Reset width: {Items.Count}");
                 foreach (var column in view.Columns.Take(view.Columns.Count - 1))
                 {
                     column.Width = 1;
@@ -165,8 +168,16 @@ namespace LogGrokCore.Controls
                 _ = Dispatcher.BeginInvoke(() => UpdateLastColumnWidth(view), DispatcherPriority.ApplicationIdle);
             }
 
-            if (View is System.Windows.Controls.GridView gridView)
-                _ = Dispatcher.BeginInvoke(() => ResetWidth(gridView), DispatcherPriority.ApplicationIdle);
+            _ = Dispatcher.BeginInvoke(() =>
+            {
+                if (View is System.Windows.Controls.GridView gridView) 
+                    ResetWidth(gridView);
+                else
+                {
+                    ScheduleResetColumnsWidth();
+                }
+            }, DispatcherPriority.ApplicationIdle);
+                
         }
 
         private void CopySelectedItemsToClipboard()
