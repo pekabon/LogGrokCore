@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using DryIoc;
 using LogGrokCore.Controls.GridView;
@@ -70,9 +71,9 @@ namespace LogGrokCore
             
             _container.Register<StringPool>(Reuse.Singleton);
             
-            
             _container.RegisterDelegate(_ => new LogFile(fileName));
-            _container.RegisterDelegate(_ => LogMetaInformation.CreateKlLogMetaInformation());
+            _container.RegisterDelegate(_ => LogMetaInformationProvider.GetLogMetaInformation(fileName),
+                    Reuse.Singleton);
             
             _container.Register<Indexer>(Reuse.Singleton);
             

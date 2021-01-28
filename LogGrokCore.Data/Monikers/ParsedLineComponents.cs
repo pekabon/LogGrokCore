@@ -24,6 +24,7 @@ namespace LogGrokCore.Data.Monikers
 
         public int GetAllCompnentsLength(int componentCount)
         {
+            if (componentCount == 0) return 0;
             var lastComponentStart = ComponentStart(componentCount - 1);
             var lastComponentLength = ComponentLength(componentCount - 1);
             return lastComponentStart + lastComponentLength;
