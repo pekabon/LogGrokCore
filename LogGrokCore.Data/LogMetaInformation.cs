@@ -4,14 +4,28 @@ namespace LogGrokCore.Data
 {
     public class LogMetaInformation
     {
+        public static LogMetaInformation CreateKlLogMetaInformation()
+        {
+            return new(
+                @"^(?'Time'\d{2}\:\d{2}\:\d{2}\.\d{3})\t(?'Thread'0x[0-9a-fA-F]+)\t(?'Severity'\w+)\t(?'Component'[\w\.]+)?\t?(?'Message'.*)",
+                new[] {"Time", "Thread", "Severity", "Component", "Text"},
+                new[] {1, 2, 3}
+            );
+        }
+        
+        public static LogMetaInformation CreateTextFileMetaInformation()
+        {
+            return new LogMetaInformation(@"^(?'Text'.*)", new[]{"Text"}, Array.Empty<int>());
+        }
+
         public string[] FieldNames { get; }
 
         public int[] IndexedFieldNumbers { get; }
 
-        public LogMetaInformation(string lineRegex, int[] indexedFieldNumbers)
+        public LogMetaInformation(string lineRegex, string [] fieldNames, int[] indexedFieldNumbers)
         {
             LineRegex = lineRegex;
-            FieldNames = new[] {"Time", "Thread", "Severity", "Component", "Text"};
+            FieldNames = fieldNames;
             ComponentCount = FieldNames.Length;
             IndexedFieldNumbers = indexedFieldNumbers;
         }

@@ -32,8 +32,6 @@ namespace LogGrokCore
         private readonly Container _container;
         public DocumentContainer(string fileName)
         {
-            var regex =
-                @"^(?'Time'\d{2}\:\d{2}\:\d{2}\.\d{3})\t(?'Thread'0x[0-9a-fA-F]+)\t(?'Severity'\w+)\t(?'Component'[\w\.]+)?\t?(?'Message'.*)";
             _container = new Container(rules =>
                 rules
                     .WithDefaultReuse(Reuse.Singleton)
@@ -74,7 +72,7 @@ namespace LogGrokCore
             
             
             _container.RegisterDelegate(_ => new LogFile(fileName));
-            _container.RegisterDelegate(_ => new LogMetaInformation(regex, new[] {1, 2, 3}));
+            _container.RegisterDelegate(_ => LogMetaInformation.CreateKlLogMetaInformation());
             
             _container.Register<Indexer>(Reuse.Singleton);
             
