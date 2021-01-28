@@ -18,9 +18,8 @@ namespace LogGrokCore.Controls
 
         public ListView()
         {
-            Loaded += (o, e) =>
+            Loaded += (_, _) =>
             {
-                ScheduleResetColumnsWidth();
                 if (GetPanel() is { } panel)
                     panel.SelectionChanged += UpdateReadonlySelectedItems;
                 else
@@ -29,9 +28,8 @@ namespace LogGrokCore.Controls
             
             CommandBindings.Add(new CommandBinding(
                 ApplicationCommands.Copy,
-                (o, e) => CopySelectedItemsToClipboard(),
-                (o, e) =>
-                {
+                (_, _) => CopySelectedItemsToClipboard(),
+                (_, e) => {
                     var items = ReadonlySelectedItems;
                     if (items == null || !items.Any()) return; 
                     e.CanExecute = true;
@@ -101,29 +99,35 @@ namespace LogGrokCore.Controls
             if (newValue == null)
             {
                 _previousItemCount = 0;
+                return;
             }
-            else
-            {
-                if (newValue is IGrowingCollection growingCollection)
-                {
-                    growingCollection.CollectionGrown += _ => _panel?.InvalidateMeasure();
-                }
 
-                _ = Dispatcher.BeginInvoke(
-                    () =>
-                    {
-                        if (Items.Count > 0) ScheduleResetColumnsWidth();
-                        _previousItemCount = Items.Count;
-                    }, 
-                    DispatcherPriority.ApplicationIdle);
+            void ScheduleRemeasure(int _)
+            {
+                var itemsCount = Items.Count;
+                if (itemsCount > 0) ScheduleResetColumnsWidth();
+                _previousItemCount = itemsCount;
+                _panel?.InvalidateMeasure();
             }
+
+            if (newValue is IGrowingCollection growingCollection)
+            {
+                growingCollection.CollectionGrown += ScheduleRemeasure;
+            }
+
+            if (oldValue is IGrowingCollection oldCollection)
+            {
+                oldCollection.CollectionGrown -= ScheduleRemeasure;
+            }
+
+            ScheduleRemeasure(0);
         }
 
         protected override void OnItemsChanged(NotifyCollectionChangedEventArgs e)
         {
             base.OnItemsChanged(e);
 
-            if (_previousItemCount == 0 && this.Items.Count > 0)
+            if (_previousItemCount == 0 && Items.Count > 0)
                 ScheduleResetColumnsWidth();
             
             _previousItemCount = Items.Count;            
