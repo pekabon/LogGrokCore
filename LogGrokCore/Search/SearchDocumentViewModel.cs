@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,6 +9,8 @@ using LogGrokCore.Controls;
 using LogGrokCore.Controls.GridView;
 using LogGrokCore.Data;
 using LogGrokCore.Data.Index;
+using LogGrokCore.Data.Search;
+using LogGrokCore.Data.Virtualization;
 using LogGrokCore.Filter;
 
 namespace LogGrokCore.Search
@@ -27,15 +31,15 @@ namespace LogGrokCore.Search
         private double _progress;
         private Regex? _highlightRegex;
         private readonly FilterSettings _filterSettings;
-        private readonly LineViewModelCollectionProvider _lineViewModelCollectionProvider;
+     
         private Indexer? _currentSearchIndexer;
         private int? _currentItemIndex;
         private readonly LogModelFacade _logModelFacade;
+        private SearchLineIndex? _currentSearchLineIndex;
 
         public SearchDocumentViewModel(
             LogModelFacade logModelFacade,
             FilterSettings filterSettings,
-            LineViewModelCollectionProvider lineViewModelCollectionProvider,
             GridViewFactory viewFactory,
             SearchPattern searchPattern)
         {
@@ -47,8 +51,7 @@ namespace LogGrokCore.Search
             
             _filterSettings = filterSettings;
             _filterSettings.ExclusionsChanged += UpdateLines;
-            _lineViewModelCollectionProvider = lineViewModelCollectionProvider;
-            
+     
             SearchPattern = searchPattern;
         }
 
@@ -111,7 +114,7 @@ namespace LogGrokCore.Search
             get => _currentItemIndex;
             set
             {
-                SetAndRaiseIfChanged(ref _currentItemIndex, value);
+                SetAndRaiseIfChanged(ref _currentItemIndex, value < 0 ? null : value);
                 if (_currentItemIndex is not { } currentItemIndex) return;
                 
                 var lineIndex = (Lines?[currentItemIndex] as LineViewModel)?.Index;
@@ -137,22 +140,56 @@ namespace LogGrokCore.Search
             IsIndeterminateProgress = true;
             IsSearching = true;
             CurrentItemIndex = null;
-            var (progress, searchIndexer) = Data.Search.Search.CreateSearchIndex(
+            
+            var (progress, searchIndexer, searchLineIndex) = Data.Search.Search.CreateSearchIndex(
                 _logModelFacade,
                 _searchPattern.GetRegex(RegexOptions.Compiled),
                 newCancellationTokenSource.Token);
-            
+
             _currentSearchIndexer = searchIndexer;
+            _currentSearchLineIndex = searchLineIndex;
 
             lock (_cancellationTokenSourceLock)
             {
                 _currentSearchCancellationTokenSource = newCancellationTokenSource;
             }
-            
+
             UpdateLines();
             UpdateDocumentWhileLoading(progress, newCancellationTokenSource.Token);
         }
+
+        private GrowingLogLinesCollection GetLineCollection(
+            Indexer searchIndexer,          // components -> searchResultLineNumber
+            SearchLineIndex searchLineIndex, // searchResultLineNumber -> originalLogLineNumber mapping
+
+            IReadOnlyDictionary<int, IEnumerable<string>> exclusions)
+        {
+            var lineProvider = _logModelFacade.LineProvider; // originalLogLineNumber -> string 
+            var lineParser = _logModelFacade.LineParser;
+
+            var filteredSearchResultLineNumbersProvider = searchIndexer.GetIndexedLinesProvider(exclusions); // collection of filtered searchResultLineNumbers
+            // to map from search result line numbers to original line numbers
+            var filteredOriginalLineNumbersProvider =
+                new ItemProviderMapper<int>(filteredSearchResultLineNumbersProvider, searchLineIndex);
+
+            var filteredLineWithOriginalLineNumber =
+                new ItemProviderMapper<(int originalLogLineNumber, string str)>(
+                    filteredOriginalLineNumbersProvider, lineProvider);
+
+            var virtualList = 
+                new VirtualList<(int originalLogLineNumber, string str), ItemViewModel>(
+                    filteredLineWithOriginalLineNumber, indexAndString =>
+                        new LineViewModel(indexAndString.originalLogLineNumber, indexAndString.str, lineParser));
+
+            for (int i = 0; i < Math.Min(virtualList.Count, 10); i++)
+            {
+                Console.Write(virtualList[i]);
+            }
+
+            return new GrowingLogLinesCollection(() => null, virtualList);
+        }
         
+
         private async void UpdateDocumentWhileLoading(Data.Search.Search.Progress progress,
             CancellationToken cancellationToken)
         {
@@ -181,23 +218,26 @@ namespace LogGrokCore.Search
 
         private void UpdateLines()
         {
+            if (_currentSearchIndexer == null || _currentSearchLineIndex == null)
+                return;
+            
             var currentItemIndex = CurrentItemIndex;
             var originalLineIndex = currentItemIndex switch
             {
                 { } ind => (Lines?[ind] as LineViewModel)?.Index,
                 _ => null
             };
-            
-            if (_currentSearchIndexer == null) return;
-            var (lineViewModelsCollection, getIndexByValue)
-                = _lineViewModelCollectionProvider.GetLogLinesCollection(_currentSearchIndexer, _filterSettings.Exclusions);
 
-            Lines = lineViewModelsCollection;
+            Lines = GetLineCollection(
+                _currentSearchIndexer, _currentSearchLineIndex, _filterSettings.Exclusions);
+
+            if (originalLineIndex is not { } index) return;
             
-            if (originalLineIndex is {} index)
-            {
-                NavigateToLineRequest.Raise(getIndexByValue(index));
-            }
+            var nearestIndex = _currentSearchLineIndex.GetIndexByOriginalIndex(index);
+            if (nearestIndex < 0 || nearestIndex >= Lines.Count)
+                CurrentItemIndex = null;
+            else
+                NavigateToLineRequest.Raise(_currentSearchLineIndex.GetIndexByOriginalIndex(index));
         }
 
         public void Dispose()

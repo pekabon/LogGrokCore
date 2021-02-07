@@ -40,12 +40,23 @@ namespace LogGrokCore
                         (Rules.AutoResolveConcreteTypeRule()));
 
             LoggerRegistrationHelper.Register(_container);
+            _container.Register<StringPool>(Reuse.Singleton);
+            _container.Register<LogModelFacade>(
+                made: Parameters.Of.Type<ILineParser>(serviceKey: ParserType.Full));
             
+            // loader pipeline
             _container.Register<Loader>(Reuse.Singleton);
+            _container.Register<ILineDataConsumer, LineProcessor>(
+                made: Parameters.Of.Type<ILineParser>(serviceKey: ParserType.OnlyIndexed));
+            _container.Register<ParsedBufferConsumer>(Reuse.Singleton);
             
+            // log model
+            _container.RegisterDelegate(_ => new LogFile(fileName));
+            _container.RegisterDelegate(_ => LogMetaInformationProvider.GetLogMetaInformation(fileName),
+                Reuse.Singleton);
             _container.Register<LineIndex>();
             _container.RegisterMapping<ILineIndex, LineIndex>();
-
+            _container.Register<Indexer>(Reuse.Singleton);
             _container.Register<IItemProvider<(int, string)>, LineProvider>();
 
             _container.RegisterDelegate<ILineParser>(
@@ -56,27 +67,13 @@ namespace LogGrokCore
                 r => new RegexBasedLineParser(r.Resolve<LogMetaInformation>()), 
                 serviceKey: ParserType.Full);
             
-            _container.Register<ILineDataConsumer, LineProcessor>(
-                made: Parameters.Of.Type<ILineParser>(serviceKey: ParserType.OnlyIndexed));
-            
-            _container.Register<ParsedBufferConsumer>(Reuse.Singleton);
-            
+            // Presentation
+
             _container.Register<LogViewModel>(
                 made: Parameters.Of
                     .Type<ILineParser>(serviceKey: ParserType.Full)
                     .Type<GridViewFactory>(serviceKey: GridViewType.FilteringGirdViewType));
 
-            _container.Register<LogModelFacade>(
-                made: Parameters.Of.Type<ILineParser>(serviceKey: ParserType.Full));
-            
-            _container.Register<StringPool>(Reuse.Singleton);
-            
-            _container.RegisterDelegate(_ => new LogFile(fileName));
-            _container.RegisterDelegate(_ => LogMetaInformationProvider.GetLogMetaInformation(fileName),
-                    Reuse.Singleton);
-            
-            _container.Register<Indexer>(Reuse.Singleton);
-            
             _container.Register<LineViewModelCollectionProvider>(Reuse.Singleton, 
                 made: Parameters.Of
                     .Type<ILineParser>(serviceKey: ParserType.Full)
@@ -103,9 +100,19 @@ namespace LogGrokCore
                     r.Resolve<Indexer>(),
                     r.Resolve<LogMetaInformation>()));
 
+            _container.RegisterDelegate<Func<SearchPattern, SearchDocumentViewModel>>(
+                r =>
+                {
+                    var logModelFacade = r.Resolve<LogModelFacade>();
+                    var filterSettings = r.Resolve<FilterSettings>();
+                    var viewFactory = r.Resolve<GridViewFactory>(GridViewType.NotFilteringGridViewType);
+                    return pattern => new SearchDocumentViewModel(logModelFacade, filterSettings, viewFactory, pattern);
+                });
+            
+            // view
             _container.RegisterDelegate(
                 r => new GridViewFactory(r.Resolve<LogMetaInformation>(),
-                        true, r.Resolve<Func<string, FilterViewModel>>()), 
+                    true, r.Resolve<Func<string, FilterViewModel>>()), 
                 serviceKey: GridViewType.FilteringGirdViewType);
 
             _container.RegisterDelegate(
@@ -113,16 +120,6 @@ namespace LogGrokCore
                     false, null), 
                 serviceKey: GridViewType.NotFilteringGridViewType);
 
-            _container.RegisterDelegate<Func<SearchPattern, SearchDocumentViewModel>>(
-                r =>
-                {
-                    var logModelFacade = r.Resolve<LogModelFacade>();
-                var lineViewModelCollectionProvider = r.Resolve<LineViewModelCollectionProvider>(serviceKey: LineViewModelCollectionType.NotHeadered);
-                var filterSettings = r.Resolve<FilterSettings>();
-                var viewFactory = r.Resolve<GridViewFactory>(GridViewType.NotFilteringGridViewType);
-                return pattern => new SearchDocumentViewModel(logModelFacade, filterSettings, 
-                    lineViewModelCollectionProvider, viewFactory, pattern);
-            });
 
             // start loading
             _ = _container.Resolve<Loader>();

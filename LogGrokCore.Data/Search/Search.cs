@@ -56,7 +56,7 @@ namespace LogGrokCore.Data.Search
             private bool _isFinished;
         }
 
-        public static (Progress, Indexer) CreateSearchIndex(
+        public static (Progress, Indexer, SearchLineIndex) CreateSearchIndex(
             LogModelFacade logModelFacade,
             Regex regex,
             CancellationToken cancellationToken)
@@ -65,9 +65,9 @@ namespace LogGrokCore.Data.Search
             var sourceIndexer = logModelFacade.Indexer;
             var sourceLineIndex = logModelFacade.LineIndex;
             
-                SearchLineIndex lineIndex = new(sourceLineIndex);
-            var searchIndexer = new Indexer();
-            
+            SearchLineIndex lineIndex = new(sourceLineIndex); // searchResultLineNumber -> originalLogLineNumber mapping
+            var searchIndexer = new Indexer();                // components -> searchResultLineNumber
+                   
             void ProcessLines(Stream stream, IEnumerator<Indexer.LineAndKey> lineAndKeyEnumerator, int start, int end)
             {
                 var (firstLineOffset, firstLineLength) = sourceLineIndex.GetLine(start);
@@ -80,7 +80,7 @@ namespace LogGrokCore.Data.Search
                 _ = stream.Seek(firstLineOffset, SeekOrigin.Begin);
                 _ = stream.Read(memorySpan);
 
-                var index = start;
+                var index = start; // index: originalLogLineNumber
 
                 var currentLineOffset = firstLineOffset;
                 var currentLineLength = firstLineLength;
@@ -111,8 +111,9 @@ namespace LogGrokCore.Data.Search
                     // get rid of regex.Match 
                     if (regex.Match(tempString, 0, stringLength).Success)
                     {
-                        searchIndexer.Add(indexKey, index);
-                        lineIndex.Add(index);
+                        var currentSearchResultLineNumber = lineIndex.Add(index);
+                        searchIndexer.Add(indexKey, currentSearchResultLineNumber);
+                        
                     }
 
                     SearchStringPool.Return(tempString);
@@ -156,7 +157,7 @@ namespace LogGrokCore.Data.Search
                     return progress.IsFinished = true;
                 }, cancellationToken);
         
-            return (progress, searchIndexer);
+            return (progress, searchIndexer, lineIndex);
         }
     }
 }

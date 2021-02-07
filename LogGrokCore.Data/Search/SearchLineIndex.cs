@@ -1,8 +1,10 @@
+using System;
 using LogGrokCore.Data.IndexTree;
+using LogGrokCore.Data.Virtualization;
 
 namespace LogGrokCore.Data.Search
 {
-    public class SearchLineIndex 
+    public class SearchLineIndex : IItemProvider<int>
     {
         private readonly IndexTree<int, SimpleLeaf<int>> _searchResult 
             = new(32, 
@@ -10,7 +12,16 @@ namespace LogGrokCore.Data.Search
 
         private readonly ILineIndex _sourceLineIndex;
         public int Count => _searchResult.Count;
-            
+        public void Fetch(int start, Span<int> values)
+        {
+            using var enumerator = _searchResult.GetEnumerableFromIndex(start).GetEnumerator();
+            for (var i = 0; i < values.Length; i++)
+            {
+                enumerator.MoveNext();
+                values[i] = enumerator.Current;
+            }
+        }
+
         public SearchLineIndex(ILineIndex sourceLineIndex)
         {
             _sourceLineIndex = sourceLineIndex;
@@ -23,18 +34,16 @@ namespace LogGrokCore.Data.Search
             return (sourceIndex, offset, length);
         }
 
-        // public void Fetch(int start, Span<(int sourceIndex, long offset, int length)> values)
-        // {
-        //     for (var i = start; i < start + values.Length; i++)
-        //     {
-        //         values[i] = _sourceLineIndex.GetLine(i);
-        //     }
-        // }
-
-        public void Add(int sourceLineIndex)
+        public int GetIndexByOriginalIndex(int originalIndex)
         {
-            _searchResult.Add(sourceLineIndex);
+            return _searchResult.FindIndexByValue(originalIndex);
         }
 
+        public int Add(int sourceLineIndex)
+        {
+            var addedLineIndex = Count;
+            _searchResult.Add(sourceLineIndex);
+            return addedLineIndex;
+        }
     }
 }
