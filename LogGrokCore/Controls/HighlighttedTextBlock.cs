@@ -1,7 +1,6 @@
 using System;
 using System.Globalization;
 using System.Linq;
-using System.Net.Mime;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
@@ -51,15 +50,14 @@ namespace LogGrokCore.Controls
             return MeasureOverrideCore(formattedText);
         }
 
-        private FormattedText? _cachedText;
-        private Size _cachedSize;
+        private Func<FormattedText, Size>? _cachedMeasureOverrideCore; 
+
         private Size MeasureOverrideCore(FormattedText formattedText)
         {
-            if (formattedText.Equals(_cachedText)) return _cachedSize;
-            _cachedText = formattedText;
-            _cachedSize = new Size(formattedText.Width, formattedText.Height);
+            _cachedMeasureOverrideCore ??=
+                Cached.Of((FormattedText text) => new Size(text.Width, text.Height));
 
-            return _cachedSize;
+            return _cachedMeasureOverrideCore(formattedText);
         }
 
         protected override Size ArrangeOverride(Size finalSize) => finalSize;
@@ -83,23 +81,25 @@ namespace LogGrokCore.Controls
             drawingContext.DrawText(GetFormattedText(), new Point(0, 0));
         }
 
-        private (string?, Regex?) _cachedGetDrawingGeometriesArg = (null, null);
-        private Geometry? _cachedGetDrawingGeometriesResult;
-
         private readonly char[] _newLineSeparators = Environment.NewLine.ToCharArray();
-        
-        //[CacheLastResult]
+
+        private Func<(string? text, Regex? regex), Geometry?>? _cachedGetDrawingGeometries;
+
         private Geometry? GetDrawingGeometries(string? text, Regex? regex)
+        {
+            _cachedGetDrawingGeometries ??=
+                Cached.Of<(string? text, Regex? regex), Geometry?>(
+                    value => GetDrawingGeometriesUncached(value.text, value.regex));
+            return _cachedGetDrawingGeometries((text, regex));
+        }
+
+        private Geometry? GetDrawingGeometriesUncached(string? text, Regex? regex)
         {
             if (string.IsNullOrEmpty(text) || regex == null)
             {
                 return null;
             }
 
-            if ((text, regex) == _cachedGetDrawingGeometriesArg)
-                return _cachedGetDrawingGeometriesResult;
-            
-            
             var lines = text.Split(_newLineSeparators);
             
             // dirty performance fix
@@ -123,21 +123,24 @@ namespace LogGrokCore.Controls
                 y += ft.Height;
             }
 
-            _cachedGetDrawingGeometriesArg = (text, regex);
-            _cachedGetDrawingGeometriesResult = accumulatedGeometry;
             return accumulatedGeometry;
         }
-        
+
         private FormattedText GetFormattedText()
         {
             return GetFormattedText(Text, FlowDirection, FontFamily, FontStyle, FontWeight, 
                 FontStretch, FontSize, Foreground, TextOptions.GetTextFormattingMode(this));
         }
-        
-        private (string value, FlowDirection, FontFamily, FontStyle, FontWeight, FontStretch, 
-            double, Brush, TextFormattingMode) _cachedFormattedTextParams = default;
-        
-        private FormattedText? _cachedFormattedText = null;
+
+        private Func<(string value,
+            FlowDirection flowDirection,
+            FontFamily fontFamily,
+            FontStyle fontStyle,
+            FontWeight fontWeight,
+            FontStretch fontStretch,
+            double fontSize,
+            Brush foreground,
+            TextFormattingMode textFormattingMode), FormattedText>? _cachedGetFormattedText;
 
         private FormattedText GetFormattedText(
             string value,
@@ -150,19 +153,25 @@ namespace LogGrokCore.Controls
             Brush foreground,
             TextFormattingMode textFormattingMode)
         {
+            _cachedGetFormattedText ??=
+                Cached.Of(((string value,
+                        FlowDirection flowDirection,
+                        FontFamily fontFamily,
+                        FontStyle fontStyle,
+                        FontWeight fontWeight,
+                        FontStretch fontStretch,
+                        double fontSize,
+                        Brush foreground,
+                        TextFormattingMode textFormattingMode) p) =>
+                    GetFormattedTextUncached(p.value, p.flowDirection, p.fontFamily, p.fontStyle, p.fontWeight,
+                        p.fontStretch, p.fontSize, p.foreground, p.textFormattingMode));
+
             var parameters = (value, flowDirection, fontFamily, fontStyle, fontWeight,
                 fontStretch, fontSize, foreground, textFormattingMode);
-
-            if (parameters.Equals(_cachedFormattedTextParams)) return _cachedFormattedText!;
-            
-            _cachedFormattedTextParams = parameters;
-            _cachedFormattedText = GetFormattedTextUncached(value, flowDirection, fontFamily, fontStyle, fontWeight,
-                fontStretch, fontSize, foreground, textFormattingMode);
-
-            return _cachedFormattedText!;
+            return _cachedGetFormattedText(parameters);
         }
 
-        private FormattedText GetFormattedTextUncached(
+        private static FormattedText GetFormattedTextUncached(
             string value,
             FlowDirection flowDirection,
             FontFamily fontFamily,
@@ -172,12 +181,12 @@ namespace LogGrokCore.Controls
             double fontSize,
             Brush foreground,
             TextFormattingMode textFormattingMode) =>
-                new(value == null ? string.Empty : value,
+                new(value,
                     CultureInfo.CurrentUICulture,
                     flowDirection,
                     new Typeface(fontFamily, fontStyle, fontWeight, fontStretch),
                     fontSize,
-                    Foreground,
+                    foreground,
                     null,
                     textFormattingMode);
     }
