@@ -66,7 +66,7 @@
                             localControls:HighlightedTextBlock.HighlightRegex="{Binding HighlightRegex}">
                             <localControls:VirtualizingStackPanel.ContextMenu>
                                 <ContextMenu>
-                                    <MenuItem Command="Copy" />
+                                    <MenuItem Command="{x:Static local:RoutedCommands.CopyToClipboard}" />
                                     <MenuItem Header="Exclude" Style="{StaticResource FilterContextMenuItem}">
                                         <MenuItem.ItemsSource>
                                             <MultiBinding

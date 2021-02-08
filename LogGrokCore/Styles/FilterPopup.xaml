@@ -3,7 +3,8 @@
                     xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
                     xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
                     xmlns:filterPopup="clr-namespace:LogGrokCore.Controls.FilterPopup"
-                    xmlns:local="clr-namespace:LogGrokCore.Filter">
+                    xmlns:local="clr-namespace:LogGrokCore.Filter"
+                    xmlns:logGrokCore="clr-namespace:LogGrokCore">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/fonts.xaml"/>
@@ -22,11 +23,11 @@
                                     filterPopup:RoutedCommandBehavior.RoutedCommandToCommandBinding="{filterPopup:RoutedCommandToCommandBinding 
                                                 Command={Binding 
                                                     Source={x:Static filterPopup:PopupCommands.Close}},
-                                                RoutedCommand={x:Static filterPopup:RoutedCommands.Cancel}}"
+                                                RoutedCommand={x:Static logGrokCore:RoutedCommands.Cancel}}"
                                     filterPopup:FocusOnOpenPopupBehavior.DefaultFocusedElement="{Binding ElementName=FilterTextBox}">
             <filterPopup:ResizablePopup.InputBindings>
                 <KeyBinding Key="Escape"
-                            Command="{x:Static filterPopup:RoutedCommands.Cancel}"
+                            Command="{x:Static logGrokCore:RoutedCommands.Cancel}"
                             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Popup}}" />
             </filterPopup:ResizablePopup.InputBindings>
             <Border BorderBrush="LightGray" BorderThickness="1">
@@ -59,7 +60,7 @@
                                      filterPopup:RoutedCommandBehavior.RoutedCommandToCommandBinding="{filterPopup:RoutedCommandToCommandBinding 
                                                     Command={Binding 
                                                         Source={x:Static filterPopup:TextBoxCommands.Clear}},
-                                                    RoutedCommand={x:Static filterPopup:RoutedCommands.Cancel}}"
+                                                    RoutedCommand={x:Static logGrokCore:RoutedCommands.Cancel}}"
 
                                      mah:TextBoxHelper.ButtonCommand="{Binding 
                                                 Source={x:Static filterPopup:TextBoxCommands.Clear}}"
@@ -68,7 +69,7 @@
                                      mah:TextBoxHelper.Watermark="Search...">
                                 <TextBox.InputBindings>
                                     <KeyBinding Key="Escape"
-                                                Command="{x:Static filterPopup:RoutedCommands.Cancel}"
+                                                Command="{x:Static logGrokCore:RoutedCommands.Cancel}"
                                                 CommandParameter="{Binding ElementName=FilterTextBox}" />
                                 </TextBox.InputBindings>
                                 <TextBox.Style>

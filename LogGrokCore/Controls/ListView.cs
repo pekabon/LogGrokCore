@@ -28,7 +28,7 @@ namespace LogGrokCore.Controls
             };
             
             CommandBindings.Add(new CommandBinding(
-                ApplicationCommands.Copy,
+                RoutedCommands.CopyToClipboard,
                 (_, _) => CopySelectedItemsToClipboard(),
                 (_, e) => {
                     var items = ReadonlySelectedItems;
