@@ -11,6 +11,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 
 namespace LogGrokCore.Controls
+
 {
     public class ListView : System.Windows.Controls.ListView
     {
@@ -26,18 +27,20 @@ namespace LogGrokCore.Controls
                 else
                     throw new InvalidOperationException("Panel is not Set when loaded");
             };
-            
-            CommandBindings.Add(new CommandBinding(
-                RoutedCommands.CopyToClipboard,
-                (_, _) => CopySelectedItemsToClipboard(),
-                (_, e) => {
-                    var items = ReadonlySelectedItems;
-                    if (items == null || !items.Any()) return; 
-                    e.CanExecute = true;
-                    e.Handled = true;
-                }
-            ));
+
+            CopyToClipboard = new DelegateCommand(CopySelectedItemsToClipboard, () =>
+            {
+                var items = ReadonlySelectedItems;
+                return items != null && items.Any();
+            });
+
+            foreach (InputGesture copyInputGesture in ApplicationCommands.Copy.InputGestures)
+            {
+                InputBindings.Add(new InputBinding(CopyToClipboard, copyInputGesture));
+            }
         }
+
+        public ICommand CopyToClipboard { get; }
 
         private void UpdateReadonlySelectedItems()
         {

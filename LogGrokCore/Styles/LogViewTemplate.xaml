@@ -58,7 +58,9 @@
                                     VirtualizingStackPanel.VirtualizationMode="Recycling"
                                     localControls:NavigateToLineBehavior.NavigateToLineRequest=
                                         "{Binding NavigateToLineRequest}"
-                                    localControls:NavigateToLineBehavior.ChangeCurrentItem="True">
+                                    localControls:NavigateToLineBehavior.ChangeCurrentItem="True"
+                                    x:Name="ItemsListView">
+                
                 <ListView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <localControls:VirtualizingStackPanel
@@ -66,7 +68,10 @@
                             localControls:HighlightedTextBlock.HighlightRegex="{Binding HighlightRegex}">
                             <localControls:VirtualizingStackPanel.ContextMenu>
                                 <ContextMenu>
-                                    <MenuItem Command="{x:Static local:RoutedCommands.CopyToClipboard}" />
+                                    <MenuItem 
+                                        Command="{Binding ElementName=ItemsListView, Path=CopyToClipboard}"
+                                        Header="{x:Static localControls:CopyCommandProperties.Text}"
+                                        InputGestureText="{x:Static localControls:CopyCommandProperties.GestureText}"/>
                                     <MenuItem Header="Exclude" Style="{StaticResource FilterContextMenuItem}">
                                         <MenuItem.ItemsSource>
                                             <MultiBinding
