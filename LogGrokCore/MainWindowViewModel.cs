@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows.Input;
+using LogGrokCore.Colors;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
 
@@ -10,7 +11,7 @@ namespace LogGrokCore
     internal class MainWindowViewModel : ViewModelBase
     {
         private DocumentViewModel? _currentDocument;
-        private readonly ILogger _logger;
+        private readonly ApplicationSettings _applicationSettings;
 
         public ObservableCollection<DocumentViewModel> Documents { get; } =
             new();
@@ -20,9 +21,9 @@ namespace LogGrokCore
             obj=> OpenFiles((IEnumerable<string>)obj), 
             o => o is IEnumerable<string>);
 
-        public MainWindowViewModel(ILogger logger)
+        public MainWindowViewModel(ApplicationSettings applicationSettings)
         {
-            _logger = logger;
+            _applicationSettings = applicationSettings;
         }
 
         public DocumentViewModel? CurrentDocument
@@ -75,7 +76,7 @@ namespace LogGrokCore
 
         private void AddDocument(string fileName)
         {
-            var container = new DocumentContainer(fileName);
+            var container = new DocumentContainer(fileName, _applicationSettings.ColorSettings);
             var viewModel = container.GetDocumentViewModel();
             Documents.Add(viewModel);
             

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using LogGrokCore.Colors;
 using LogGrokCore.Data;
 using LogGrokCore.Search;
 
@@ -12,7 +13,8 @@ namespace LogGrokCore
         public DocumentViewModel(
             LogModelFacade logModelFacade,
             LogViewModel logViewModel, 
-            SearchViewModel searchViewModel)
+            SearchViewModel searchViewModel,
+            ColorSettings colorSettings)
         {
             Title = 
                 Path.GetFileName(logModelFacade.LogFile.FilePath) 
@@ -20,7 +22,8 @@ namespace LogGrokCore
 
             LogViewModel = logViewModel;
             SearchViewModel = searchViewModel;
-
+            ColorSettings = colorSettings;
+            
             SearchViewModel.CurrentLineChanged += lineNumber => LogViewModel.NavigateTo(lineNumber);
             SearchViewModel.CurrentSearchChanged += regex => LogViewModel.HighlightRegex = regex;
         }
@@ -30,6 +33,8 @@ namespace LogGrokCore
         public LogViewModel LogViewModel { get; }
 
         public SearchViewModel SearchViewModel { get; }
+
+        public ColorSettings ColorSettings { get; }
 
         public bool IsCurrentDocument
         {

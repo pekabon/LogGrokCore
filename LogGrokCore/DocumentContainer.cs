@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using DryIoc;
+using LogGrokCore.Colors.Configuration;
 using LogGrokCore.Controls.GridView;
 using LogGrokCore.Data;
 using LogGrokCore.Data.Index;
@@ -31,7 +32,7 @@ namespace LogGrokCore
         }
         
         private readonly Container _container;
-        public DocumentContainer(string fileName)
+        public DocumentContainer(string fileName, ColorSettings colorSettings)
         {
             _container = new Container(rules =>
                 rules
@@ -40,6 +41,7 @@ namespace LogGrokCore
                         (Rules.AutoResolveConcreteTypeRule()));
 
             LoggerRegistrationHelper.Register(_container);
+            
             _container.Register<StringPool>(Reuse.Singleton);
             _container.Register<LogModelFacade>(
                 made: Parameters.Of.Type<ILineParser>(serviceKey: ParserType.Full));
@@ -68,6 +70,7 @@ namespace LogGrokCore
                 serviceKey: ParserType.Full);
             
             // Presentation
+            _container.RegisterInstance(colorSettings);
 
             _container.Register<LogViewModel>(
                 made: Parameters.Of

@@ -4,6 +4,7 @@
                     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                     xmlns:local="clr-namespace:LogGrokCore"
                     xmlns:controls="clr-namespace:LogGrokCore.Controls"
+                    xmlns:colors="clr-namespace:LogGrokCore.Colors"
                     mc:Ignorable="d">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
@@ -13,7 +14,7 @@
     </ResourceDictionary.MergedDictionaries>
     
     <DataTemplate x:Key="DocumentTemplate" DataType="local:DocumentViewModel">
-        <Grid>
+        <Grid colors:ColorSettings.ColorSettings="{Binding ColorSettings}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto"/>
