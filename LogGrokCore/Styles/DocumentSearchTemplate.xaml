@@ -49,16 +49,14 @@
                         <controls:VirtualizingStackPanel
                             CurrentPosition="{Binding CurrentItemIndex}" 
                             controls:HighlightedTextBlock.HighlightRegex="{Binding HighlightRegex}"
-                            Tag="{Binding SelectedItems, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type controls:ListView}}}">
+                            Tag="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type controls:ListView}}}">
                             <controls:VirtualizingStackPanel.ContextMenu>
                                 <ContextMenu>
-                                    <MenuItem Command="Copy" />
-                                    <!-- TODO -->
-                                    <!-- <MenuItem Command="{Binding AddToScratchPadCommand}" -->
-                                    <!--           CommandParameter="{Binding PlacementTarget.Tag, -->
-                                    <!--                                     RelativeSource={RelativeSource FindAncestor, -->
-                                    <!--                                     AncestorType={x:Type ContextMenu}}}" -->
-                                    <!--           Header="Add to scratch pad" /> -->
+                                    <MenuItem 
+                                        Command="{Binding PlacementTarget.Tag.CopyToClipboard, 
+                                            RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContextMenu}}}"
+                                            Header="{x:Static controls:CopyCommandProperties.Text}"
+                                            InputGestureText="{x:Static controls:CopyCommandProperties.GestureText}"/>
                                 </ContextMenu>
                             </controls:VirtualizingStackPanel.ContextMenu>
                         </controls:VirtualizingStackPanel>

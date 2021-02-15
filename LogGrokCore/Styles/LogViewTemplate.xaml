@@ -65,11 +65,15 @@
                     <ItemsPanelTemplate>
                         <localControls:VirtualizingStackPanel
                             CurrentPosition="{Binding CurrentItemIndex}" 
-                            localControls:HighlightedTextBlock.HighlightRegex="{Binding HighlightRegex}">
+                            localControls:HighlightedTextBlock.HighlightRegex="{Binding HighlightRegex}"
+                            Tag="{Binding
+                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type localControls:ListView}}}">
+                            
                             <localControls:VirtualizingStackPanel.ContextMenu>
-                                <ContextMenu>
+                                <ContextMenu Tag="{Binding}">
                                     <MenuItem 
-                                        Command="{Binding ElementName=ItemsListView, Path=CopyToClipboard}"
+                                        Command="{Binding PlacementTarget.Tag.CopyToClipboard, 
+                                            RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContextMenu}}}"
                                         Header="{x:Static localControls:CopyCommandProperties.Text}"
                                         InputGestureText="{x:Static localControls:CopyCommandProperties.GestureText}"/>
                                     <MenuItem Header="Exclude" Style="{StaticResource FilterContextMenuItem}">
