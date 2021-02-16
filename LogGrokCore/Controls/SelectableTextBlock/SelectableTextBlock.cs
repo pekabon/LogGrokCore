@@ -12,6 +12,16 @@ namespace LogGrokCore.Controls.SelectableTextBlock
             TextBoxBase.SelectionBrushProperty.AddOwner(typeof(SelectableTextBlock), 
                 new PropertyMetadata(GetDefaultSelectionTextBrush()));
 
+        public static readonly DependencyProperty SelectedTextProperty = DependencyProperty.Register(
+            "SelectedText", typeof(string), typeof(SelectableTextBlock), 
+            new PropertyMetadata(string.Empty));
+        
+        public string SelectedText
+        {
+            get => (string) GetValue(SelectedTextProperty);
+            set => SetValue(SelectedTextProperty, value);
+        }
+
         private static Brush GetDefaultSelectionTextBrush()
         {
             SolidColorBrush solidColorBrush = new SolidColorBrush(SystemColors.HighlightColor);
@@ -24,7 +34,9 @@ namespace LogGrokCore.Controls.SelectableTextBlock
             get => (Brush) GetValue(SelectionBrushProperty);
             set => SetValue(SelectionBrushProperty, value);
         }
-        
+
+        private bool _subscribedToSelectionChanges;
+
         static SelectableTextBlock()
         {
             FocusableProperty.OverrideMetadata(typeof(SelectableTextBlock), new FrameworkPropertyMetadata(true));
@@ -35,12 +47,16 @@ namespace LogGrokCore.Controls.SelectableTextBlock
                 new FrameworkPropertyMetadata((object?)null));
         }
 
-        // ReSharper disable once NotAccessedField.Local
-        private readonly TextEditorWrapper? _editor;
+        // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
+        private readonly TextEditorWrapper _editor;
 
         public SelectableTextBlock()
         {
             _editor = TextEditorWrapper.CreateFor(this);
+            _editor.SelectionChanged += (sender, args) =>
+            {
+                SelectedText = _editor.GetSelectedText();
+            };
         }
     }
 }

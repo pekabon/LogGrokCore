@@ -5,6 +5,7 @@
                     xmlns:local="clr-namespace:LogGrokCore"
                     xmlns:localControls="clr-namespace:LogGrokCore.Controls"
                     xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
+                    xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
                     mc:Ignorable="d">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
@@ -12,27 +13,9 @@
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.contextmenu.xaml" />
 
         <ResourceDictionary Source="ListViewItemStyle.xaml" />
+        <ResourceDictionary Source="LogViewContextMenu.xaml"/>
     </ResourceDictionary.MergedDictionaries>
-    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-    <Style x:Key="FilterContextMenuItem"
-           TargetType="MenuItem"
-           BasedOn="{StaticResource MahApps.Styles.MenuItem}"
-           d:DataContext="{d:DesignInstance Type=local:LogViewModel, IsDesignTimeCreatable=False}">
-        <Style.Triggers>
-            <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=ItemsSource}"
-                         Value="{x:Null}">
-                <DataTrigger.Setters>
-                    <Setter Property="Visibility" Value="Collapsed" />
-                </DataTrigger.Setters>
-            </DataTrigger>
-            <DataTrigger Binding="{Binding CanFilter, Converter={StaticResource BooleanToVisibilityConverter}}"
-                         Value="False">
-                <DataTrigger.Setters>
-                    <Setter Property="Visibility" Value="Collapsed" />
-                </DataTrigger.Setters>
-            </DataTrigger>
-        </Style.Triggers>
-    </Style>
+
     <DataTemplate x:Key="LogViewTemplate" DataType="local:LogViewModel">
         <Grid>
             <Grid.RowDefinitions>
@@ -66,41 +49,9 @@
                         <localControls:VirtualizingStackPanel
                             CurrentPosition="{Binding CurrentItemIndex}" 
                             localControls:HighlightedTextBlock.HighlightRegex="{Binding HighlightRegex}"
-                            Tag="{Binding
-                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type localControls:ListView}}}">
-                            
-                            <localControls:VirtualizingStackPanel.ContextMenu>
-                                <ContextMenu Tag="{Binding}">
-                                    <MenuItem 
-                                        Command="{Binding PlacementTarget.Tag.CopyToClipboard, 
-                                            RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContextMenu}}}"
-                                        Header="{x:Static localControls:CopyCommandProperties.Text}"
-                                        InputGestureText="{x:Static localControls:CopyCommandProperties.GestureText}"/>
-                                    <MenuItem Header="Exclude" Style="{StaticResource FilterContextMenuItem}">
-                                        <MenuItem.ItemsSource>
-                                            <MultiBinding
-                                                Converter="{localControls:MetaInfoToMenuItemsConverter}">
-                                                <Binding Path="MetaInformation" />
-                                                <Binding Path="ExcludeCommand" />
-                                                <Binding Path="SelectedItems" />
-                                            </MultiBinding>
-                                        </MenuItem.ItemsSource>
-                                    </MenuItem>
-                                    <MenuItem Header="Exclude All But" Style="{StaticResource FilterContextMenuItem}">
-                                        <MenuItem.ItemsSource>
-                                            <MultiBinding
-                                                Converter="{localControls:MetaInfoToMenuItemsConverter}">
-                                                <Binding Path="MetaInformation" />
-                                                <Binding Path="ExcludeAllButCommand" />
-                                                <Binding Path="SelectedItems" />
-                                            </MultiBinding>
-                                        </MenuItem.ItemsSource>
-                                    </MenuItem>
-                                    <MenuItem Header="Clear filters"
-                                              Visibility="{Binding HaveFilter, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                              Command="{Binding ClearExclusionsCommand}" />
-                                </ContextMenu>
-                            </localControls:VirtualizingStackPanel.ContextMenu>
+                            Tag="{Binding DataContext,
+                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type localControls:ListView}}}"
+                            ContextMenu="{StaticResource LogViewContextMenu}">
                         </localControls:VirtualizingStackPanel>
                     </ItemsPanelTemplate>
                 </ListView.ItemsPanel>

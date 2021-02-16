@@ -27,21 +27,8 @@ namespace LogGrokCore.Controls
                 else
                     throw new InvalidOperationException("Panel is not Set when loaded");
             };
-
-            CopyToClipboard = new DelegateCommand(CopySelectedItemsToClipboard, () =>
-            {
-                var items = ReadonlySelectedItems;
-                return items != null && items.Any();
-            });
-
-            foreach (InputGesture copyInputGesture in ApplicationCommands.Copy.InputGestures)
-            {
-                InputBindings.Add(new InputBinding(CopyToClipboard, copyInputGesture));
-            }
         }
-
-        public ICommand CopyToClipboard { get; }
-
+        
         private void UpdateReadonlySelectedItems()
         {
             ReadonlySelectedItems =
@@ -181,26 +168,6 @@ namespace LogGrokCore.Controls
                 }
             }, DispatcherPriority.ApplicationIdle);
                 
-        }
-
-        private void CopySelectedItemsToClipboard()
-        {
-            var indices = GetPanel()?.SelectedIndices ?? Enumerable.Empty<int>();
-            
-            var items =  
-                indices
-                    .OrderBy(i => i)
-                    .Select(i => Items[i]);
-            
-            var  text = new StringBuilder();
-            foreach (var line in items)
-            {
-                _ = text.Append(line);
-                _ = text.Append("\r\n");
-            }
-            _ = text.Replace("\0", string.Empty);
-
-            TextCopy.ClipboardService.SetText(text.ToString());
         }
 
         private VirtualizingStackPanel? _panel;

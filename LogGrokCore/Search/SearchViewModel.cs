@@ -11,7 +11,7 @@ namespace LogGrokCore.Search
     internal class SearchViewModel : ViewModelBase
     {
         private readonly Func<SearchPattern, SearchDocumentViewModel> _searchDocumentViewModelFactory;
-        private string _searchText = string.Empty;
+        private string _textToSearch = string.Empty;
         private  bool _isCaseSensitive;
         private bool _useRegex;
 
@@ -30,38 +30,48 @@ namespace LogGrokCore.Search
                 
             ClearSearchCommand = new DelegateCommand(ClearSearch);
             CloseDocumentCommand = DelegateCommand.Create<SearchDocumentViewModel>(CloseDocument);
-            AddNewSearchCommand = new DelegateCommand(AddNewSearch);
+            AddNewSearchCommand = new DelegateCommand(() => AddNewSearch(_searchPattern.Clone()));
+            SearchTextCommand = new DelegateCommand(SearchText, text => !string.IsNullOrEmpty(text as string));
             Documents = new ObservableCollection<SearchDocumentViewModel>();
         }
 
+        public DelegateCommand SearchTextCommand { get; set; }
+
         private void ClearSearch()
         {
-            SearchText = string.Empty;
-            CommitSearchPatternImmediately(SearchText, IsCaseSensitive, UseRegex);
+            TextToSearch = string.Empty;
+            CommitSearchPatternImmediately(TextToSearch, IsCaseSensitive, UseRegex);
         }
 
         private void CloseDocument(SearchDocumentViewModel  d)
         {
             if (Documents.Count != 0) return;
-            SearchText = string.Empty;
+            TextToSearch = string.Empty;
             CurrentDocument = null;
         }
 
-        private void AddNewSearch()
+        private void AddNewSearch(SearchPattern searchPattern)
         {
-            var newDocument = _searchDocumentViewModelFactory(_searchPattern.Clone());
+            var newDocument = _searchDocumentViewModelFactory(searchPattern);
             Documents.Add(newDocument);
             CurrentDocument = newDocument;
+        }
+        
+        private void SearchText(object obj)
+        {
+            if (obj is not string text) return;
+            var searchPattern = new SearchPattern(text, false, false);
+            AddNewSearch(searchPattern);
         }
 
         public event Action<int>? CurrentLineChanged;
 
         public event Action<Regex>? CurrentSearchChanged;
 
-        public string SearchText
+        public string TextToSearch
         {
-            get => _searchText;
-            set => CommitSearchPattern(ref _searchText, value, TimeSpan.FromMilliseconds(500)); 
+            get => _textToSearch;
+            set => CommitSearchPattern(ref _textToSearch, value, TimeSpan.FromMilliseconds(500)); 
         }
 
         public bool IsCaseSensitive
@@ -104,14 +114,14 @@ namespace LogGrokCore.Search
                 
                 if (_currentDocument == null)
                 {
-                    SearchText = string.Empty;
+                    TextToSearch = string.Empty;
                     IsCaseSensitive = false;
                     UseRegex = false;
                 }
                 else
                 {
                     var searchPattern = _currentDocument.SearchPattern;
-                    SearchText = searchPattern.Pattern;
+                    TextToSearch = searchPattern.Pattern;
                     IsCaseSensitive = searchPattern.IsCaseSensitive;
                     UseRegex = searchPattern.UseRegex;
                 }
@@ -123,7 +133,7 @@ namespace LogGrokCore.Search
             if (Equals(field, newValue)) return;
             SetAndRaiseIfChanged(ref field, newValue, propertyName);
             Throttle(ref _searchPatternThrottleTimer, 
-                () => CommitSearchPatternImmediately(SearchText, IsCaseSensitive, UseRegex), 
+                () => CommitSearchPatternImmediately(TextToSearch, IsCaseSensitive, UseRegex), 
                 timeSpan);
         }
 

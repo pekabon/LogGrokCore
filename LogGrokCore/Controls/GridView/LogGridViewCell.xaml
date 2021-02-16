@@ -10,13 +10,20 @@
                       d:DataContext="{d:DesignInstance Type=gridView:CellContentViewModel, IsDesignTimeCreatable=False}">
     <ContentControl.Resources>
         <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../../Styles/LogViewContextMenu.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
             <DataTemplate x:Key="NormalTemplate" DataType="{x:Type gridView:CellContentViewModel}">
                 <controls:HighlightedTextBlock Text="{Binding Text}"/>
             </DataTemplate>
             <DataTemplate x:Key="SelectableTemplate" DataType="{x:Type gridView:CellContentViewModel}">
                 <selectableTextBlock:SelectableTextBlock
                     SelectionBrush="{StaticResource MahApps.Brushes.Highlight}"
-                    Text="{Binding Text, Mode=OneWay}"/>
+                    Text="{Binding Text, Mode=OneWay}"
+                    Tag="{Binding DataContext,
+                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type controls:ListView}}}"
+                    ContextMenu="{StaticResource LogViewContextMenu}">
+             </selectableTextBlock:SelectableTextBlock>
             </DataTemplate>
         </ResourceDictionary>
     </ContentControl.Resources>

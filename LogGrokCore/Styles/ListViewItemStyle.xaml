@@ -30,7 +30,9 @@
                     BorderBrush="{TemplateBinding BorderBrush}"
                     BorderThickness="1"
                     SnapsToDevicePixels="True" />
-            <TextBlock Text="{Binding Text}" Margin="25"/>
+            
+            <TextBlock Text="{Binding Content.Text, 
+                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Margin="25"/>
         </Grid>
     </ControlTemplate>
 
@@ -45,11 +47,13 @@
             </Setter.Value>
         </Setter>
         <Style.Triggers>
-            <DataTrigger Binding="{Binding  Converter={StaticResource ObjectToTypeConverter}}"
+            <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource Self},
+                         Converter={StaticResource ObjectToTypeConverter}}"
                          Value="{x:Type logGrokCore:LineViewModel}">
                 <Setter Property="Template" Value="{StaticResource LogLineControlTemplate}" />
             </DataTrigger>
-            <DataTrigger Binding="{Binding  Converter={StaticResource ObjectToTypeConverter}}"
+            <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource Self},
+                            Converter={StaticResource ObjectToTypeConverter}}"
                          Value="{x:Type logGrokCore:LogHeaderViewModel}">
                 <Setter Property="Template" Value="{StaticResource LogHeaderControlTemplate}" />
             </DataTrigger>

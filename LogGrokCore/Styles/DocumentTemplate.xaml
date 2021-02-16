@@ -14,6 +14,8 @@
     </ResourceDictionary.MergedDictionaries>
     
     <DataTemplate x:Key="DocumentTemplate" DataType="local:DocumentViewModel">
+        <controls:RootDocumentControl
+            SearchTextCommand="{Binding SearchViewModel.SearchTextCommand}">
         <Grid colors:ColorSettings.ColorSettings="{Binding ColorSettings}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
@@ -44,5 +46,6 @@
                             Visibility="{Binding SearchViewModel.IsFilterEnabled,
                                 Converter={StaticResource BooleanToVisibilityConverter}}" />
         </Grid>
+        </controls:RootDocumentControl>
     </DataTemplate>
 </ResourceDictionary>

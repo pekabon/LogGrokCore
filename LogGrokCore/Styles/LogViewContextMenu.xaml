@@ -1,0 +1,88 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                    xmlns:logGrokCore="clr-namespace:LogGrokCore"
+                    xmlns:localControls="clr-namespace:LogGrokCore.Controls"
+                    xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
+                    mc:Ignorable="d">
+    
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    <xcad:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
+    <Style x:Key="FilterContextMenuItem"
+           TargetType="MenuItem"
+           BasedOn="{StaticResource MahApps.Styles.MenuItem}"
+           d:DataContext="{d:DesignInstance Type=logGrokCore:LogViewModel, IsDesignTimeCreatable=False}">
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=ItemsSource}"
+                         Value="{x:Null}">
+                <DataTrigger.Setters>
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </DataTrigger.Setters>
+            </DataTrigger>
+            <DataTrigger
+                Binding="{Binding CanFilter, 
+                Converter={StaticResource BooleanToVisibilityConverter}}"
+                Value="False">
+                <DataTrigger.Setters>
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </DataTrigger.Setters>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+    <ContextMenu
+        d:DataContext="{d:DesignInstance Type=logGrokCore:LogViewModel, IsDesignTimeCreatable=False}"
+        mc:Ignorable="d"
+        x:Key="LogViewContextMenu"
+        DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
+ 
+            <MenuItem Command="Copy"
+                  Visibility="{Binding RelativeSource={RelativeSource Self},
+                                              Path=IsEnabled,
+                                              Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+            <MenuItem Command="logGrokCore:RoutedCommands.SearchText"
+                      Header="{Binding PlacementTarget.SelectedText,
+                            Converter={localControls:FormatText},
+                            ConverterParameter='Search \'{0}\'',
+                            RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContextMenu}}}"
+                            CommandParameter="{Binding PlacementTarget.SelectedText,
+                            RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContextMenu}}}"
+                      
+                      Visibility="{Binding RelativeSource={RelativeSource Self},
+                                              Path=IsEnabled,
+                                              Converter={StaticResource BooleanToVisibilityConverter}}" />
+            
+            <MenuItem
+                Command="{Binding CopySelectedItemsToClipboardCommand}"
+                Visibility="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=ContextMenu},
+                                                Path=Items[0].IsEnabled,
+                                                Converter={StaticResource InverseBoolToVisibilityConverter}}"
+                Header="{x:Static localControls:CopyCommandProperties.Text}"
+                InputGestureText="{x:Static localControls:CopyCommandProperties.GestureText}" />
+            
+            <MenuItem Header="Exclude" Style="{StaticResource FilterContextMenuItem}">
+                <MenuItem.ItemsSource>
+                    <MultiBinding
+                        Converter="{localControls:MetaInfoToMenuItemsConverter}">
+                        <Binding Path="MetaInformation" />
+                        <Binding Path="ExcludeCommand" />
+                        <Binding Path="SelectedItems" />
+                    </MultiBinding>
+                </MenuItem.ItemsSource>
+            </MenuItem>
+            <MenuItem Header="Exclude All But" Style="{StaticResource FilterContextMenuItem}">
+                <MenuItem.ItemsSource>
+                    <MultiBinding
+                        Converter="{localControls:MetaInfoToMenuItemsConverter}">
+                        <Binding Path="MetaInformation" />
+                        <Binding Path="ExcludeAllButCommand" />
+                        <Binding Path="SelectedItems" />
+                    </MultiBinding>
+                </MenuItem.ItemsSource>
+            </MenuItem>
+            <MenuItem Header="Clear filters"
+                      Visibility="{Binding HaveFilter, Converter={StaticResource BooleanToVisibilityConverter}}"
+                      Command="{Binding ClearExclusionsCommand}" />
+    </ContextMenu>
+</ResourceDictionary>

@@ -111,7 +111,7 @@
             </ToggleButton>
             <TextBox Grid.Row="0"
                      Grid.Column="2"
-                     Text="{Binding SearchText,
+                     Text="{Binding TextToSearch,
                                         UpdateSourceTrigger=PropertyChanged,
                                         NotifyOnValidationError=True,
                                         ValidatesOnDataErrors=True,

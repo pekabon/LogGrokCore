@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Input;
-using LogGrokCore.Colors;
 using LogGrokCore.Controls;
 using LogGrokCore.Controls.GridView;
 using LogGrokCore.Data;
@@ -83,12 +83,32 @@ namespace LogGrokCore
             ClearExclusionsCommand = new DelegateCommand(() =>
                 {
                     _filterSettings.ClearAllExclusions();
-                }
-            );
+                });
+
+            CopySelectedItemsToClipboardCommand = new DelegateCommand(CopySelectedItemsToClipboard, 
+                () => SelectedItems?.Cast<object>().Any() ?? false); 
             
             _viewFactory = viewFactory;
             UpdateDocumentWhileLoading();
             UpdateProgress();
+        }
+
+        private void CopySelectedItemsToClipboard()
+        {
+            if (SelectedItems == null) return;
+            var orderedLines =
+                SelectedItems.OfType<LogHeaderViewModel>().Select(h => h.ToString())
+                    .Concat(SelectedItems.OfType<LineViewModel>().OrderBy(ln => ln.Index).Select(ln => ln.ToString()));
+            
+            var  text = new StringBuilder();
+            foreach (var line in orderedLines)
+            {
+                _ = text.Append(line);
+                _ = text.Append("\r\n");
+            }
+            _ = text.Replace("\0", string.Empty);
+
+            TextCopy.ClipboardService.SetText(text.ToString());
         }
 
         private void UpdateFilteredCollection()
@@ -122,6 +142,8 @@ namespace LogGrokCore
 
         public LogMetaInformation MetaInformation => _logModelFacade.MetaInformation;
 
+        public ICommand CopySelectedItemsToClipboardCommand { get; }
+        
         public ICommand ExcludeCommand { get; }
 
         public ICommand ExcludeAllButCommand { get; }

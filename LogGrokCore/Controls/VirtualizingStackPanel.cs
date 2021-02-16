@@ -168,7 +168,7 @@ namespace LogGrokCore.Controls
             {
                 var context = Items[itemIndex];
                 if (itm.DataContext == context && itm.Content == context) return;
-                itm.DataContext = context;
+                itm.DataContext = this.DataContext;
                 itm.Content = context;
                 if (itm.IsSelected) itm.IsSelected = false;
 

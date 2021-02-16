@@ -2,25 +2,25 @@ using System;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 
 namespace LogGrokCore.Controls.SelectableTextBlock
 {
     #nullable disable
     class TextEditorWrapper
     {
-        
         private static readonly Type TextEditorType = 
             Type.GetType("System.Windows.Documents.TextEditor, PresentationFramework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
         private static readonly PropertyInfo IsReadOnlyProp = TextEditorType.GetProperty("IsReadOnly", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly PropertyInfo TextViewProp = TextEditorType.GetProperty("TextView", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly MethodInfo RegisterMethod = TextEditorType.GetMethod("RegisterCommandHandlers", 
             BindingFlags.Static | BindingFlags.NonPublic, null, new[] { typeof(Type), typeof(bool), typeof(bool), typeof(bool) }, null);
-
+        private static readonly PropertyInfo SelectionProperty = TextEditorType.GetProperty("Selection", BindingFlags.Instance | BindingFlags.NonPublic);
+        
         private static readonly Type TextContainerType = Type.GetType("System.Windows.Documents.ITextContainer, PresentationFramework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
         private static readonly PropertyInfo TextContainerTextViewProp = TextContainerType.GetProperty("TextView");
 
         private static readonly PropertyInfo TextContainerProp = typeof(TextBlock).GetProperty("TextContainer", BindingFlags.Instance | BindingFlags.NonPublic);
-
         
         public static void RegisterCommandHandlers(Type controlType, bool acceptsRichContent, bool readOnly, bool registerEventListeners)
         {
@@ -38,12 +38,34 @@ namespace LogGrokCore.Controls.SelectableTextBlock
             return editor;
         }
 
+
         private readonly object _editor;
 
         private TextEditorWrapper(object textContainer, FrameworkElement uiScope, bool isUndoEnabled)
         {
             _editor = Activator.CreateInstance(TextEditorType, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.CreateInstance, 
                 null, new[] { textContainer, uiScope, isUndoEnabled }, null);
+        }
+
+        public event EventHandler SelectionChanged
+        {
+            add
+            {
+                if (SelectionProperty.GetValue(_editor) is TextSelection textSelection)
+                    textSelection.Changed += value;
+            }
+            remove
+            {
+                if (SelectionProperty.GetValue(_editor) is TextSelection textSelection)
+                    textSelection.Changed -= value;
+            }
+        }
+
+        public string GetSelectedText()
+        {
+            var textSelection = SelectionProperty.GetValue(_editor) as TextSelection;
+
+            return textSelection?.Text ?? string.Empty;
         }
     }
 }
