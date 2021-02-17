@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -54,7 +53,9 @@ namespace LogGrokCore.Search
      
             SearchPattern = searchPattern;
         }
-
+        
+        public bool HaveFilter => false;
+        
         public string Title
         {
             get => _title;

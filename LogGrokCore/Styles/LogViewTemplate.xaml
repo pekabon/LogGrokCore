@@ -49,7 +49,7 @@
                         <localControls:VirtualizingStackPanel
                             CurrentPosition="{Binding CurrentItemIndex}" 
                             localControls:HighlightedTextBlock.HighlightRegex="{Binding HighlightRegex}"
-                            Tag="{Binding DataContext,
+                            Tag="{Binding 
                                 RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type localControls:ListView}}}"
                             ContextMenu="{StaticResource LogViewContextMenu}">
                         </localControls:VirtualizingStackPanel>

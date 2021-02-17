@@ -20,7 +20,7 @@
                 <selectableTextBlock:SelectableTextBlock
                     SelectionBrush="{StaticResource MahApps.Brushes.Highlight}"
                     Text="{Binding Text, Mode=OneWay}"
-                    Tag="{Binding DataContext,
+                    Tag="{Binding
                                 RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type controls:ListView}}}"
                     ContextMenu="{StaticResource LogViewContextMenu}">
              </selectableTextBlock:SelectableTextBlock>

@@ -49,7 +49,8 @@
                         <controls:VirtualizingStackPanel
                             CurrentPosition="{Binding CurrentItemIndex}" 
                             controls:HighlightedTextBlock.HighlightRegex="{Binding HighlightRegex}"
-                            Tag="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type controls:ListView}}}">
+                            Tag="{Binding 
+                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type controls:ListView}}}">
                             <controls:VirtualizingStackPanel.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem 
