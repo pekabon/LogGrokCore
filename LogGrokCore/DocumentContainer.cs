@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using DryIoc;
 using LogGrokCore.Colors.Configuration;

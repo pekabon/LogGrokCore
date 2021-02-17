@@ -2,8 +2,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows.Input;
-using LogGrokCore.Colors;
-using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
 
 namespace LogGrokCore

@@ -1,5 +1,3 @@
-using System;
-using System.Configuration;
 using LogGrokCore.Data;
 
 namespace LogGrokCore
