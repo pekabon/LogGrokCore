@@ -111,7 +111,7 @@ namespace LogGrokCore.Controls
             var y = 0.0;
             foreach (var line in lines)
             {
-                var matches = regex.Matches(line).Cast<Match>().ToList();
+                var matches = regex.Matches(line).ToList();
                 var ft = 
                     GetFormattedTextUncached(line, FlowDirection, FontFamily, FontStyle, FontWeight, 
                         FontStretch, FontSize, Foreground, TextOptions.GetTextFormattingMode(this), 
