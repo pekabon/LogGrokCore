@@ -81,8 +81,11 @@ namespace LogGrokCore
         public bool IsSynchronized => SourceList.IsSynchronized;
 
         public object SyncRoot => SourceList.SyncRoot;
-
+        
+#pragma warning disable CS0067
         public event NotifyCollectionChangedEventHandler? CollectionChanged;
+#pragma warning restore
+        
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public void Add(ItemViewModel item) => _sourceCollection.Add(item);

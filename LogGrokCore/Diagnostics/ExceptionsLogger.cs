@@ -13,12 +13,12 @@ namespace LogGrokCore.Diagnostics
           AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;     
       }
       
-      private static void OnFirstChanceException(object _, FirstChanceExceptionEventArgs args)
+      private static void OnFirstChanceException(object? _, FirstChanceExceptionEventArgs args)
       {
           OnException(args.Exception, "first chance exception");
       }
       
-      private static void OnUnhandledException(object _, UnhandledExceptionEventArgs args)
+      private static void OnUnhandledException(object? _, UnhandledExceptionEventArgs args)
       {
           OnException(args.ExceptionObject, "unhandled exception");
       }

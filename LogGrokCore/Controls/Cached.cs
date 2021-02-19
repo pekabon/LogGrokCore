@@ -13,11 +13,11 @@ namespace LogGrokCore.Controls
             public TValue? Value { get; set; }
         }
 
-        public static Func<T, TResult> Of<T, TResult>(Func<T, TResult?> sourceFunc)
+        public static Func<T, TResult> Of<T, TResult>(Func<T, TResult> sourceFunc)
         {
             Storage<T, TResult> storage = new();
 
-            TResult? Func(T arg)
+            TResult Func(T arg)
             {
                 if (storage.IsEmpty || !Equals(arg, storage.Key))
                 {
@@ -26,7 +26,7 @@ namespace LogGrokCore.Controls
                     storage.IsEmpty = false;
                 }
 
-                return storage.Value;
+                return storage.Value!;
             }
 
             return Func;
