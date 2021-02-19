@@ -114,7 +114,8 @@ namespace LogGrokCore.Controls
                 var matches = regex.Matches(line).Cast<Match>().ToList();
                 var ft = 
                     GetFormattedTextUncached(line, FlowDirection, FontFamily, FontStyle, FontWeight, 
-                        FontStretch, FontSize, Foreground, TextOptions.GetTextFormattingMode(this));
+                        FontStretch, FontSize, Foreground, TextOptions.GetTextFormattingMode(this), 
+                        VisualTreeHelper.GetDpi(this).PixelsPerDip);
                 foreach(var match in matches.Where(m => m.Length > 0))
                 {
                     var geometry = ft.BuildHighlightGeometry(new Point(0, y), match.Index, match.Length);
@@ -129,7 +130,8 @@ namespace LogGrokCore.Controls
         private FormattedText GetFormattedText()
         {
             return GetFormattedText(Text, FlowDirection, FontFamily, FontStyle, FontWeight, 
-                FontStretch, FontSize, Foreground, TextOptions.GetTextFormattingMode(this));
+                FontStretch, FontSize, Foreground, TextOptions.GetTextFormattingMode(this),
+                VisualTreeHelper.GetDpi(this).PixelsPerDip);
         }
 
         private Func<(string value,
@@ -140,7 +142,8 @@ namespace LogGrokCore.Controls
             FontStretch fontStretch,
             double fontSize,
             Brush foreground,
-            TextFormattingMode textFormattingMode), FormattedText>? _cachedGetFormattedText;
+            TextFormattingMode textFormattingMode,
+            double pixelsPerDip), FormattedText>? _cachedGetFormattedText;
 
         private FormattedText GetFormattedText(
             string value,
@@ -151,7 +154,8 @@ namespace LogGrokCore.Controls
             FontStretch fontStretch,
             double fontSize,
             Brush foreground,
-            TextFormattingMode textFormattingMode)
+            TextFormattingMode textFormattingMode,
+            double pixelsPerDip)
         {
             _cachedGetFormattedText ??=
                 Cached.Of(((string value,
@@ -162,12 +166,13 @@ namespace LogGrokCore.Controls
                         FontStretch fontStretch,
                         double fontSize,
                         Brush foreground,
-                        TextFormattingMode textFormattingMode) p) =>
+                        TextFormattingMode textFormattingMode,
+                        double pixelsPerDip) p) =>
                     GetFormattedTextUncached(p.value, p.flowDirection, p.fontFamily, p.fontStyle, p.fontWeight,
-                        p.fontStretch, p.fontSize, p.foreground, p.textFormattingMode));
+                        p.fontStretch, p.fontSize, p.foreground, p.textFormattingMode, p.pixelsPerDip));
 
             var parameters = (value, flowDirection, fontFamily, fontStyle, fontWeight,
-                fontStretch, fontSize, foreground, textFormattingMode);
+                fontStretch, fontSize, foreground, textFormattingMode, pixelsPerDip);
             return _cachedGetFormattedText(parameters);
         }
 
@@ -180,14 +185,17 @@ namespace LogGrokCore.Controls
             FontStretch fontStretch,
             double fontSize,
             Brush foreground,
-            TextFormattingMode textFormattingMode) =>
-                new(value,
-                    CultureInfo.CurrentUICulture,
-                    flowDirection,
-                    new Typeface(fontFamily, fontStyle, fontWeight, fontStretch),
-                    fontSize,
-                    foreground,
-                    null,
-                    textFormattingMode);
+            TextFormattingMode textFormattingMode,
+            double pixelsPerDip)
+        {
+            return new(value,
+                CultureInfo.CurrentUICulture,
+                flowDirection,
+                new Typeface(fontFamily, fontStyle, fontWeight, fontStretch),
+                fontSize,
+                foreground,
+                null,
+                textFormattingMode, pixelsPerDip);
+        }
     }
 }
