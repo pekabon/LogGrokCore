@@ -15,16 +15,16 @@ namespace LogGrokCore
 
     public class GrowingLogLinesCollection: IList<ItemViewModel>, IList, INotifyCollectionChanged, INotifyPropertyChanged, IGrowingCollection
     {
-        private readonly IReadOnlyList<ItemViewModel> _sourceCollection;
+        private readonly IList<ItemViewModel> _sourceCollection;
         private int _logLinesCount;
         private readonly IReadOnlyList<ItemViewModel> _headerCollection;
         private int _headerCollectionCount;
 
-        private IReadOnlyList<ItemViewModel> SourceList => _sourceCollection;
+        private IList SourceList => (IList)_sourceCollection;
 
         public GrowingLogLinesCollection(
                 IReadOnlyList<ItemViewModel> headerCollection, 
-                IReadOnlyList<ItemViewModel> sourceCollection)
+                IList<ItemViewModel> sourceCollection)
         {
             _sourceCollection = sourceCollection;
             _headerCollection = headerCollection;

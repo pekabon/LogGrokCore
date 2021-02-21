@@ -40,7 +40,7 @@ namespace LogGrokCore
             return (new GrowingLogLinesCollection(
                     _headerCollection,
                     lineCollection),
-                        getIndexByValue);
+                    getIndexByValue);
         }
         
         private (IItemProvider<(int index, string str)> itemProvider, Func<int, int> GetIndexByValue) GetLineProvider(
