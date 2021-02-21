@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -45,6 +46,9 @@ namespace LogGrokCore.Controls.SelectableTextBlock
             // remove the focus rectangle around the control
             FocusVisualStyleProperty.OverrideMetadata(typeof(SelectableTextBlock), 
                 new FrameworkPropertyMetadata((object?)null));
+            
+            EventManager.RegisterClassHandler(typeof(SelectableTextBlock), RequestBringIntoViewEvent, 
+                new RequestBringIntoViewEventHandler(OnRequestBringIntoView));
         }
 
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
@@ -57,6 +61,16 @@ namespace LogGrokCore.Controls.SelectableTextBlock
             {
                 SelectedText = _editor.GetSelectedText();
             };
+        }
+
+        private static void OnRequestBringIntoView(object sender, RequestBringIntoViewEventArgs e)
+        {
+            // disable autoscroll when cursor come to SelectableTextBlock
+            if (sender is SelectableTextBlock selectableTextBlock && 
+                string.IsNullOrEmpty(selectableTextBlock._editor.GetSelectedText()))
+            {
+                e.Handled = true;
+            }
         }
     }
 }

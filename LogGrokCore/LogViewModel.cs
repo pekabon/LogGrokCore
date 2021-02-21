@@ -26,39 +26,41 @@ namespace LogGrokCore
         private IEnumerable? _selectedItems;
         private readonly LineViewModelCollectionProvider _lineViewModelCollectionProvider;
         private GrowingLogLinesCollection? _lines;
-        private readonly Lazy<int> _headerLineCount;
         private Regex? _highlightRegex;
         private Func<int, int> _getIndexByValue = x => x;
         private readonly FilterSettings _filterSettings;
         private int _currentItemIndex;
+        private readonly LogHeaderCollection _headerCollection;
 
         public LogViewModel(
             LogModelFacade logModelFacade,
             LineViewModelCollectionProvider lineViewModelCollectionProvider,
             GridViewFactory viewFactory,
-            HeaderProvider headerProvider,
-            FilterSettings filterSettings)
+            LogHeaderCollection headerCollection,
+            FilterSettings filterSettings,
+            Selection markedLines)
         {
-            _headerLineCount = new Lazy<int>(() => headerProvider.Header == null ? 0 : 1);
             _logModelFacade = logModelFacade;
             _filterSettings = filterSettings;
 
+            _headerCollection = headerCollection;
+            
             var lineProvider = _logModelFacade.LineProvider;
             var lineParser = _logModelFacade.LineParser;
             
             _lineViewModelCollectionProvider = lineViewModelCollectionProvider;
             filterSettings.ExclusionsChanged += () =>
             {
-                InvokePropertyChanged(nameof(HaveFilter));
                 UpdateFilteredCollection();
             };
+            
 
             var lineCollection =
                 new VirtualList<(int index, string str), ItemViewModel>(lineProvider,
                     (indexAndString) => 
-                        new LineViewModel(indexAndString.index, indexAndString.str, lineParser));
+                        new LineViewModel(indexAndString.index, indexAndString.str, lineParser, markedLines));
             
-            Lines = new GrowingLogLinesCollection(() => headerProvider.Header, lineCollection);
+            Lines = new GrowingLogLinesCollection(headerCollection, lineCollection);
             
             CopyPathToClipboardCommand =
                 new DelegateCommand(() => TextCopy.ClipboardService.SetText(_logModelFacade.LogFile.FilePath));
@@ -80,10 +82,8 @@ namespace LogGrokCore
                         GetComponentsInSelectedLines(componentIndex));
                 });
             
-            ClearExclusionsCommand = new DelegateCommand(() =>
-                {
-                    _filterSettings.ClearAllExclusions();
-                });
+            ClearExclusionsCommand = new DelegateCommand(() => _filterSettings.ClearAllExclusions(),
+                () => _filterSettings.HaveExclusions);
 
             CopySelectedItemsToClipboardCommand = new DelegateCommand(CopySelectedItemsToClipboard, 
                 () => SelectedItems?.Cast<object>().Any() ?? false); 
@@ -137,8 +137,6 @@ namespace LogGrokCore
         }
 
         public bool CanFilter => true;
-
-        public bool HaveFilter => _filterSettings.HaveExclusions;
 
         public LogMetaInformation MetaInformation => _logModelFacade.MetaInformation;
 
@@ -241,7 +239,7 @@ namespace LogGrokCore
 
         public void NavigateTo(in int logLineNumber)
         {
-            NavigateToLineRequest.Raise(_getIndexByValue(logLineNumber) + _headerLineCount.Value);
+            NavigateToLineRequest.Raise(_getIndexByValue(logLineNumber) + _headerCollection.Count);
         }
     }
 }

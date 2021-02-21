@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using DryIoc;
 using LogGrokCore.Colors.Configuration;
+using LogGrokCore.Controls;
 using LogGrokCore.Controls.GridView;
 using LogGrokCore.Data;
 using LogGrokCore.Data.Index;
@@ -25,11 +26,6 @@ namespace LogGrokCore
             NotFilteringGridViewType
         }
 
-        private enum LineViewModelCollectionType
-        {
-            NotHeadered
-        }
-        
         private readonly Container _container;
         public DocumentContainer(string fileName, ColorSettings colorSettings)
         {
@@ -79,21 +75,13 @@ namespace LogGrokCore
             _container.Register<LineViewModelCollectionProvider>(Reuse.Singleton, 
                 made: Parameters.Of
                     .Type<ILineParser>(serviceKey: ParserType.Full)
-                    .Type<Func<string?>>(request =>
-                    {
-                        var headerProvider = request.Container.Resolve<HeaderProvider>();
-                        return () => headerProvider.Header;
-                    }));
+                    .Type<LogHeaderCollection>(request => request.Container.Resolve<LogHeaderCollection>()));
             
-            _container.Register<LineViewModelCollectionProvider>(Reuse.Singleton, 
-                made: Parameters.Of
-                    .Type<ILineParser>(serviceKey: ParserType.Full)
-                    .Type<Func<string?>>(request => () =>  null), serviceKey: LineViewModelCollectionType.NotHeadered);
-
             _container.Register<FilterSettings>(Reuse.Singleton);
             
             _container.Register<DocumentViewModel>();
             _container.Register<SearchViewModel>();
+            _container.Register<Selection>(Reuse.Singleton);
             
             _container.RegisterDelegate<Func<string, FilterViewModel>>(
                 r => fieldName => new FilterViewModel(
@@ -108,7 +96,9 @@ namespace LogGrokCore
                     var logModelFacade = r.Resolve<LogModelFacade>();
                     var filterSettings = r.Resolve<FilterSettings>();
                     var viewFactory = r.Resolve<GridViewFactory>(GridViewType.NotFilteringGridViewType);
-                    return pattern => new SearchDocumentViewModel(logModelFacade, filterSettings, viewFactory, pattern);
+                    var markedLines = r.Resolve<Selection>();
+                    return pattern => new SearchDocumentViewModel(logModelFacade, filterSettings, viewFactory, pattern,
+                        markedLines);
                 });
             
             // view

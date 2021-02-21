@@ -9,6 +9,7 @@
                      xmlns:local="clr-namespace:LogGrokCore"
                      xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
                      xmlns:th="clr-namespace:Xceed.Wpf.AvalonDock.Themes;assembly=Xceed.Wpf.AvalonDock.Themes.Metro"
+                     xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
                      d:DataContext="{d:DesignInstance Type=local:MainWindowViewModel, IsDesignTimeCreatable=False}"
                      localControls:DragnDropBehavior.AllowDrop="True"
                      localControls:DragnDropBehavior.DropCommand="{Binding DropCommand}"
@@ -19,8 +20,9 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/themes/light.blue.xaml" />
                 <ResourceDictionary Source="Styles/DocumentTemplate.xaml"/>
+                <ResourceDictionary Source="Styles/MarkedLinesViewTemplate.xaml"/>
+                <ResourceDictionary Source="Styles/ListViewItemStyle.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <th:MetroTheme x:Key="MetroTheme" />
             <localControls:StringShortenerConvereter x:Key="StringShortenerConvereter" />
@@ -45,6 +47,26 @@
     <mahapps:MetroWindow.InputBindings>
         <KeyBinding Command="{Binding OpenFileCommand}" Gesture="CTRL+O" />
     </mahapps:MetroWindow.InputBindings>
+
+    <b:Interaction.Triggers>
+        <b:EventTrigger EventName="ShowScratchPad" SourceObject="{Binding}">
+            <localBehaviors:ShowAnchorableLayoutAction DockingManager="{Binding 
+                ElementName=DockingManager}">
+                <localBehaviors:ShowAnchorableLayoutAction.LayoutAnchorablePane>
+                    <avalonDock:LayoutAnchorablePane DockMinHeight="200" />
+                </localBehaviors:ShowAnchorableLayoutAction.LayoutAnchorablePane>
+                <localBehaviors:ShowAnchorableLayoutAction.LayoutAnchorable>
+                    <avalonDock:LayoutAnchorable Title="Marked lines">
+                        <ContentControl 
+                            ContentTemplate="{StaticResource MarkedLinesViewTemplate}"
+                            Content="{Binding MarkedLinesViewModel}" />
+                    </avalonDock:LayoutAnchorable>
+                </localBehaviors:ShowAnchorableLayoutAction.LayoutAnchorable>
+            </localBehaviors:ShowAnchorableLayoutAction>
+        </b:EventTrigger>
+
+    </b:Interaction.Triggers>
+
     <Grid>
         <avalonDock:DockingManager x:Name="DockingManager"
                                    Theme="{StaticResource MetroTheme}"

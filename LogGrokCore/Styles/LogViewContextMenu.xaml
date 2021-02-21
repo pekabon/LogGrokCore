@@ -6,6 +6,7 @@
                     xmlns:localControls="clr-namespace:LogGrokCore.Controls"
                     xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
                     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+                    xmlns:filterPopup="clr-namespace:LogGrokCore.Controls.FilterPopup"
                     mc:Ignorable="d">
 
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
@@ -35,7 +36,6 @@
         d:DataContext="{d:DesignInstance Type={x:Type localControls:ListView}, IsDesignTimeCreatable=False}"
         x:Key="LogViewContextMenu"
         DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
-
         <MenuItem Command="Copy"
                   Visibility="{Binding RelativeSource={RelativeSource Self},
                                               Path=IsEnabled,
@@ -117,11 +117,10 @@
                     Kind="FilterPlusOutline" />
             </MenuItem.Icon>
         </MenuItem>
-        <MenuItem Header="Clear filters"
-                  DataContext="{Binding DataContext}"
-                  d:DataContext="{d:DesignInstance Type={x:Type logGrokCore:LogViewModel}, IsDesignTimeCreatable=False}"
-                  Visibility="{Binding HaveFilter, Converter={StaticResource BooleanToVisibilityConverter}}"
-                  Command="{Binding ClearExclusionsCommand}">
+        <MenuItem Command="{x:Static logGrokCore:RoutedCommands.ClearFilters}"
+                  Visibility="{Binding RelativeSource={RelativeSource Self},
+                                              Path=IsEnabled,
+                                              Converter={StaticResource BooleanToVisibilityConverter}}">
             <MenuItem.Icon>
                 <iconPacks:PackIconMaterial
                     VerticalAlignment="Center"

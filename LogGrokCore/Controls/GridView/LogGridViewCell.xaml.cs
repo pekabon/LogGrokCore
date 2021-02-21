@@ -3,15 +3,6 @@ using System.Windows;
 
 namespace LogGrokCore.Controls.GridView
 {
-    internal record CellContentViewModel
-    {
-        public string Text { get; }
-        
-        public LineViewModel LineViewModel { get; }
-
-        public CellContentViewModel(string text, LineViewModel lineViewModel) => (Text, LineViewModel) = (text, lineViewModel);
-    }
-
     public partial class LogGridViewCell
     {
         public LogGridViewCell()
@@ -42,7 +33,7 @@ namespace LogGrokCore.Controls.GridView
         private void UpdateValue()
         {
             if (DataContext is LineViewModel lineVm && ValueGetter != null)
-                Content = new CellContentViewModel(ValueGetter(lineVm), lineVm);
+                Content = ValueGetter(lineVm);
         }
     }
 }

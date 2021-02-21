@@ -5,6 +5,18 @@ namespace LogGrokCore.Data.Index
 {
     public static class ListExtensions
     {
+        public static int IndexOf<T>(this IReadOnlyList<T> self, T elementToFind)
+        {
+            var i = 0;
+            foreach(var element in self)
+            {
+                if( Equals( element, elementToFind))
+                    return i;
+                i++;
+            }
+            return -1;
+        }
+        
         public static int BinarySearch<TElement, TValue>(this IReadOnlyList<TElement> lst, int startIndex, int length, TValue value, 
             Func<TElement, TValue, int> comparer)  
         {

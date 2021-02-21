@@ -1,46 +1,21 @@
 ﻿<ContentControl x:Class="LogGrokCore.Controls.GridView.LogGridViewCell"
                       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                      xmlns:controls="clr-namespace:LogGrokCore.Controls"
-                      xmlns:gridView="clr-namespace:LogGrokCore.Controls.GridView"
                       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-                      xmlns:selectableTextBlock="clr-namespace:LogGrokCore.Controls.SelectableTextBlock"
+                      xmlns:system="clr-namespace:System;assembly=System.Runtime"
+                      xmlns:controls="clr-namespace:LogGrokCore.Controls"
                       mc:Ignorable="d"
-                      d:DataContext="{d:DesignInstance Type=gridView:CellContentViewModel, IsDesignTimeCreatable=False}">
+                      d:DataContext="{d:DesignInstance Type={x:Type system:String}, IsDesignTimeCreatable=True}">
+
     <ContentControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../../Styles/LogViewContextMenu.xaml"/>
+                <ResourceDictionary Source="LogGridViewCellStyle.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-            <DataTemplate x:Key="NormalTemplate" DataType="{x:Type gridView:CellContentViewModel}">
-                <controls:HighlightedTextBlock Text="{Binding Text}"/>
-            </DataTemplate>
-            <DataTemplate x:Key="SelectableTemplate" DataType="{x:Type gridView:CellContentViewModel}">
-                <selectableTextBlock:SelectableTextBlock
-                    SelectionBrush="{StaticResource MahApps.Brushes.Highlight}"
-                    Text="{Binding Text, Mode=OneWay}"
-                    Tag="{Binding
-                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type controls:ListView}}}"
-                    ContextMenu="{StaticResource LogViewContextMenu}">
-             </selectableTextBlock:SelectableTextBlock>
-            </DataTemplate>
         </ResourceDictionary>
     </ContentControl.Resources>
     <ContentControl.Style>
-        <Style TargetType="ContentControl">
-            <Style.Triggers>
-                <DataTrigger Value="False" 
-                             Binding="{Binding Path=(controls:VirtualizingStackPanel.IsCurrentItem),
-                                RelativeSource={RelativeSource FindAncestor,AncestorType={x:Type ListViewItem}}}">
-                    <Setter Property="ContentTemplate" Value="{StaticResource NormalTemplate}"/>
-                </DataTrigger>
-                <DataTrigger Value="True" 
-                             Binding="{Binding Path=(controls:VirtualizingStackPanel.IsCurrentItem),
-                                RelativeSource={RelativeSource FindAncestor,AncestorType={x:Type ListViewItem}}}">
-                    <Setter Property="ContentTemplate" Value="{StaticResource SelectableTemplate}"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
+        <StaticResource ResourceKey="LogGridViewCellStyle" />
     </ContentControl.Style>
- </ContentControl>   
+</ContentControl>   

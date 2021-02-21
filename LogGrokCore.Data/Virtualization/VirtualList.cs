@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace LogGrokCore.Data.Virtualization
 {
-    public class VirtualList<TSource, T> : IList<T>, IList where T : class 
+    public class VirtualList<TSource, T> : IList<T>, IReadOnlyList<T>, IList where T : class 
 	{
         
         private readonly IItemProvider<TSource> _itemProvider;

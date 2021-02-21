@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using LogGrokCore.Controls;
 using LogGrokCore.Data;
 using LogGrokCore.Data.Index;
 using LogGrokCore.Data.Virtualization;
@@ -10,16 +11,20 @@ namespace LogGrokCore
     {
         private readonly IItemProvider<(int index, string str)> _lineProvider;
         private readonly ILineParser _lineParser;
-        private readonly Func<string?> _headerProvider;
+        private readonly IReadOnlyList<ItemViewModel> _headerCollection;
+        private readonly Selection _markedLines;
 
         public LineViewModelCollectionProvider(
             IItemProvider<(int index, string str)> lineProvider,
             ILineParser lineParser,             
-            Func<string?> headerProvider)       
+            LogHeaderCollection headerCollection,
+            Selection markedLines)       
         {
             _lineProvider = lineProvider;
             _lineParser = lineParser;
-            _headerProvider = headerProvider;
+            _headerCollection = headerCollection;
+
+            _markedLines = markedLines;
         }
 
         public (GrowingLogLinesCollection lineViewModelsCollection, Func<int, int> getIndexByValue) 
@@ -31,9 +36,11 @@ namespace LogGrokCore
             var lineCollection =
                 new VirtualList<(int index, string str), ItemViewModel>(itemProvider,
                     indexAndString => 
-                        new LineViewModel(indexAndString.index, indexAndString.str, _lineParser));
-            return (new GrowingLogLinesCollection(() => _headerProvider(), lineCollection),
-                        getIndexByValue);
+                        new LineViewModel(indexAndString.index, indexAndString.str, _lineParser, _markedLines));
+            return (new GrowingLogLinesCollection(
+                    _headerCollection,
+                    lineCollection),
+                    getIndexByValue);
         }
         
         private (IItemProvider<(int index, string str)> itemProvider, Func<int, int> GetIndexByValue) GetLineProvider(

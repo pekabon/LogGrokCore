@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows.Input;
+using LogGrokCore.MarkedLines;
 using Microsoft.Win32;
 
 namespace LogGrokCore
@@ -11,8 +13,10 @@ namespace LogGrokCore
         private DocumentViewModel? _currentDocument;
         private readonly ApplicationSettings _applicationSettings;
 
-        public ObservableCollection<DocumentViewModel> Documents { get; } =
-            new();
+        public ObservableCollection<DocumentViewModel> Documents { get; }
+
+        public MarkedLinesViewModel MarkedLinesViewModel { get; }
+        
         public ICommand OpenFileCommand => new DelegateCommand(OpenFile);
         
         public ICommand DropCommand => new DelegateCommand(
@@ -22,6 +26,8 @@ namespace LogGrokCore
         public MainWindowViewModel(ApplicationSettings applicationSettings)
         {
             _applicationSettings = applicationSettings;
+            Documents = new ObservableCollection<DocumentViewModel>();
+            MarkedLinesViewModel = new MarkedLinesViewModel(Documents);
         }
 
         public DocumentViewModel? CurrentDocument
@@ -30,7 +36,6 @@ namespace LogGrokCore
             set
             {
                 if (_currentDocument == value) return;
-                
                 
                 if (_currentDocument != null)
                     _currentDocument.IsCurrentDocument = false;
@@ -62,6 +67,8 @@ namespace LogGrokCore
                     AddDocument(fileName);
                 }
             }
+            
+            ShowScratchPad?.Invoke(this, new EventArgs());
         }
         
         private void OpenFiles(IEnumerable<string> files)
@@ -77,7 +84,6 @@ namespace LogGrokCore
             var container = new DocumentContainer(fileName, _applicationSettings.ColorSettings);
             var viewModel = container.GetDocumentViewModel();
             Documents.Add(viewModel);
-            
             Documents.CollectionChanged += (o, e) =>
             {
                 if (Documents.Contains(viewModel))
@@ -86,5 +92,7 @@ namespace LogGrokCore
             };
             CurrentDocument = viewModel;
         }
+
+        public event EventHandler? ShowScratchPad;
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows;
@@ -21,6 +22,12 @@ namespace LogGrokCore.Controls
 
         public VirtualizingStackPanel()
         {
+            ItemCollection GetItems()
+            {
+                var itemsOwner = ItemsControl.GetItemsOwner(this);
+                return itemsOwner.Items;
+            }
+
             Loaded += (_, _) =>
             {
                 // ReSharper disable once UnusedVariable
@@ -29,15 +36,20 @@ namespace LogGrokCore.Controls
                 itemContainerGenerator.ItemsChanged += (_, _) =>
                 {
                     if (Items.Count <= 0) return;
-                    
+                        
                     CurrentPosition = Math.Min(CurrentPosition, Items.Count - 1);
-                    Items.MoveCurrentToPosition(CurrentPosition);
+                    GetItems().MoveCurrentToPosition(CurrentPosition);
                 };
 
-                Items.CurrentChanged += OnCurrentItemChanged;
+                GetItems().CurrentChanged += OnCurrentItemChanged;
+                
             };
 
-            _selection.Changed += () => SelectionChanged?.Invoke();
+            _selection.Changed += () =>
+            {
+                ListView.UpdateReadonlySelectedItems(_selection);
+                SelectionChanged?.Invoke();
+            };
         }
 
         protected override Size MeasureOverride(Size availableSize)
@@ -51,8 +63,10 @@ namespace LogGrokCore.Controls
 
             var maxWidth = 
                 _visibleItems.Any() ? _visibleItems.Max(item => item.Element.DesiredSize.Width) : 0.0;
+            
 
-            return (double.IsPositiveInfinity(availableSize.Height)) ? new Size(1, 1) : 
+            return (double.IsPositiveInfinity(availableSize.Height)) ? 
+                new Size(maxWidth, _visibleItems.Sum(v => v.Height)) : 
                 new Size(Math.Max(maxWidth, availableSize.Width), availableSize.Height);
         }
 
@@ -126,14 +140,17 @@ namespace LogGrokCore.Controls
             var oldItems = new HashSet<VisibleItem>(currentVisibleItems, new GenericEqualityComparer<VisibleItem>());
             var newItems = new List<VisibleItem>();
 
-            while (currentOffset == null || currentOffset < heightToBuild)
+            while ((currentOffset == null || currentOffset < heightToBuild) && currentIndex < Items.Count)
             {
                 var index = currentIndex;
-                var currentItem = currentVisibleItems.Search(current => current.Index == index);
+                var currentItem = 
+                    currentVisibleItems.Search(current => 
+                        current.Index == index && current is {Element: ContentControl contentControl} 
+                        && contentControl.Content == Items[index]);
 
                 ListViewItem? itemToAdd;
                 
-                if (currentItem is { } foundItem)
+                if (currentItem is {} foundItem)
                 {
                     oldItems.Remove(foundItem);
                     itemToAdd = foundItem.Element;
@@ -157,7 +174,16 @@ namespace LogGrokCore.Controls
             return (newItems, oldItems.ToList());
         }
 
-        private ItemCollection Items => ItemsControl.GetItemsOwner(this).Items;
+        private ReadOnlyCollection<object> Items
+        {
+            get
+            {
+                // necessary InternalChildren touch
+                // ReSharper disable once UnusedVariable
+                var v = InternalChildren;
+                return ((ItemContainerGenerator) ItemContainerGenerator).Items;
+            }
+        }
 
         private void InsertAndMeasureItem(ListViewItem item, int itemIndex, bool isNewElement)
         {
@@ -381,7 +407,7 @@ namespace LogGrokCore.Controls
             }
             else
             {
-                newItem = new LogListViewItem();
+                newItem = ListView.GetContainerForItem();
                 InsertAndMeasureItem(newItem, currentIndex, true);
             }
 

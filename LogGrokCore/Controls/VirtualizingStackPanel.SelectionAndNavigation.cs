@@ -4,8 +4,6 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
-using Xceed.Wpf.AvalonDock.Controls;
 
 namespace LogGrokCore.Controls
 {
@@ -35,6 +33,7 @@ namespace LogGrokCore.Controls
             var newValue = (int) e.NewValue;
             panel._selection.Add(newValue);
             panel.UpdateSelection();
+            panel.ListView.Items.MoveCurrentToPosition(newValue);
         }
 
         public int CurrentPosition
@@ -83,10 +82,13 @@ namespace LogGrokCore.Controls
         public bool ProcessMouseDown(MouseButton changedButton)
         {
             var item = GetItemUnderMouse();
+            var suitableVisibleItems = _visibleItems.Where(i => i.Element == item).ToList();
+
             if (item == null) return false;
             if (changedButton == MouseButton.Right && item.IsSelected) return false;
+            if (!suitableVisibleItems.Any()) return false;
             
-            var index = _visibleItems.Single(i => i.Element == item).Index;
+            var index = suitableVisibleItems.Single().Index;
             
             if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
             {
@@ -125,36 +127,8 @@ namespace LogGrokCore.Controls
         private  ListViewItem? GetItemUnderMouse()
         {            
             var mousePosition = GetMousePosition();
-            return mousePosition != null ? GetItemUnderPoint(mousePosition.Value) : null;
-        }
-        
-        private ListViewItem? GetItemUnderPoint(Point p)
-        {
-            HitTestFilterBehavior VisibilityHitTestFilter(DependencyObject target)
-            {
-                if (!(target is UIElement uiElement)) 
-                    return HitTestFilterBehavior.Continue;
-                if(!uiElement.IsHitTestVisible || !uiElement.IsVisible)
-                    return HitTestFilterBehavior.ContinueSkipSelfAndChildren;
-                return HitTestFilterBehavior.Continue;
-            }
-            
-            if (ScrollContentPresenter == null) return null;
-            ListViewItem? hitTestResult = null; 
-            VisualTreeHelper.HitTest(ScrollContentPresenter, 
-                                            VisibilityHitTestFilter,
-                                            t =>
-                                            {
-                                                var foundItem =  t.VisualHit.FindVisualAncestor<ListViewItem>();
-                                                if (foundItem == null)
-                                                    return HitTestResultBehavior.Continue;
-                                                hitTestResult = foundItem;
-                                                return HitTestResultBehavior.Stop;
-
-                                            }, 
-                                            new PointHitTestParameters(p));
-
-            return hitTestResult;
+            return mousePosition != null ? 
+                ScrollContentPresenter?.GetItemUnderPoint<ListViewItem>(mousePosition.Value) : null;
         }
 
         private void UpdateSelection()
@@ -164,8 +138,6 @@ namespace LogGrokCore.Controls
                 var isItemSelected = _selection.Contains(visibleItem.Index);
                 if (visibleItem.Element.IsSelected != isItemSelected)
                     visibleItem.Element.IsSelected = isItemSelected;
-                
-                SetIsCurrentItem(visibleItem.Element, visibleItem.Index == CurrentPosition);
             }
         }
 

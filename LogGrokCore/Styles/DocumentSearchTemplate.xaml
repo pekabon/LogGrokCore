@@ -34,7 +34,6 @@
                                         Mode=OneWay}" />
             <controls:ListView Grid.Row="1"
                                FontFamily="Consolas"
-                               IsSynchronizedWithCurrentItem="True"
                                IsTextSearchEnabled="False"
                                ItemContainerStyle="{StaticResource ItemContainerStyle}"
                                ItemsSource="{Binding Lines}"

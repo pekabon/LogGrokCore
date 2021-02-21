@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 
@@ -15,6 +16,8 @@ namespace LogGrokCore.Diagnostics
               InvalidOperationException e => IsKnown(e, KnownInvalidOperationExceptionMethods),
               AccessViolationException e => IsKnown(e, KnownAccessViolationExceptionMethods),
               DirectoryNotFoundException e => IsKnown(e, KnownDirectoryNotFoundExceptionMethods),
+              Win32Exception e => IsKnown(e, KnownWin32ExceptionMethods),
+              _ when exception.GetType().Name == "TypeNameParserException" => true,
               _ => false
           };
       }
@@ -47,6 +50,11 @@ namespace LogGrokCore.Diagnostics
       
       private static readonly string[]  KnownDirectoryNotFoundExceptionMethods = {
           "NLog.Internal.FileAppenders.BaseFileAppender.WindowsCreateFile"
+      };
+
+      private static readonly string[] KnownWin32ExceptionMethods =
+      {
+          "MS.Win32.UnsafeNativeMethods.GetWindowText"
       };
   }
 }

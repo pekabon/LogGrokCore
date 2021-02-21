@@ -27,19 +27,27 @@ namespace LogGrokCore.Controls
             Changed?.Invoke();
         }
 
-        public void Clear() => _indices.Clear();
+        public void Clear()
+        {
+            _indices.Clear();
+            Changed?.Invoke();
+        }
+
+        public void Remove(in int index)
+        {
+            _indices.Remove(index);
+            Changed?.Invoke();
+        }
 
         public bool Contains(int index) => _indices.Contains(index);
 
         public event Action? Changed; 
 
-        public void Remove(in int index) => _indices.Remove(index);
-        
         public IEnumerator<int> GetEnumerator()
         {
             return _indices.GetEnumerator();
         }
-
+        
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();

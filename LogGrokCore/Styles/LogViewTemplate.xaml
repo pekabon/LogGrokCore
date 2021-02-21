@@ -5,7 +5,7 @@
                     xmlns:local="clr-namespace:LogGrokCore"
                     xmlns:localControls="clr-namespace:LogGrokCore.Controls"
                     xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
-                    xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
+                    xmlns:filterPopup="clr-namespace:LogGrokCore.Controls.FilterPopup"
                     mc:Ignorable="d">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
@@ -15,7 +15,9 @@
     </ResourceDictionary.MergedDictionaries>
 
     <DataTemplate x:Key="LogViewTemplate" DataType="local:LogViewModel">
-        <Grid>
+        <Grid filterPopup:RoutedCommandBehavior.RoutedCommandToCommandBinding= "{filterPopup:RoutedCommandToCommandBinding 
+                RoutedCommand={x:Static local:RoutedCommands.ClearFilters}, 
+                Command={Binding ClearExclusionsCommand}}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition />
@@ -32,11 +34,10 @@
                                                             Mode=OneWayToSource}"
                                     View="{Binding CustomView}"
                                     ItemContainerStyle="{StaticResource ItemContainerStyle}"
-                                    IsSynchronizedWithCurrentItem="True"
                                     ScrollViewer.VerticalScrollBarVisibility="Visible"
                                     ScrollViewer.CanContentScroll="True"
                                     VirtualizingStackPanel.IsVirtualizing="True"
-                                    VirtualizingStackPanel.VirtualizationMode="Recycling"
+                                    VirtualizingStackPanel.VirtualizationMode="Recycling"   
                                     localControls:NavigateToLineBehavior.NavigateToLineRequest=
                                         "{Binding NavigateToLineRequest}"
                                     localControls:NavigateToLineBehavior.ChangeCurrentItem="True"
@@ -49,8 +50,7 @@
                             localControls:HighlightedTextBlock.HighlightRegex="{Binding HighlightRegex}"
                             Tag="{Binding 
                                 RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type localControls:ListView}}}"
-                            ContextMenu="{StaticResource LogViewContextMenu}">
-                        </localControls:VirtualizingStackPanel>
+                            ContextMenu="{StaticResource LogViewContextMenu}" />
                     </ItemsPanelTemplate>
                 </ListView.ItemsPanel>
             </localControls:ListView>

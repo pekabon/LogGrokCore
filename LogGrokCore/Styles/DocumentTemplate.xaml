@@ -35,9 +35,9 @@
                             Converter={StaticResource BooleanToVisibilityConverter}}" />
             
             <StackPanel Grid.Row="1" >
-                <Border HorizontalAlignment="Stretch" Height="10"></Border>
+                <Border HorizontalAlignment="Stretch" Height="10" />
                 <ContentControl ContentTemplate="{StaticResource SearchParametersTemplate}" 
-                            Content="{Binding SearchViewModel}"/>
+                                Content="{Binding SearchViewModel}"/>
             </StackPanel>
             
             <ContentControl Grid.Row="2" 
