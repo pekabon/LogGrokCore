@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using LogGrokCore.Colors;
+using LogGrokCore.Controls;
 using LogGrokCore.Data;
 using LogGrokCore.Search;
 
@@ -8,12 +9,14 @@ namespace LogGrokCore
 {
     internal class DocumentViewModel : ViewModelBase
     {
+        private readonly Selection _markedLines;
         private bool _isCurrentDocument;
 
         public DocumentViewModel(
             LogModelFacade logModelFacade,
             LogViewModel logViewModel, 
             SearchViewModel searchViewModel,
+            Selection markedLines,
             ColorSettings colorSettings)
         {
             Title = 
@@ -26,6 +29,8 @@ namespace LogGrokCore
             
             SearchViewModel.CurrentLineChanged += lineNumber => LogViewModel.NavigateTo(lineNumber);
             SearchViewModel.CurrentSearchChanged += regex => LogViewModel.HighlightRegex = regex;
+
+            _markedLines = markedLines;
         }
 
         public string Title { get; }

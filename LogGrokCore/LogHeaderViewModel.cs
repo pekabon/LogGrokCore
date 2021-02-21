@@ -4,7 +4,7 @@ namespace LogGrokCore
     {
         public string Text { get; }
 
-        public LogHeaderViewModel(string text) => Text = text;
+        public  LogHeaderViewModel(string text) => Text = text;
 
         public override string ToString() => Text;
     }

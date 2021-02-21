@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Linq;
+using LogGrokCore.Data.Index;
 
 namespace LogGrokCore
 {
@@ -13,48 +15,41 @@ namespace LogGrokCore
 
     public class GrowingLogLinesCollection: IList<ItemViewModel>, IList, INotifyCollectionChanged, INotifyPropertyChanged, IGrowingCollection
     {
-        private readonly IList<ItemViewModel> _sourceCollection;
+        private readonly IReadOnlyList<ItemViewModel> _sourceCollection;
         private int _logLinesCount;
-        private readonly Lazy<string?> _header;
-        
-        private readonly Lazy<LogHeaderViewModel?> _headerViewModel;
-        
-        private IList SourceList => (IList)_sourceCollection;
+        private readonly IReadOnlyList<ItemViewModel> _headerCollection;
+        private int _headerCollectionCount;
 
-        public GrowingLogLinesCollection(Func<string?> headerProvider, IList<ItemViewModel> sourceCollection)
+        private IReadOnlyList<ItemViewModel> SourceList => _sourceCollection;
+
+        public GrowingLogLinesCollection(
+                IReadOnlyList<ItemViewModel> headerCollection, 
+                IReadOnlyList<ItemViewModel> sourceCollection)
         {
             _sourceCollection = sourceCollection;
-            
-            _header = new Lazy<string?>(headerProvider);
-            
-            _headerViewModel = new Lazy<LogHeaderViewModel?>(
-                () => _header.Value == null ? null : new LogHeaderViewModel(_header.Value));
-            
+            _headerCollection = headerCollection;
             _logLinesCount = sourceCollection.Count;
-          
+            _headerCollectionCount = headerCollection.Count;
         }
         
         public void UpdateCount()
         {
-            if (_logLinesCount == _sourceCollection.Count)
+            
+            if (_logLinesCount == _sourceCollection.Count 
+                && _headerCollectionCount == _headerCollection.Count)
                 return;
 
             _logLinesCount= _sourceCollection.Count;
-            //CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+            _headerCollectionCount = _headerCollection.Count;
+
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Count)));
             CollectionGrown?.Invoke(_logLinesCount);
         }
         
         public ItemViewModel this[int index]
         {
-            get
-            {
-                if (_headerViewModel.Value == null)
-                    return _sourceCollection[index];
-                
-                return index == 0 ? _headerViewModel.Value : _sourceCollection[index - 1];
-            }
-            
+            get => index < _headerCollectionCount ? 
+                _headerCollection[index] : _sourceCollection[index - _headerCollectionCount];
             set => throw new NotSupportedException();
         }
 
@@ -70,17 +65,17 @@ namespace LogGrokCore
             {
                 if (_logLinesCount  == 0)
                     return 0;
-                return _logLinesCount + HeaderCount;
+                return _logLinesCount + _headerCollectionCount;
             }
         }
 
-        public bool IsReadOnly => _sourceCollection.IsReadOnly;
+        public bool IsReadOnly => true;
 
         public bool IsFixedSize => false;
 
-        public bool IsSynchronized => SourceList.IsSynchronized;
+        public bool IsSynchronized => throw new NotSupportedException();
 
-        public object SyncRoot => SourceList.SyncRoot;
+        public object SyncRoot =>  throw new NotSupportedException();
         
 #pragma warning disable CS0067
         public event NotifyCollectionChangedEventHandler? CollectionChanged;
@@ -88,11 +83,11 @@ namespace LogGrokCore
         
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        public void Add(ItemViewModel item) => _sourceCollection.Add(item);
+        public void Add(ItemViewModel item) => throw new NotSupportedException();
 
-        public int Add(object? value) => SourceList.Add(value);
+        public int Add(object? value) =>  throw new NotSupportedException();
 
-        public void Clear() => _sourceCollection.Clear();
+        public void Clear() =>  throw new NotSupportedException();
 
         public bool Contains(ItemViewModel item) => _sourceCollection.Contains(item);
 
@@ -106,9 +101,11 @@ namespace LogGrokCore
         {
             if (_logLinesCount == 0)
                 yield break;
-            
-            if (_header.Value != null)
-                yield return new LogHeaderViewModel(_header.Value);
+
+            foreach (var itemViewModel in _headerCollection)
+            {
+                yield return itemViewModel;
+            }
 
             foreach (var itemViewModel in _sourceCollection)
             {
@@ -116,9 +113,9 @@ namespace LogGrokCore
             }
         }
 
-        public int IndexOf(ItemViewModel item) => _sourceCollection.IndexOf(item) + HeaderCount;
+        public int IndexOf(ItemViewModel item) => throw new NotSupportedException();
 
-        public int IndexOf(object? value) => SourceList.IndexOf(value) + HeaderCount;
+        public int IndexOf(object? value) => SourceList.IndexOf(value); 
 
         public void Insert(int index, ItemViewModel item) => throw new NotSupportedException();
 
@@ -130,8 +127,6 @@ namespace LogGrokCore
 
         public void RemoveAt(int index) => throw new NotSupportedException();
 
-        private int HeaderCount => _header.Value != null ? 1 : 0; 
-        
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         
         public event Action<int>? CollectionGrown;

@@ -28,6 +28,18 @@ namespace LogGrokCore.Controls.GridView
         {
             var indexFieldName = "Index";
             var view = new System.Windows.Controls.GridView();
+
+            view.Columns.Add(new LogGridViewColumn
+            {
+                HeaderTemplate = new DataTemplate(typeof(DependencyObject))
+                {
+                    VisualTree = new FrameworkElementFactory(typeof(PinGridViewhHeader))
+                },
+                CellTemplate = new DataTemplate(typeof(DependencyObject))
+                {
+                    VisualTree = new FrameworkElementFactory(typeof(PinGridViewCell))
+                }
+            });
             
             foreach (var fieldHeader in indexFieldName.Yield().Concat(_meta.FieldNames))
             {

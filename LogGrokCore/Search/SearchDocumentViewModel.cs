@@ -35,12 +35,14 @@ namespace LogGrokCore.Search
         private int? _currentItemIndex;
         private readonly LogModelFacade _logModelFacade;
         private SearchLineIndex? _currentSearchLineIndex;
+        private readonly Selection _markedLines;
 
         public SearchDocumentViewModel(
             LogModelFacade logModelFacade,
             FilterSettings filterSettings,
             GridViewFactory viewFactory,
-            SearchPattern searchPattern)
+            SearchPattern searchPattern,
+            Selection markedLines)
         {
             
             _viewFactory = viewFactory;
@@ -50,6 +52,8 @@ namespace LogGrokCore.Search
             
             _filterSettings = filterSettings;
             _filterSettings.ExclusionsChanged += UpdateLines;
+
+            _markedLines = markedLines;
      
             SearchPattern = searchPattern;
         }
@@ -180,14 +184,15 @@ namespace LogGrokCore.Search
             var virtualList = 
                 new VirtualList<(int originalLogLineNumber, string str), ItemViewModel>(
                     filteredLineWithOriginalLineNumber, indexAndString =>
-                        new LineViewModel(indexAndString.originalLogLineNumber, indexAndString.str, lineParser));
+                        new LineViewModel(indexAndString.originalLogLineNumber, indexAndString.str, lineParser, 
+                            _markedLines));
 
             for (int i = 0; i < Math.Min(virtualList.Count, 10); i++)
             {
                 Console.Write(virtualList[i]);
             }
 
-            return new GrowingLogLinesCollection(() => null, virtualList);
+            return new GrowingLogLinesCollection(new List<ItemViewModel>(), virtualList);
         }
         
 
