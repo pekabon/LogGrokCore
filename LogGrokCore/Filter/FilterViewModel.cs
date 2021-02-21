@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Threading;
@@ -22,9 +23,11 @@ namespace LogGrokCore.Filter
             Indexer indexer,
             LogMetaInformation metaInformation)
         {
+            
             _filterSettings = filterSettings;
+            _filterSettings.ExclusionsChanged += () => InvokePropertyChanged(nameof(IsFilterApplied));
+            
             _indexer = indexer;
-
             _indexedFieldIndex = metaInformation.GetIndexedFieldIndexByName(fieldName);
 
             var fieldValues =
@@ -89,7 +92,9 @@ namespace LogGrokCore.Filter
 
         public ObservableCollection<ElementViewModel> Elements { get; }
 
-        public bool IsFilterApplied => _filterSettings.HaveExclusions;
+        public bool IsFilterApplied => 
+            _filterSettings.Exclusions.TryGetValue(_indexedFieldIndex, out var exclusionList) 
+                && exclusionList.Any();
 
         public DelegateCommand DeselectAllCommand =>
             new(() => _filterSettings.ExcludeAllExcept(_indexedFieldIndex,
