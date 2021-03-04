@@ -6,7 +6,7 @@
              xmlns:logGrokCore="clr-namespace:LogGrokCore"
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="300"
-             d:DataContext="{d:DesignInstance Type={x:Type logGrokCore:LineViewModel}, IsDesignTimeCreatable=False}">
+             d:DataContext="{d:DesignInstance Type={x:Type logGrokCore:BaseLogLineViewModel}, IsDesignTimeCreatable=False}">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

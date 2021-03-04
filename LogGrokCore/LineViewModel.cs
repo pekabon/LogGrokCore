@@ -3,34 +3,18 @@ using LogGrokCore.Data;
 
 namespace LogGrokCore
 {
-    public class LineViewModel : ItemViewModel
+    public class LineViewModel : BaseLogLineViewModel
     {
         private readonly string _sourceString;
-        private readonly Selection _markedLines;
+
         private readonly ParseResult _parseResult;
 
         public LineViewModel(int index, string sourceString, ILineParser parser, Selection markedLines)
+            : base(index, markedLines)
         {
-            Index = index;
             _sourceString = sourceString;
-            _markedLines = markedLines;
             _parseResult = parser.Parse(sourceString);
-            _markedLines.Changed += () => InvokePropertyChanged(nameof(IsMarked));
         }
-
-        public bool IsMarked
-        {
-            get => _markedLines.Contains(Index);
-            set
-            {
-                if (value)
-                    _markedLines.Add(Index);
-                else 
-                    _markedLines.Remove(Index);
-            }
-        }
-
-        public int Index { get; }
 
         public string this[int index] => GetValue(index);
 

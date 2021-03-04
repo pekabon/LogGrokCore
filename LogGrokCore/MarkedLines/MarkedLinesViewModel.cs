@@ -1,20 +1,22 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text;
 using System.Windows.Data;
 
 namespace LogGrokCore.MarkedLines
 {
-    
-    
     internal class MarkedLinesViewModel : ViewModelBase
     {
         private readonly ObservableCollection<MarkedLineViewModel> _markedLines = new();
         private readonly ObservableCollection<DocumentViewModel> _documents;
         private readonly HashSet<DocumentViewModel> _alreadySubscribed = new();
+        
         public ObservableCollection<MarkedLineViewModel> Documents => _markedLines;
 
-        
+        public DelegateCommand CopyLinesCommand { get; }
+
+
         public MarkedLinesViewModel(ObservableCollection<DocumentViewModel> documents)
         {
             _documents = documents;
@@ -25,14 +27,26 @@ namespace LogGrokCore.MarkedLines
                 SubscribeToNewDocumentChanges(_documents);
                 UpdateLinesCollection();
             };
+
+            CopyLinesCommand = new DelegateCommand(
+                o =>
+                {
+                    var document = (DocumentViewModel) o;
+                    var linesToCopy =
+                        Documents.Where(m => m.Document == document)
+                            .OrderBy(m => m.Index)
+                            .Select(m => m.ToString());
+
+                    TextCopy.ClipboardService.SetText(string.Join("\r\n", linesToCopy).Trim('\0'));
+                });
             
             var view = (CollectionView)CollectionViewSource.GetDefaultView(Documents);
             var groupDescription = new PropertyGroupDescription("Document");
             view.GroupDescriptions?.Add(groupDescription);
-
             UpdateLinesCollection();
         }
 
+        
         private void SubscribeToNewDocumentChanges(ObservableCollection<DocumentViewModel> documents)
         {
             var newDocuments = new HashSet<DocumentViewModel>(documents);
@@ -68,12 +82,12 @@ namespace LogGrokCore.MarkedLines
                     continue;
                 }
 
-                while (_markedLines[index].LineNumber < lineNumber)
+                while (_markedLines[index].Index < lineNumber)
                 {
                     _markedLines.RemoveAt(index);
                 }
 
-                if (_markedLines[index].LineNumber > lineNumber)
+                if (_markedLines[index].Index > lineNumber)
                 {
                     _markedLines.Insert(index, new MarkedLineViewModel(document, lineNumber, text));
                 }

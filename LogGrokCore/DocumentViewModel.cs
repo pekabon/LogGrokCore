@@ -5,7 +5,6 @@ using System.Linq;
 using LogGrokCore.Colors;
 using LogGrokCore.Controls;
 using LogGrokCore.Data;
-using LogGrokCore.MarkedLines;
 using LogGrokCore.Search;
 
 namespace LogGrokCore
@@ -61,6 +60,8 @@ namespace LogGrokCore
             }
         }
 
+        public Selection MarkedLines => _markedLines;        
+        
         public string Title { get; }
 
         public LogViewModel LogViewModel { get; }
