@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 using System.Windows.Data;
 
 namespace LogGrokCore.MarkedLines
@@ -16,7 +15,10 @@ namespace LogGrokCore.MarkedLines
 
         public DelegateCommand CopyLinesCommand { get; }
 
-
+        public bool CanFilter  => false;
+        
+        //public bool HaveFilter => false;
+                
         public MarkedLinesViewModel(ObservableCollection<DocumentViewModel> documents)
         {
             _documents = documents;
