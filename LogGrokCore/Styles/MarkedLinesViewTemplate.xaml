@@ -17,15 +17,17 @@
         <ResourceDictionary Source="LogViewContextMenu.xaml" />
     </ResourceDictionary.MergedDictionaries>
     <DataTemplate x:Key="MarkedLineCellTemplate">
-        <selectableTextBlock:SelectableTextBlock
-            SelectionBrush="{StaticResource MahApps.Brushes.Highlight}"
-            Text="{Binding Mode=OneWay}">
-        </selectableTextBlock:SelectableTextBlock> 
-      
+        
+        <gridView:LogGridViewCell Content="{Binding}"/>
+        <!-- <selectableTextBlock:SelectableTextBlock -->
+        <!--     SelectionBrush="{StaticResource MahApps.Brushes.Highlight}" -->
+        <!--     Text="{Binding Mode=OneWay}" /> -->
+
     </DataTemplate>
-    <Style x:Key="MarkedLinesItemContainerStyle" TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource ItemContainerStyle}">
+    <Style x:Key="MarkedLinesItemContainerStyle" TargetType="{x:Type ListViewItem}"
+           BasedOn="{StaticResource ItemContainerStyle}">
         <Style.Setters>
-            <Setter Property="colors:ColorSettings.ColorSettings" Value="{Binding ColorSettings}"></Setter>
+            <Setter Property="colors:ColorSettings.ColorSettings" Value="{Binding Name.ColorSettings}" />
         </Style.Setters>
     </Style>
     <DataTemplate x:Key="MarkedLinesViewTemplate">
@@ -34,36 +36,48 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <markedLines:MarkedLinesListView Grid.Row="1" ItemsSource="{Binding Documents}"
-                                          ItemContainerStyle="{StaticResource MarkedLinesItemContainerStyle}"
-                                          VirtualizingStackPanel.IsVirtualizing="True"
-                                          VirtualizingStackPanel.VirtualizationMode="Recycling">
+            <markedLines:MarkedLinesListView
+                FontFamily="Consolas"
+                SelectionMode="Extended"
+                Grid.Row="1" ItemsSource="{Binding Documents}"
+                ItemContainerStyle="{StaticResource MarkedLinesItemContainerStyle}"
+                VirtualizingStackPanel.IsVirtualizing="True"
+                VirtualizingStackPanel.VirtualizationMode="Recycling"
+                Tag="{Binding 
+                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type markedLines:MarkedLinesListView}}}"
+                ContextMenu="{StaticResource LogViewContextMenu}">
+                
+                <markedLines:MarkedLinesListView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <controls:VirtualizingStackPanel/>
+                    </ItemsPanelTemplate>
+                </markedLines:MarkedLinesListView.ItemsPanel>
                 <ListView.View>
                     <GridView>
                         <GridViewColumn>
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate DataType="markedLines:MarkedLineViewModel">
-                                    <gridView:PinGridViewCell VerticalAlignment="Center"/>
+                                    <gridView:PinGridViewCell VerticalAlignment="Center" />
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
                         <GridViewColumn Header="INDEX">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate DataType="markedLines:MarkedLineViewModel">
-                                    <ContentControl ContentTemplate="{StaticResource MarkedLineCellTemplate}" 
-                                                    Content="{Binding Index}"/>
+                                    <ContentControl ContentTemplate="{StaticResource MarkedLineCellTemplate}"
+                                                    Content="{Binding Index}" />
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
                         <GridViewColumn Header="">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate DataType="markedLines:MarkedLineViewModel">
-                                    <ContentControl ContentTemplate="{StaticResource MarkedLineCellTemplate}" 
-                                                    Content="{Binding Text}"/>
+                                    <ContentControl ContentTemplate="{StaticResource MarkedLineCellTemplate}"
+                                                    Content="{Binding Text}" />
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
-                        
+
                     </GridView>
                 </ListView.View>
                 <ListView.GroupStyle>
@@ -73,7 +87,7 @@
                                 <TextBlock FontWeight="Bold" FontSize="14" Text="{Binding Name.Title }" />
                             </DataTemplate>
                         </GroupStyle.HeaderTemplate>
-                        
+
                         <GroupStyle.ContainerStyle>
                             <Style TargetType="{x:Type GroupItem}">
                                 <Setter Property="Template">
@@ -82,23 +96,25 @@
                                             <Expander IsExpanded="True" BorderThickness="0">
                                                 <Expander.Header>
                                                     <StackPanel Orientation="Horizontal">
-                                                    <selectableTextBlock:SelectableTextBlock 
-                                                        Text="{Binding Name.Title}" FontWeight="Bold" VerticalAlignment="Center" />
-                                                    <Button 
-                                                        Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListView}},
+                                                        <selectableTextBlock:SelectableTextBlock
+                                                            Text="{Binding Name.Title}" FontWeight="Bold"
+                                                            VerticalAlignment="Center" />
+                                                        <Button
+                                                            Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListView}},
                                                                     Path=DataContext.CopyLinesCommand}"
-                                                        CommandParameter="{Binding Name}"
-                                                        Margin="10, 0, 0, 0"
-                                                        Style="{DynamicResource MahApps.Styles.Button.Square.Accent}" BorderThickness="0" Background="Transparent">
-                                                        <StackPanel Orientation="Horizontal">
-                                                        <iconPacks:PackIconMaterial Margin="0" Height="10"
-                                                            VerticalAlignment="Center"
-                                                            HorizontalAlignment="Center"
-                                                            Kind="ContentCopy" />
-                                                        <TextBlock Text="Copy lines"/>
-                                                        </StackPanel>
+                                                            CommandParameter="{Binding Name}"
+                                                            Margin="10, 0, 0, 0"
+                                                            Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
+                                                            BorderThickness="0" Background="Transparent">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <iconPacks:PackIconMaterial Margin="0" Height="10"
+                                                                    VerticalAlignment="Center"
+                                                                    HorizontalAlignment="Center"
+                                                                    Kind="ContentCopy" />
+                                                                <TextBlock Text="Copy lines" />
+                                                            </StackPanel>
 
-                                                    </Button>
+                                                        </Button>
                                                     </StackPanel>
                                                 </Expander.Header>
                                                 <ItemsPresenter />

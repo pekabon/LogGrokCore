@@ -35,9 +35,14 @@ namespace LogGrokCore.Controls
                 };
 
                 Items.CurrentChanged += OnCurrentItemChanged;
+                
             };
 
-            _selection.Changed += () => SelectionChanged?.Invoke();
+            _selection.Changed += () =>
+            {
+                ListView.UpdateReadonlySelectedItems(_selection);
+                SelectionChanged?.Invoke();
+            };
         }
 
         protected override Size MeasureOverride(Size availableSize)
@@ -51,8 +56,10 @@ namespace LogGrokCore.Controls
 
             var maxWidth = 
                 _visibleItems.Any() ? _visibleItems.Max(item => item.Element.DesiredSize.Width) : 0.0;
+            
 
-            return (double.IsPositiveInfinity(availableSize.Height)) ? new Size(1, 1) : 
+            return (double.IsPositiveInfinity(availableSize.Height)) ? 
+                new Size(maxWidth, _visibleItems.Sum(v => v.Height)) : 
                 new Size(Math.Max(maxWidth, availableSize.Width), availableSize.Height);
         }
 
@@ -126,14 +133,17 @@ namespace LogGrokCore.Controls
             var oldItems = new HashSet<VisibleItem>(currentVisibleItems, new GenericEqualityComparer<VisibleItem>());
             var newItems = new List<VisibleItem>();
 
-            while (currentOffset == null || currentOffset < heightToBuild)
+            while ((currentOffset == null || currentOffset < heightToBuild) && currentIndex < Items.Count)
             {
                 var index = currentIndex;
-                var currentItem = currentVisibleItems.Search(current => current.Index == index);
+                var currentItem = 
+                    currentVisibleItems.Search(current => 
+                        current.Index == index && current is {Element: ContentControl contentControl} 
+                        && contentControl.Content == Items[index]);
 
                 ListViewItem? itemToAdd;
                 
-                if (currentItem is { } foundItem)
+                if (currentItem is {} foundItem)
                 {
                     oldItems.Remove(foundItem);
                     itemToAdd = foundItem.Element;
@@ -381,7 +391,7 @@ namespace LogGrokCore.Controls
             }
             else
             {
-                newItem = new LogListViewItem();
+                newItem = ListView.GetContainerForItem();
                 InsertAndMeasureItem(newItem, currentIndex, true);
             }
 

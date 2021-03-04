@@ -20,14 +20,6 @@ namespace LogGrokCore.Controls
 
         public ListView()
         {
-            Loaded += (_, _) =>
-            {
-                if (GetPanel() is { } panel)
-                    panel.SelectionChanged += UpdateReadonlySelectedItems;
-                else
-                    throw new InvalidOperationException("Panel is not Set when loaded");
-            };
-
             CopyToClipboard = new DelegateCommand(CopySelectedItemsToClipboard, () =>
             {
                 var items = ReadonlySelectedItems;
@@ -40,12 +32,14 @@ namespace LogGrokCore.Controls
             }
         }
 
+        public virtual ListViewItem GetContainerForItem() => new LogListViewItem(); 
+        
         public ICommand CopyToClipboard { get; }
 
-        private void UpdateReadonlySelectedItems()
+        public void UpdateReadonlySelectedItems(IEnumerable<int> selectedIndices)
         {
             ReadonlySelectedItems =
-                GetPanel()?.SelectedIndices
+                selectedIndices
                     .Where(index => index < Items.Count && index > 0)
                     .Select(index => Items[index]).ToList();
         }
