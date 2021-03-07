@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows;
@@ -21,6 +22,12 @@ namespace LogGrokCore.Controls
 
         public VirtualizingStackPanel()
         {
+            ItemCollection GetItems()
+            {
+                var itemsOwner = ItemsControl.GetItemsOwner(this);
+                return itemsOwner.Items;
+            }
+
             Loaded += (_, _) =>
             {
                 // ReSharper disable once UnusedVariable
@@ -29,12 +36,12 @@ namespace LogGrokCore.Controls
                 itemContainerGenerator.ItemsChanged += (_, _) =>
                 {
                     if (Items.Count <= 0) return;
-                    
+                        
                     CurrentPosition = Math.Min(CurrentPosition, Items.Count - 1);
-                    Items.MoveCurrentToPosition(CurrentPosition);
+                    GetItems().MoveCurrentToPosition(CurrentPosition);
                 };
 
-                Items.CurrentChanged += OnCurrentItemChanged;
+                GetItems().CurrentChanged += OnCurrentItemChanged;
                 
             };
 
@@ -167,7 +174,16 @@ namespace LogGrokCore.Controls
             return (newItems, oldItems.ToList());
         }
 
-        private ItemCollection Items => ItemsControl.GetItemsOwner(this).Items;
+        private ReadOnlyCollection<object> Items
+        {
+            get
+            {
+                // necessary InternalChildren touch
+                // ReSharper disable once UnusedVariable
+                var v = InternalChildren;
+                return ((ItemContainerGenerator) ItemContainerGenerator).Items;
+            }
+        }
 
         private void InsertAndMeasureItem(ListViewItem item, int itemIndex, bool isNewElement)
         {

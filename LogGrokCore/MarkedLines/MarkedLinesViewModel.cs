@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Data;
@@ -11,14 +12,21 @@ namespace LogGrokCore.MarkedLines
         private readonly ObservableCollection<DocumentViewModel> _documents;
         private readonly HashSet<DocumentViewModel> _alreadySubscribed = new();
         
-        public ObservableCollection<MarkedLineViewModel> Documents => _markedLines;
+        public ObservableCollection<MarkedLineViewModel> MarkedLines => _markedLines;
 
         public DelegateCommand CopyLinesCommand { get; }
 
         public bool CanFilter  => false;
         
-        //public bool HaveFilter => false;
-                
+        public bool HaveFilter => false;
+        
+        public IEnumerable? SelectedItems
+        {
+            get;
+            set;
+
+        }
+
         public MarkedLinesViewModel(ObservableCollection<DocumentViewModel> documents)
         {
             _documents = documents;
@@ -35,14 +43,14 @@ namespace LogGrokCore.MarkedLines
                 {
                     var document = (DocumentViewModel) o;
                     var linesToCopy =
-                        Documents.Where(m => m.Document == document)
+                        MarkedLines.Where(m => m.Document == document)
                             .OrderBy(m => m.Index)
                             .Select(m => m.ToString());
 
                     TextCopy.ClipboardService.SetText(string.Join("\r\n", linesToCopy).Trim('\0'));
                 });
             
-            var view = (CollectionView)CollectionViewSource.GetDefaultView(Documents);
+            var view = (CollectionView)CollectionViewSource.GetDefaultView(MarkedLines);
             var groupDescription = new PropertyGroupDescription("Document");
             view.GroupDescriptions?.Add(groupDescription);
             UpdateLinesCollection();

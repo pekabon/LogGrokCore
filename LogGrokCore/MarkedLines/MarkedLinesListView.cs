@@ -1,5 +1,4 @@
-﻿using System.Windows;
-using System.Windows.Controls;
+﻿using System.Windows.Controls;
 using LogGrokCore.Controls;
 using ListView = LogGrokCore.Controls.ListView;
 
@@ -11,7 +10,5 @@ namespace LogGrokCore.MarkedLines
         {
             return new LogListViewItem();
         }
-
-      
     }
 }

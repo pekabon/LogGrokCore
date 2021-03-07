@@ -17,12 +17,7 @@
         <ResourceDictionary Source="LogViewContextMenu.xaml" />
     </ResourceDictionary.MergedDictionaries>
     <DataTemplate x:Key="MarkedLineCellTemplate">
-        
         <gridView:LogGridViewCell Content="{Binding}"/>
-        <!-- <selectableTextBlock:SelectableTextBlock -->
-        <!--     SelectionBrush="{StaticResource MahApps.Brushes.Highlight}" -->
-        <!--     Text="{Binding Mode=OneWay}" /> -->
-
     </DataTemplate>
     <Style x:Key="MarkedLinesItemContainerStyle" TargetType="{x:Type ListViewItem}"
            BasedOn="{StaticResource ItemContainerStyle}">
@@ -30,7 +25,7 @@
             <Setter Property="colors:ColorSettings.ColorSettings" Value="{Binding Name.ColorSettings}" />
         </Style.Setters>
     </Style>
-    <DataTemplate x:Key="MarkedLinesViewTemplate">
+    <DataTemplate x:Key="MarkedLinesViewTemplate" DataType="markedLines:MarkedLinesViewModel">
         <Grid Margin="10">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -39,17 +34,18 @@
             <markedLines:MarkedLinesListView
                 FontFamily="Consolas"
                 SelectionMode="Extended"
-                Grid.Row="1" ItemsSource="{Binding Documents}"
+                Grid.Row="1" ItemsSource="{Binding MarkedLines}"
                 ItemContainerStyle="{StaticResource MarkedLinesItemContainerStyle}"
                 VirtualizingStackPanel.IsVirtualizing="True"
                 VirtualizingStackPanel.VirtualizationMode="Recycling"
-                Tag="{Binding 
-                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type markedLines:MarkedLinesListView}}}"
-                ContextMenu="{StaticResource LogViewContextMenu}">
+                ReadonlySelectedItems="{Binding SelectedItems, Mode=OneWayToSource}">
                 
                 <markedLines:MarkedLinesListView.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <controls:VirtualizingStackPanel/>
+                        <controls:VirtualizingStackPanel 
+                            Tag="{Binding 
+                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type markedLines:MarkedLinesListView}}}"
+                            ContextMenu="{StaticResource LogViewContextMenu}"/>
                     </ItemsPanelTemplate>
                 </markedLines:MarkedLinesListView.ItemsPanel>
                 <ListView.View>
