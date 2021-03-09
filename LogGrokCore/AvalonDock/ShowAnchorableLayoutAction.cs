@@ -2,6 +2,7 @@
 using Microsoft.Xaml.Behaviors;
 using Xceed.Wpf.AvalonDock;
 using Xceed.Wpf.AvalonDock.Layout;
+using Xceed.Wpf.AvalonDock.Layout.Serialization;
 
 namespace LogGrokCore.AvalonDock
 {

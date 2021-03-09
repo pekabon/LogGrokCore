@@ -57,7 +57,7 @@
                     <avalonDock:LayoutAnchorablePane DockMinHeight="200" />
                 </localBehaviors:ShowAnchorableLayoutAction.LayoutAnchorablePane>
                 <localBehaviors:ShowAnchorableLayoutAction.LayoutAnchorable>
-                    <avalonDock:LayoutAnchorable Title="Scratch Pad">
+                    <avalonDock:LayoutAnchorable Title="Scratch Pad" ContentId="ScratchPad">
                         <ContentControl 
                             ContentTemplate="{StaticResource MarkedLinesViewTemplate}"
                             Content="{Binding MarkedLinesViewModel}" >
@@ -70,7 +70,9 @@
     </b:Interaction.Triggers>
 
     <Grid>
-        <avalonDock:DockingManager x:Name="DockingManager"
+        <avalonDock:DockingManager 
+            localBehaviors:SaveLayoutBehavior.SavedLayoutFilePath="c:\\temp\\layout.x"
+            x:Name="DockingManager"
                                    Theme="{StaticResource MetroTheme}"
                                    localBehaviors:BindingBehavior.CurrentDocument="{Binding CurrentDocument}"
                                    localBehaviors:BindingBehavior.DocumentViewTemplate="{StaticResource DocumentTemplate}"

@@ -6,6 +6,7 @@ using LogGrokCore.Colors;
 using LogGrokCore.Controls;
 using LogGrokCore.Data;
 using LogGrokCore.Search;
+using Xceed.Wpf.AvalonDock.Layout.Serialization;
 
 namespace LogGrokCore
 {
