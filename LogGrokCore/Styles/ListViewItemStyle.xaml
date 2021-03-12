@@ -42,11 +42,6 @@
         <Setter Property="UseLayoutRounding" Value="True" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="VerticalContentAlignment" Value="Stretch"/>
-        <Setter Property="Foreground">
-            <Setter.Value>
-                <SolidColorBrush Color="DarkBlue" />
-            </Setter.Value>
-        </Setter>
         <Style.Triggers>
             <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource Self},
                          Converter={StaticResource ObjectToTypeConverter}}"

@@ -6,6 +6,7 @@
     
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="../../Styles/LogViewContextMenu.xaml"/>
+        
     </ResourceDictionary.MergedDictionaries>    
     
     <DataTemplate x:Key="NormalTemplate" DataType="{x:Type system:String}">
@@ -14,7 +15,7 @@
     
     <DataTemplate x:Key="SelectableTemplate" DataType="{x:Type system:String}">
         <selectableTextBlock:SelectableTextBlock
-            SelectionBrush="{StaticResource MahApps.Brushes.Highlight}"
+           
             Text="{Binding Mode=OneWay}"
             Tag="{Binding
                                 RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type controls:ListView}}}"
