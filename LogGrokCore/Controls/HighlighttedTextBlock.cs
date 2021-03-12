@@ -34,7 +34,7 @@ namespace LogGrokCore.Controls
             nameof(Text),
             typeof(string),
             typeof(HighlightedTextBlock),
-            new FrameworkPropertyMetadata(null,
+            new FrameworkPropertyMetadata(string.Empty,
                 FrameworkPropertyMetadataOptions.AffectsRender | FrameworkPropertyMetadataOptions.AffectsMeasure)
             );
 

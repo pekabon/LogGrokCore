@@ -10,7 +10,6 @@
                      xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
                      xmlns:th="clr-namespace:Xceed.Wpf.AvalonDock.Themes;assembly=Xceed.Wpf.AvalonDock.Themes.Metro"
                      xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
-                     xmlns:markedLines="clr-namespace:LogGrokCore.MarkedLines"
                      d:DataContext="{d:DesignInstance Type=local:MainWindowViewModel, IsDesignTimeCreatable=False}"
                      localControls:DragnDropBehavior.AllowDrop="True"
                      localControls:DragnDropBehavior.DropCommand="{Binding DropCommand}"
@@ -23,7 +22,7 @@
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
                 <ResourceDictionary Source="Styles/DocumentTemplate.xaml"/>
                 <ResourceDictionary Source="Styles/MarkedLinesViewTemplate.xaml"/>
-                <ResourceDictionary Source="Styles/ListViewItemStyle.xaml"></ResourceDictionary>
+                <ResourceDictionary Source="Styles/ListViewItemStyle.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <th:MetroTheme x:Key="MetroTheme" />
             <localControls:StringShortenerConvereter x:Key="StringShortenerConvereter" />
@@ -60,8 +59,7 @@
                     <avalonDock:LayoutAnchorable Title="Scratch Pad">
                         <ContentControl 
                             ContentTemplate="{StaticResource MarkedLinesViewTemplate}"
-                            Content="{Binding MarkedLinesViewModel}" >
-                        </ContentControl>
+                            Content="{Binding MarkedLinesViewModel}" />
                     </avalonDock:LayoutAnchorable>
                 </localBehaviors:ShowAnchorableLayoutAction.LayoutAnchorable>
             </localBehaviors:ShowAnchorableLayoutAction>

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
+using Xceed.Wpf.AvalonDock.Controls;
 
 namespace LogGrokCore.Controls
 {
@@ -22,6 +23,34 @@ namespace LogGrokCore.Controls
 
                 foreach (var d in GetVisualChildren<T>(descendant)) yield return d;
             }
+        }
+
+        public static T? GetItemUnderPoint<T>(this Visual obj, Point p) where T : class
+        {
+            HitTestFilterBehavior VisibilityHitTestFilter(DependencyObject target)
+            {
+                if (!(target is UIElement uiElement)) 
+                    return HitTestFilterBehavior.Continue;
+                if(!uiElement.IsHitTestVisible || !uiElement.IsVisible)
+                    return HitTestFilterBehavior.ContinueSkipSelfAndChildren;
+                return HitTestFilterBehavior.Continue;
+            }
+            
+            T? hitTestResult = null; 
+            VisualTreeHelper.HitTest(obj, 
+                VisibilityHitTestFilter,
+                t =>
+                {
+                    var foundItem =  t.VisualHit.FindVisualAncestor<T>();
+                    if (foundItem == null)
+                        return HitTestResultBehavior.Continue;
+                    hitTestResult = foundItem;
+                    return HitTestResultBehavior.Stop;
+
+                }, 
+                new PointHitTestParameters(p));
+
+            return hitTestResult;
         }
     }
 }

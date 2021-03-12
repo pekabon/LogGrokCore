@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -32,7 +31,7 @@ namespace LogGrokCore.Controls
             }
         }
 
-        public virtual ListViewItem GetContainerForItem() => new LogListViewItem(); 
+        public ListViewItem GetContainerForItem() => new LogListViewItem(this); 
         
         public ICommand CopyToClipboard { get; }
 
@@ -174,7 +173,6 @@ namespace LogGrokCore.Controls
                     ScheduleResetColumnsWidth();
                 }
             }, DispatcherPriority.ApplicationIdle);
-                
         }
 
         private void CopySelectedItemsToClipboard()
