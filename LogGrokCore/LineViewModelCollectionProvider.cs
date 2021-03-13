@@ -17,7 +17,7 @@ namespace LogGrokCore
         public LineViewModelCollectionProvider(
             IItemProvider<(int index, string str)> lineProvider,
             ILineParser lineParser,             
-            IReadOnlyList<ItemViewModel> headerCollection,
+            LogHeaderCollection headerCollection,
             Selection markedLines)       
         {
             _lineProvider = lineProvider;

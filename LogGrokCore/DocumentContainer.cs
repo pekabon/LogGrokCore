@@ -26,11 +26,6 @@ namespace LogGrokCore
             NotFilteringGridViewType
         }
 
-        private enum LineViewModelCollectionType
-        {
-            NotHeadered
-        }
-        
         private readonly Container _container;
         public DocumentContainer(string fileName, ColorSettings colorSettings)
         {
@@ -82,11 +77,6 @@ namespace LogGrokCore
                     .Type<ILineParser>(serviceKey: ParserType.Full)
                     .Type<LogHeaderCollection>(request => request.Container.Resolve<LogHeaderCollection>()));
             
-            _container.Register<LineViewModelCollectionProvider>(Reuse.Singleton, 
-                made: Parameters.Of
-                    .Type<ILineParser>(serviceKey: ParserType.Full)
-                    .Type<Func<string?>>(request => () =>  null), serviceKey: LineViewModelCollectionType.NotHeadered);
-
             _container.Register<FilterSettings>(Reuse.Singleton);
             
             _container.Register<DocumentViewModel>();
