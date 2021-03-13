@@ -195,10 +195,10 @@ namespace LogGrokCore.Controls
             TextCopy.ClipboardService.SetText(text.ToString());
         }
 
-        private VirtualizingStackPanel? _panel;
-        private VirtualizingStackPanel? GetPanel()
+        private VirtualizingStackPanel.VirtualizingStackPanel? _panel;
+        private VirtualizingStackPanel.VirtualizingStackPanel? GetPanel()
         {
-            _panel ??= this.GetVisualChildren<VirtualizingStackPanel>().FirstOrDefault();
+            _panel ??= this.GetVisualChildren<VirtualizingStackPanel.VirtualizingStackPanel>().FirstOrDefault();
             return _panel;
         }
     }

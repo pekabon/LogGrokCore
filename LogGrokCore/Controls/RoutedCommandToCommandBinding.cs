@@ -1,6 +1,6 @@
 using System.Windows.Input;
 
-namespace LogGrokCore.Controls.FilterPopup
+namespace LogGrokCore.Controls
 {
     public class RoutedCommandToCommandBinding 
     {

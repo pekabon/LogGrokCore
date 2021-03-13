@@ -4,7 +4,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Markup;
 
-namespace LogGrokCore.Controls.FilterPopup
+namespace LogGrokCore.Controls
 {
     public class RoutedCommandToCommandBindingExtension : MarkupExtension
     {

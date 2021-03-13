@@ -4,7 +4,8 @@
                     xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
                     xmlns:filterPopup="clr-namespace:LogGrokCore.Controls.FilterPopup"
                     xmlns:local="clr-namespace:LogGrokCore.Filter"
-                    xmlns:logGrokCore="clr-namespace:LogGrokCore">
+                    xmlns:logGrokCore="clr-namespace:LogGrokCore"
+                    xmlns:controls="clr-namespace:LogGrokCore.Controls">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/fonts.xaml"/>
@@ -20,7 +21,7 @@
                                     TextBlock.FontWeight="Normal"
                                     filterPopup:BindPopupBehavior.ToToggleButton="{Binding 
                                         RelativeSource={RelativeSource FindAncestor, AncestorType=ToggleButton}}"
-                                    filterPopup:RoutedCommandBehavior.RoutedCommandToCommandBinding="{filterPopup:RoutedCommandToCommandBinding 
+                                    controls:RoutedCommandBehavior.RoutedCommandToCommandBinding="{controls:RoutedCommandToCommandBinding 
                                                 Command={Binding 
                                                     Source={x:Static filterPopup:PopupCommands.Close}},
                                                 RoutedCommand={x:Static logGrokCore:RoutedCommands.Cancel}}"
@@ -57,7 +58,7 @@
                                      Margin="10, 10, 10, 0"
                                      Text="{Binding TextFilter,
                                                             UpdateSourceTrigger=PropertyChanged}"
-                                     filterPopup:RoutedCommandBehavior.RoutedCommandToCommandBinding="{filterPopup:RoutedCommandToCommandBinding 
+                                     controls:RoutedCommandBehavior.RoutedCommandToCommandBinding="{controls:RoutedCommandToCommandBinding 
                                                     Command={Binding 
                                                         Source={x:Static filterPopup:TextBoxCommands.Clear}},
                                                     RoutedCommand={x:Static logGrokCore:RoutedCommands.Cancel}}"

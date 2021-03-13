@@ -7,6 +7,7 @@
                     xmlns:localBehaviors="clr-namespace:LogGrokCore.AvalonDock"
                     xmlns:controls="clr-namespace:LogGrokCore.Controls"
                     xmlns:search="clr-namespace:LogGrokCore.Search"
+                    xmlns:virtualizingStackPanel="clr-namespace:LogGrokCore.Controls.VirtualizingStackPanel"
                     mc:Ignorable="d">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="ListViewItemStyle.xaml" />
@@ -45,12 +46,12 @@
                                controls:NavigateToLineBehavior.ChangeCurrentItem="False">
                 <controls:ListView.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <controls:VirtualizingStackPanel
+                        <virtualizingStackPanel:VirtualizingStackPanel
                             CurrentPosition="{Binding CurrentItemIndex}" 
                             controls:HighlightedTextBlock.HighlightRegex="{Binding HighlightRegex}"
                             Tag="{Binding 
                                 RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type controls:ListView}}}">
-                            <controls:VirtualizingStackPanel.ContextMenu>
+                            <virtualizingStackPanel:VirtualizingStackPanel.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem 
                                         Command="{Binding PlacementTarget.Tag.CopyToClipboard, 
@@ -58,8 +59,8 @@
                                             Header="{x:Static controls:CopyCommandProperties.Text}"
                                             InputGestureText="{x:Static controls:CopyCommandProperties.GestureText}"/>
                                 </ContextMenu>
-                            </controls:VirtualizingStackPanel.ContextMenu>
-                        </controls:VirtualizingStackPanel>
+                            </virtualizingStackPanel:VirtualizingStackPanel.ContextMenu>
+                        </virtualizingStackPanel:VirtualizingStackPanel>
                     </ItemsPanelTemplate>
                 </controls:ListView.ItemsPanel>
             </controls:ListView>

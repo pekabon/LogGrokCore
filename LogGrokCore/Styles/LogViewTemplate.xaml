@@ -6,6 +6,7 @@
                     xmlns:localControls="clr-namespace:LogGrokCore.Controls"
                     xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
                     xmlns:filterPopup="clr-namespace:LogGrokCore.Controls.FilterPopup"
+                    xmlns:virtualizingStackPanel="clr-namespace:LogGrokCore.Controls.VirtualizingStackPanel"
                     mc:Ignorable="d">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
@@ -15,7 +16,7 @@
     </ResourceDictionary.MergedDictionaries>
 
     <DataTemplate x:Key="LogViewTemplate" DataType="local:LogViewModel">
-        <Grid filterPopup:RoutedCommandBehavior.RoutedCommandToCommandBinding= "{filterPopup:RoutedCommandToCommandBinding 
+        <Grid localControls:RoutedCommandBehavior.RoutedCommandToCommandBinding= "{localControls:RoutedCommandToCommandBinding 
                 RoutedCommand={x:Static local:RoutedCommands.ClearFilters}, 
                 Command={Binding ClearExclusionsCommand}}">
             <Grid.RowDefinitions>
@@ -45,7 +46,7 @@
                 
                 <ListView.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <localControls:VirtualizingStackPanel
+                        <virtualizingStackPanel:VirtualizingStackPanel
                             CurrentPosition="{Binding CurrentItemIndex}" 
                             localControls:HighlightedTextBlock.HighlightRegex="{Binding HighlightRegex}"
                             Tag="{Binding 
