@@ -11,5 +11,8 @@ namespace LogGrokCore
         
         public static readonly RoutedCommand SearchText = new RoutedUICommand(
             "Search selection", "Search selection", typeof(UIElement));
+
+        public static readonly RoutedCommand ClearFilters = new RoutedUICommand(
+            "Clear filters", "Clear filters", typeof(UIElement));
     }
 }

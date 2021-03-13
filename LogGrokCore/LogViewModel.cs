@@ -51,7 +51,6 @@ namespace LogGrokCore
             _lineViewModelCollectionProvider = lineViewModelCollectionProvider;
             filterSettings.ExclusionsChanged += () =>
             {
-                InvokePropertyChanged(nameof(HaveFilter));
                 UpdateFilteredCollection();
             };
             
@@ -83,10 +82,8 @@ namespace LogGrokCore
                         GetComponentsInSelectedLines(componentIndex));
                 });
             
-            ClearExclusionsCommand = new DelegateCommand(() =>
-                {
-                    _filterSettings.ClearAllExclusions();
-                });
+            ClearExclusionsCommand = new DelegateCommand(() => _filterSettings.ClearAllExclusions(),
+                () => _filterSettings.HaveExclusions);
 
             CopySelectedItemsToClipboardCommand = new DelegateCommand(CopySelectedItemsToClipboard, 
                 () => SelectedItems?.Cast<object>().Any() ?? false); 
@@ -140,8 +137,6 @@ namespace LogGrokCore
         }
 
         public bool CanFilter => true;
-
-        public bool HaveFilter => _filterSettings.HaveExclusions;
 
         public LogMetaInformation MetaInformation => _logModelFacade.MetaInformation;
 

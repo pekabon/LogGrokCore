@@ -58,8 +58,6 @@ namespace LogGrokCore.Search
             SearchPattern = searchPattern;
         }
         
-        public bool HaveFilter => false;
-        
         public string Title
         {
             get => _title;

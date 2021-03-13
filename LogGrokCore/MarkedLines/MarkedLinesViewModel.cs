@@ -18,13 +18,10 @@ namespace LogGrokCore.MarkedLines
 
         public bool CanFilter  => false;
         
-        public bool HaveFilter => false;
-        
         public IEnumerable? SelectedItems
         {
             get;
             set;
-
         }
 
         public MarkedLinesViewModel(ObservableCollection<DocumentViewModel> documents)
