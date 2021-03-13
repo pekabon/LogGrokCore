@@ -112,7 +112,6 @@ namespace LogGrokCore
                     false, null), 
                 serviceKey: GridViewType.NotFilteringGridViewType);
 
-
             // start loading
             _ = _container.Resolve<Loader>();
             Trace.TraceInformation($"Start loading {fileName}");

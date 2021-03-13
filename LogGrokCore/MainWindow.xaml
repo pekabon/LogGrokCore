@@ -13,6 +13,7 @@
                      d:DataContext="{d:DesignInstance Type=local:MainWindowViewModel, IsDesignTimeCreatable=False}"
                      localControls:DragnDropBehavior.AllowDrop="True"
                      localControls:DragnDropBehavior.DropCommand="{Binding DropCommand}"
+                     SaveWindowPosition="True"
                      mc:Ignorable="d"
                      Title="LOGGROK" Height="450" Width="800"
                      TextOptions.TextFormattingMode="Display">
