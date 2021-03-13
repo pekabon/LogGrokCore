@@ -39,7 +39,7 @@ namespace LogGrokCore.Controls
         {
             ReadonlySelectedItems =
                 selectedIndices
-                    .Where(index => index < Items.Count && index > 0)
+                    .Where(index => index < Items.Count && index >= 0)
                     .Select(index => Items[index]).ToList();
         }
 
