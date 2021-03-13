@@ -1,7 +1,9 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Windows.Input;
 using LogGrokCore.Colors;
 using LogGrokCore.Controls;
 using LogGrokCore.Data;
@@ -24,9 +26,11 @@ namespace LogGrokCore
             Selection markedLines,
             ColorSettings colorSettings)
         {
+            var logFileFilePath = logModelFacade.LogFile.FilePath;
+            
             Title = 
-                Path.GetFileName(logModelFacade.LogFile.FilePath) 
-                    ?? throw new InvalidOperationException($"Invalid path: {logModelFacade.LogFile.FilePath}");
+                Path.GetFileName(logFileFilePath) 
+                    ?? throw new InvalidOperationException($"Invalid path: {logFileFilePath}");
 
             LogViewModel = logViewModel;
             SearchViewModel = searchViewModel;
@@ -38,10 +42,18 @@ namespace LogGrokCore
             _markedLines = markedLines;
             _lineProvider = lineProvider;
             _markedLines.Changed += () => MarkedLinesChanged?.Invoke();
+            
+            CopyPathToClipboardCommand =
+                new DelegateCommand(() => TextCopy.ClipboardService.SetText(logFileFilePath));
+            OpenContainingFolderCommand = new DelegateCommand(() => OpenContainingFolder(logFileFilePath));
         }
 
         public event Action? MarkedLinesChanged;
         
+        public ICommand CopyPathToClipboardCommand { get; }
+        
+        public ICommand OpenContainingFolderCommand { get; }
+
         public ObservableCollection<(int number, string text)> MarkedLineViewModels
         {
             get
@@ -74,6 +86,17 @@ namespace LogGrokCore
         {
             get => _isCurrentDocument;
             set => SetAndRaiseIfChanged(ref _isCurrentDocument, value);
+        }
+        
+        private void OpenContainingFolder(string path)
+        {
+            var filePath = path;
+
+            var cmdLine = File.Exists(filePath)
+                ? $"/select, {filePath}"
+                : $"/select, {Directory.GetParent(filePath)?.FullName}";
+
+            _ = Process.Start("explorer.exe", cmdLine);
         }
     }
 }

@@ -62,10 +62,6 @@ namespace LogGrokCore
             
             Lines = new GrowingLogLinesCollection(headerCollection, lineCollection);
             
-            CopyPathToClipboardCommand =
-                new DelegateCommand(() => TextCopy.ClipboardService.SetText(_logModelFacade.LogFile.FilePath));
-            OpenContainingFolderCommand = new DelegateCommand(OpenContainingFolder);
-
             ExcludeCommand = DelegateCommand.Create(
                     (int componentIndex) => {
                         _filterSettings.AddExclusions(
@@ -181,10 +177,6 @@ namespace LogGrokCore
 
         public ViewBase CustomView => _viewFactory.CreateView();
 
-        public ICommand CopyPathToClipboardCommand { get; }
-        
-        public ICommand OpenContainingFolderCommand { get; }
-        
         public NavigateToLineRequest NavigateToLineRequest { get; } = new();
         
         public GrowingLogLinesCollection? Lines
@@ -224,17 +216,6 @@ namespace LogGrokCore
             }
 
             Progress = 100;
-        }
-
-        private void OpenContainingFolder()
-        {
-            var filePath = _logModelFacade.LogFile.FilePath;
-
-            var cmdLine = File.Exists(filePath)
-                ? $"/select, {filePath}"
-                : $"/select, {Directory.GetParent(filePath)?.FullName}";
-
-            _ = Process.Start("explorer.exe", cmdLine);
         }
 
         public void NavigateTo(in int logLineNumber)
