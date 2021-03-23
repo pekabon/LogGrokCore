@@ -9,10 +9,8 @@ namespace LogGrokCore.Controls
     {
         private readonly HashSet<int> _indices = new();
 
-        public int Min => _indices.Min();
-
-        public int Max => _indices.Max();
-        
+        public (int min, int max)? Bounds => _indices.Count == 0 ? null : (_indices.Min(), _indices.Max()); 
+       
         public void Add(int index)
         {
             _indices.Add(index);
@@ -21,9 +19,21 @@ namespace LogGrokCore.Controls
 
         public void AddRangeToValue(int selectedValue)
         {
-            var valueFrom = selectedValue > Max ? Max : Min;
-            for (var index = Math.Min(valueFrom, selectedValue); index <= Math.Max(valueFrom, selectedValue); index++)
-                Add(index);
+            if (Bounds is not {min: var min, max: var max})
+            {
+                Add(selectedValue);
+            }
+            else
+            {
+                var valueFrom = selectedValue > max ? max : min;
+                for (var index = Math.Min(valueFrom, selectedValue);
+                    index <= Math.Max(valueFrom, selectedValue);
+                    index++)
+                {
+                    Add(index);
+                }
+            }
+
             Changed?.Invoke();
         }
 

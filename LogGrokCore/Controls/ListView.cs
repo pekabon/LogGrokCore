@@ -10,7 +10,6 @@ using System.Windows.Input;
 using System.Windows.Threading;
 
 namespace LogGrokCore.Controls
-
 {
     public class ListView : System.Windows.Controls.ListView
     {

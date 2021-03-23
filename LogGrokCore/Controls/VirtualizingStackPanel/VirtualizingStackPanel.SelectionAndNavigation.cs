@@ -171,18 +171,22 @@ namespace LogGrokCore.Controls.VirtualizingStackPanel
         private void ExpandSelectionUp()
         {
             if (CurrentPosition <= 0 ) return;
-            
-            
-            if (CurrentPosition == _selection.Min)
+
+            if (_selection.Bounds is not {min: var min, max: var max})
+            {
+                return;
+            }
+
+            if (CurrentPosition == min)
             {
                 CurrentPosition--;
                 _selection.Add(CurrentPosition);
             }
 
-            if (CurrentPosition == _selection.Max)
+            if (CurrentPosition == max)
             {
                 _selection.Remove(CurrentPosition);
-                CurrentPosition = _selection.Max;
+                CurrentPosition = max;
             }
 
             BringIndexIntoView(CurrentPosition);
@@ -191,18 +195,19 @@ namespace LogGrokCore.Controls.VirtualizingStackPanel
 
         private void ExpandSelectionDown()
         {
-            if (CurrentPosition >= Items.Count - 1) return;
+            if (CurrentPosition >= Items.Count - 1 || 
+                _selection.Bounds is not {min: var min, max: var max}) return;
 
-            if (CurrentPosition == _selection.Max)
+            if (CurrentPosition == max)
             {
                 CurrentPosition++;
                 _selection.Add(CurrentPosition);
             }
 
-            if (CurrentPosition == _selection.Min)
+            if (CurrentPosition == min)
             {
                 _selection.Remove(CurrentPosition);
-                CurrentPosition = _selection.Min;
+                CurrentPosition = min;
             }
             
             BringIndexIntoViewWhileNavigatingDown(CurrentPosition);
