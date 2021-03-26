@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows.Input;
+using LogGrokCore.AvalonDock;
 using LogGrokCore.MarkedLines;
 using Microsoft.Win32;
 
 namespace LogGrokCore
-{
-    internal class MainWindowViewModel : ViewModelBase
+{ 
+    internal class MainWindowViewModel : ViewModelBase, IContentProvider
     {
         private DocumentViewModel? _currentDocument;
         private readonly ApplicationSettings _applicationSettings;
@@ -81,6 +82,11 @@ namespace LogGrokCore
 
         private void AddDocument(string fileName)
         {
+            CurrentDocument = CreateDocument(fileName);
+        }
+
+        private DocumentViewModel CreateDocument(string fileName)
+        {
             var container = new DocumentContainer(fileName, _applicationSettings.ColorSettings);
             var viewModel = container.GetDocumentViewModel();
             Documents.Add(viewModel);
@@ -90,9 +96,14 @@ namespace LogGrokCore
                     return;
                 container.Dispose();
             };
-            CurrentDocument = viewModel;
+            return viewModel;
         }
 
         public event EventHandler? ShowScratchPad;
+        
+        public object? GetContent(string contentId)
+        {
+            return contentId == Constants.MarkedLinesContentId ? MarkedLinesViewModel : null;
+        }
     }
 }

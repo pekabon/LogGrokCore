@@ -9,7 +9,6 @@
                      xmlns:local="clr-namespace:LogGrokCore"
                      xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
                      xmlns:th="clr-namespace:Xceed.Wpf.AvalonDock.Themes;assembly=Xceed.Wpf.AvalonDock.Themes.Metro"
-                     xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
                      d:DataContext="{d:DesignInstance Type=local:MainWindowViewModel, IsDesignTimeCreatable=False}"
                      localControls:DragnDropBehavior.AllowDrop="True"
                      localControls:DragnDropBehavior.DropCommand="{Binding DropCommand}"
@@ -36,7 +35,6 @@
     <mahapps:MetroWindow.LeftWindowCommands>
         <mahapps:WindowCommands>
             <Menu VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="0, 0, 5, 0">
-                
                 <MenuItem Header="File" >
                     <MenuItem Command="{Binding OpenFileCommand}" Header="Open" />
                     <Separator />
@@ -73,20 +71,6 @@
                     </Style.Triggers>
                 </Style>
             </avalonDock:DockingManager.LayoutItemContainerStyle>
-            <avalonDock:LayoutRoot>
-                <avalonDock:LayoutPanel Orientation="Horizontal">
-                    <avalonDock:LayoutDocumentPane />
-                    <avalonDock:LayoutAnchorablePane DockMinWidth="300">
-                        <avalonDock:LayoutAnchorable Title="Marked lines">
-                            <ContentControl 
-                                ContentTemplate="{StaticResource MarkedLinesViewTemplate}"
-                                Content="{Binding MarkedLinesViewModel}" />
-                        </avalonDock:LayoutAnchorable>
-                    </avalonDock:LayoutAnchorablePane>
-
-                </avalonDock:LayoutPanel>
-
-            </avalonDock:LayoutRoot>
         </avalonDock:DockingManager>
     </Grid>
 </mahapps:MetroWindow>

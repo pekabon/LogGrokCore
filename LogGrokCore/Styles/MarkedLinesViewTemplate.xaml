@@ -24,7 +24,7 @@
             <Setter Property="colors:ColorSettings.ColorSettings" Value="{Binding ColorSettings}" />
         </Style.Setters>
     </Style>
-    <DataTemplate x:Key="MarkedLinesViewTemplate" DataType="markedLines:MarkedLinesViewModel">
+    <DataTemplate DataType="{x:Type markedLines:MarkedLinesViewModel}">
         <Grid Margin="10">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />

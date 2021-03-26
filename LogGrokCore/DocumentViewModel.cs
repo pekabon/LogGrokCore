@@ -46,8 +46,11 @@ namespace LogGrokCore
             CopyPathToClipboardCommand =
                 new DelegateCommand(() => TextCopy.ClipboardService.SetText(logFileFilePath));
             OpenContainingFolderCommand = new DelegateCommand(() => OpenContainingFolder(logFileFilePath));
+            DocumentId = logFileFilePath;
         }
 
+        public string DocumentId { get; }
+    
         public event Action? MarkedLinesChanged;
         
         public ICommand CopyPathToClipboardCommand { get; }
