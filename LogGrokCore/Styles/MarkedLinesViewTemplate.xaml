@@ -15,6 +15,7 @@
         <ResourceDictionary Source="LogViewContextMenu.xaml" />
         <ResourceDictionary Source="../Controls/GridView/LogGridViewCellStyle.xaml" />
     </ResourceDictionary.MergedDictionaries>
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     <DataTemplate x:Key="MarkedLineCellTemplate">
         <ContentControl Content="{Binding}" Style="{StaticResource LogGridViewCellStyle}" />
     </DataTemplate>
@@ -25,7 +26,8 @@
         </Style.Setters>
     </Style>
     <DataTemplate DataType="{x:Type markedLines:MarkedLinesViewModel}">
-        <Grid Margin="10">
+        <Grid Margin="10" Visibility="{Binding HaveMarkedLines, 
+            Converter={StaticResource BooleanToVisibilityConverter}}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />

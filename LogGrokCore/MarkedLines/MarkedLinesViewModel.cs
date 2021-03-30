@@ -16,7 +16,7 @@ namespace LogGrokCore.MarkedLines
 
         public DelegateCommand CopyLinesCommand { get; }
 
-        public bool CanFilter  => false;
+        public bool HaveMarkedLines => _markedLines.Count != 0;
         
         public IEnumerable? SelectedItems
         {
@@ -52,7 +52,6 @@ namespace LogGrokCore.MarkedLines
             view.GroupDescriptions?.Add(groupDescription);
             UpdateLinesCollection();
         }
-
         
         private void SubscribeToNewDocumentChanges(ObservableCollection<DocumentViewModel> documents)
         {
@@ -106,6 +105,8 @@ namespace LogGrokCore.MarkedLines
             {
                 _markedLines.RemoveAt(index);
             }
+            
+            InvokePropertyChanged(nameof(HaveMarkedLines));
         }
     }
 }
