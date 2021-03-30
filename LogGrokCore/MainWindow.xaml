@@ -14,8 +14,7 @@
                      localControls:DragnDropBehavior.DropCommand="{Binding DropCommand}"
                      SaveWindowPosition="True"
                      mc:Ignorable="d"
-                     Title="LOGGROK" Height="450" Width="800"
-                     TextOptions.TextFormattingMode="Display">
+                     Title="Loggrok 2" Height="450" Width="800">
     <mahapps:MetroWindow.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
