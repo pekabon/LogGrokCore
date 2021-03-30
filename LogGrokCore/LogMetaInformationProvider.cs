@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using LogGrokCore.Data;
@@ -10,9 +11,12 @@ namespace LogGrokCore
         private const int ProbeSize = 256;
         private const double DetectTreshold = 0.05;
 
-        public static LogMetaInformation GetLogMetaInformation(string fileName)
+        public static LogMetaInformation GetLogMetaInformation(string fileName,
+            IEnumerable<LogFormat> logFormats)
         {
-            var metas = new[] {LogMetaInformation.CreateKlLogMetaInformation()};
+            var metas = logFormats
+                .Select(m => new LogMetaInformation(m));   
+
             var bestFitter = metas
                 .Select(meta => (meta, ratio: GetRatio(meta, fileName)))
                 .OrderByDescending(m => m.ratio)

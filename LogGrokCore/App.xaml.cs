@@ -27,7 +27,7 @@ namespace LogGrokCore
 
         private void RegisterDependencies(IRegistrator container)
         {
-            container.Register<ApplicationSettings>();
+            container.RegisterDelegate(ApplicationSettings.Load);
             container.Register<MainWindowViewModel>();
         }
     }

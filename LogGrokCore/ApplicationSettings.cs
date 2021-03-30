@@ -1,4 +1,6 @@
-﻿using LogGrokCore.Colors.Configuration;
+﻿using System;
+using LogGrokCore.Colors.Configuration;
+using LogGrokCore.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 
@@ -6,23 +8,34 @@ namespace LogGrokCore
 {
     public class ApplicationSettings
     {
-        public ColorSettings ColorSettings { get; private set; }
+        public ColorSettings ColorSettings { get; private set; } = new();
 
-        public ApplicationSettings()
+        public LogFormat[] LogFormats { get; set; } =
+            Array.Empty<LogFormat>();
+
+        public static ApplicationSettings Load()
         {
-            ColorSettings = new ColorSettings();
-            
             var builder = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", true, true);
-            IConfigurationRoot configuration = builder.Build();
-            configuration.GetSection("ColorSettings").Bind(ColorSettings);
+                .AddYamlFile("appsettings.yaml", true, true);
 
+            var settings = new ApplicationSettings();
+            
+            IConfigurationRoot configuration = builder.Build();
+            configuration.GetSection("Settings").Bind(settings);
+            
             ChangeToken.OnChange(() => configuration.GetReloadToken(), () =>
             {
-                var newColorSettings = new ColorSettings();
-                configuration.GetSection("ColorSettings").Bind(newColorSettings);
-                ColorSettings = newColorSettings;
+                var newSettings = new ApplicationSettings();
+                configuration.GetSection("Settings").Bind(newSettings);
+                settings.ColorSettings = newSettings.ColorSettings;
+                settings.LogFormats = newSettings.LogFormats;
             });
+            
+            return settings;
+        }
+
+        private ApplicationSettings()
+        {
         }
     }
 }

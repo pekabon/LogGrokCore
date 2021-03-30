@@ -27,7 +27,7 @@ namespace LogGrokCore
         }
 
         private readonly Container _container;
-        public DocumentContainer(string fileName, ColorSettings colorSettings)
+        public DocumentContainer(string fileName, ApplicationSettings applicationSettings)
         {
             _container = new Container(rules =>
                 rules
@@ -49,7 +49,8 @@ namespace LogGrokCore
             
             // log model
             _container.RegisterDelegate(_ => new LogFile(fileName));
-            _container.RegisterDelegate(_ => LogMetaInformationProvider.GetLogMetaInformation(fileName),
+            _container.RegisterDelegate(c => LogMetaInformationProvider.GetLogMetaInformation(fileName,
+                applicationSettings.LogFormats),
                 Reuse.Singleton);
             _container.Register<LineIndex>();
             _container.RegisterMapping<ILineIndex, LineIndex>();
@@ -65,7 +66,7 @@ namespace LogGrokCore
                 serviceKey: ParserType.Full);
             
             // Presentation
-            _container.RegisterInstance(colorSettings);
+            _container.RegisterInstance(applicationSettings.ColorSettings);
 
             _container.Register<LogViewModel>(
                 made: Parameters.Of

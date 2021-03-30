@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace LogGrokCore.Data
 {
@@ -21,6 +23,13 @@ namespace LogGrokCore.Data
         public string[] FieldNames { get; }
 
         public int[] IndexedFieldNumbers { get; }
+
+        public LogMetaInformation(LogFormat logFormat)
+            : this(logFormat.Regex, 
+                logFormat.FieldsOrder,
+                logFormat.IndexedFieldNumbers)
+        {
+        }
 
         public LogMetaInformation(string lineRegex, string [] fieldNames, int[] indexedFieldNumbers)
         {

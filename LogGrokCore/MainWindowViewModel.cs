@@ -87,7 +87,7 @@ namespace LogGrokCore
 
         private DocumentViewModel CreateDocument(string fileName)
         {
-            var container = new DocumentContainer(fileName, _applicationSettings.ColorSettings);
+            var container = new DocumentContainer(fileName, _applicationSettings);
             var viewModel = container.GetDocumentViewModel();
             Documents.Add(viewModel);
             Documents.CollectionChanged += (o, e) =>
