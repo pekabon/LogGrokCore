@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using LogGrokCore.Data.IndexTree;
 using NLog;
@@ -18,7 +19,6 @@ namespace LogGrokCore.Data.Index
             = new();
 
         private readonly object _componentsLocker = new();
-        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
         
         public IEnumerable<string> GetAllComponents(int componentNumber)
         {
@@ -142,7 +142,7 @@ namespace LogGrokCore.Data.Index
 
         public IEnumerable<LineAndKey> GetIndexedSequenceFrom(int from)
         {
-            Logger.Info($"GetIndexedSequenceFrom({from})");
+            Trace.TraceInformation($"GetIndexedSequenceFrom({from})");
             static bool IsNext(LineAndKey lk1, LineAndKey lk2)
             {
                 return lk2.LineNumber == lk1.LineNumber + 1;
@@ -156,7 +156,7 @@ namespace LogGrokCore.Data.Index
             var startValues = string.Join(",", cursors.Select(c => c.Current.LineNumber).OrderBy(i => i)
                 .Select(j => j.ToString()));
 
-            Logger.Debug($"Start values: {startValues}"); 
+            Debug.WriteLine($"Start values: {startValues}"); 
             return CollectionUtlis.MergeSorted(cursors, IsNext);
         }
     

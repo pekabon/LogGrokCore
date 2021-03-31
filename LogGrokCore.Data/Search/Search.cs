@@ -16,8 +16,7 @@ namespace LogGrokCore.Data.Search
         private static readonly StringPool SearchStringPool = new();
         private const int MaxSearchSizeLines = 256;
         private const double Throttle = 0.01;
-        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
-        
+       
         public class Progress
         {
             public double Value
@@ -134,7 +133,7 @@ namespace LogGrokCore.Data.Search
                     await foreach (var (start, count) in
                         sourceLineIndex.FetchRanges(cancellationToken))
                     {
-                        Logger.Info($"Searching '{regex}'; Current range: {start}, count={count}");
+                        Trace.TraceInformation($"Searching '{regex}'; Current range: {start}, count={count}");
                         var loadedCount = sourceLineIndex.Count;
                         var totalCountEstimate = loadedCount / logModelFacade.LoadProgress * 100.0;
                         

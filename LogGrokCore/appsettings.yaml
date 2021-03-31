@@ -41,7 +41,7 @@ Settings:
         - Component
 # TestRun logs
 # 18:14:53.667	[4720-16]	INF	KL.KsnMock.Client.Responses.KsnResponseRegistrator`1+<>c__DisplayClass5_0	"[df42b713] Receive packet for GrpcKsnMock.Ksn_Protocol_FileReputation_ObjectRequest, body: { ""Requests"": [ { ""HashType"": 1, ""ServiceMask"": ""23"", ""FileHash"": ""ooWVtba5z5Yjgv/snVQq+g=="" } ] }"	
-    - Regex: ^(?'time'\d{2}\:\d{2}\:\d{2}\.\d{3})\t(?'process_thread'\[\d+-\d+\])\t(?'severity'\w+)\t(?:[\w|\d]+\.)*(?'component'[^-\s]+)\t(?'message'.*)
+    - Regex: ^(?'time'\d{2}\:\d{2}\:\d{2}\.\d{3})\t(?'process_thread'\[\d+-\d+\])\t(?'severity'\w+)?\t(?:[\w|\d]+\.)*(?'component'[^-\s]+)\t(?'message'.*)
       FieldsOrder:
         - time
         - process_thread
