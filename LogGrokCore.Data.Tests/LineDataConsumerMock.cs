@@ -21,8 +21,8 @@ namespace LogGrokCore.Data.Tests
             return parsed;
         }
 
-        public void CompleteAdding()
+        public void CompleteAdding(long totalBytesRead)
         {
         }
-    }
+   }
 }
