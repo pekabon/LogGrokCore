@@ -17,6 +17,7 @@ namespace LogGrokCore.Diagnostics
               AccessViolationException e => IsKnown(e, KnownAccessViolationExceptionMethods),
               DirectoryNotFoundException e => IsKnown(e, KnownDirectoryNotFoundExceptionMethods),
               Win32Exception e => IsKnown(e, KnownWin32ExceptionMethods),
+              FileNotFoundException e => e.FileName != null && KnownSerializationAssemblies.Any(k => e.FileName.Contains(k)),
               _ when exception.GetType().Name == "TypeNameParserException" => true,
               _ => false
           };
@@ -28,6 +29,12 @@ namespace LogGrokCore.Diagnostics
               exception. StackTrace != null &&
               exception.StackTrace.Contains(method));
       }
+
+      public static readonly string[] KnownSerializationAssemblies =
+      {
+          "Xceed.Wpf.AvalonDock.XmlSerializers.dll",
+          "ControlzEx.XmlSerializers.dll"
+      };
       
       private static readonly string[] KnownArgumentExceptionMethods = {
           "System.Drawing.Font.FromLogFont",          
