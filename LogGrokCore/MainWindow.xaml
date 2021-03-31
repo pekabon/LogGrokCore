@@ -9,6 +9,7 @@
                      xmlns:local="clr-namespace:LogGrokCore"
                      xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
                      xmlns:th="clr-namespace:Xceed.Wpf.AvalonDock.Themes;assembly=Xceed.Wpf.AvalonDock.Themes.Metro"
+                     xmlns:logGrokCore="clr-namespace:LogGrokCore"
                      d:DataContext="{d:DesignInstance Type=local:MainWindowViewModel, IsDesignTimeCreatable=False}"
                      localControls:DragnDropBehavior.AllowDrop="True"
                      localControls:DragnDropBehavior.DropCommand="{Binding DropCommand}"
@@ -19,8 +20,8 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
-                <ResourceDictionary Source="Styles/DocumentTemplate.xaml"/>
-                <ResourceDictionary Source="Styles/MarkedLinesViewTemplate.xaml"/>
+                <ResourceDictionary Source="Styles/DocumentTemplate.xaml" />
+                <ResourceDictionary Source="Styles/MarkedLinesViewTemplate.xaml" />
                 <ResourceDictionary Source="Styles/ListViewItemStyle.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <th:MetroTheme x:Key="MetroTheme" />
@@ -34,7 +35,7 @@
     <mahapps:MetroWindow.LeftWindowCommands>
         <mahapps:WindowCommands>
             <Menu VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="0, 0, 5, 0">
-                <MenuItem Header="File" >
+                <MenuItem Header="File">
                     <MenuItem Command="{Binding OpenFileCommand}" Header="Open" />
                     <Separator />
                     <MenuItem Command="{Binding ExitCommand}" Header="Exit" />
@@ -42,6 +43,28 @@
             </Menu>
         </mahapps:WindowCommands>
     </mahapps:MetroWindow.LeftWindowCommands>
+    <mahapps:MetroWindow.RightWindowCommands>
+        <mahapps:WindowCommands>
+
+            <Button Command="{Binding OpenSettings}">
+                <StackPanel Orientation="Horizontal">
+                    <Rectangle Width="20"
+                               Height="20"
+                               Fill="{Binding RelativeSource={RelativeSource AncestorType=Button},
+                                              Path=Foreground}">
+                        <Rectangle.OpacityMask>
+                            <VisualBrush Stretch="Fill" Visual="{StaticResource appbar_settings}" />
+                        </Rectangle.OpacityMask>
+                    </Rectangle>
+                    <TextBlock Margin="4 0 0 0"
+                               VerticalAlignment="Center"
+                               Text="settings" />
+                </StackPanel>
+            </Button>
+        </mahapps:WindowCommands>
+
+    </mahapps:MetroWindow.RightWindowCommands>
+
     <mahapps:MetroWindow.InputBindings>
         <KeyBinding Command="{Binding OpenFileCommand}" Gesture="CTRL+O" />
     </mahapps:MetroWindow.InputBindings>

@@ -29,6 +29,16 @@ namespace LogGrokCore
             _applicationSettings = applicationSettings;
             Documents = new ObservableCollection<DocumentViewModel>();
             MarkedLinesViewModel = new MarkedLinesViewModel(Documents);
+            OpenSettings = new DelegateCommand(() =>
+            {
+                using var process = new Process {StartInfo =
+                {
+                    FileName = ApplicationSettings.SettingsFileName,
+                    UseShellExecute = true
+                }};
+                process.Start();
+
+            });
         }
 
         public DocumentViewModel? CurrentDocument
@@ -50,6 +60,8 @@ namespace LogGrokCore
             }
         }
 
+        public ICommand OpenSettings { get; }
+        
         private void OpenFile()
         {
             var dialog = new OpenFileDialog

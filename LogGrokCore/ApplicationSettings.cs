@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using LogGrokCore.Colors.Configuration;
 using LogGrokCore.Data;
 using Microsoft.Extensions.Configuration;
@@ -8,6 +9,8 @@ namespace LogGrokCore
 {
     public class ApplicationSettings
     {
+        public static string SettingsFileName => Path.GetFullPath("appsettings.yaml");
+
         public ColorSettings ColorSettings { get; private set; } = new();
 
         public LogFormat[] LogFormats { get; set; } =
@@ -16,7 +19,7 @@ namespace LogGrokCore
         public static ApplicationSettings Load()
         {
             var builder = new ConfigurationBuilder()
-                .AddYamlFile("appsettings.yaml", true, true);
+                .AddYamlFile(SettingsFileName, true, true);
 
             var settings = new ApplicationSettings();
             
