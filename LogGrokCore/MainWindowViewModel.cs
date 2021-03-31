@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Windows;
 using System.Windows.Input;
 using LogGrokCore.AvalonDock;
 using LogGrokCore.MarkedLines;
@@ -61,7 +62,9 @@ namespace LogGrokCore
         }
 
         public ICommand OpenSettings { get; }
-        
+
+        public ICommand ExitCommand => new DelegateCommand(() => Application.Current.Shutdown());
+
         private void OpenFile()
         {
             var dialog = new OpenFileDialog

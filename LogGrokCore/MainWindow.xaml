@@ -10,6 +10,7 @@
                      xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
                      xmlns:th="clr-namespace:Xceed.Wpf.AvalonDock.Themes;assembly=Xceed.Wpf.AvalonDock.Themes.Metro"
                      xmlns:logGrokCore="clr-namespace:LogGrokCore"
+                     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
                      d:DataContext="{d:DesignInstance Type=local:MainWindowViewModel, IsDesignTimeCreatable=False}"
                      localControls:DragnDropBehavior.AllowDrop="True"
                      localControls:DragnDropBehavior.DropCommand="{Binding DropCommand}"
@@ -34,8 +35,13 @@
     </mahapps:MetroWindow.Resources>
     <mahapps:MetroWindow.LeftWindowCommands>
         <mahapps:WindowCommands>
-            <Menu VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="0, 0, 5, 0">
-                <MenuItem Header="File">
+            <Menu VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="0, 0, 5, 0" Background="Transparent">
+                <MenuItem Background="Transparent">
+                    <MenuItem.HeaderTemplate>
+                        <DataTemplate>
+                        <iconPacks:PackIconMaterial  Kind="Menu" Foreground="Azure" Background="Transparent"/>
+                        </DataTemplate>
+                    </MenuItem.HeaderTemplate>
                     <MenuItem Command="{Binding OpenFileCommand}" Header="Open" />
                     <Separator />
                     <MenuItem Command="{Binding ExitCommand}" Header="Exit" />
@@ -45,7 +51,6 @@
     </mahapps:MetroWindow.LeftWindowCommands>
     <mahapps:MetroWindow.RightWindowCommands>
         <mahapps:WindowCommands>
-
             <Button Command="{Binding OpenSettings}">
                 <StackPanel Orientation="Horizontal">
                     <Rectangle Width="20"
