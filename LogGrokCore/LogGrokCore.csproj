@@ -31,9 +31,6 @@
     <None Update="LogGrokCore.manifest">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="appsettings.yaml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 
@@ -61,6 +58,14 @@
 
   <ItemGroup>
     <Folder Include="Diagnostics" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <None Remove="appsettings.yaml" />
+    <AdditionalFiles Include="appsettings.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </AdditionalFiles>
   </ItemGroup>
 
 </Project>
