@@ -103,7 +103,7 @@ namespace LogGrokCore.Data
                         if (bytesRead < data.Length)
                         {
                             var bufferEndOffset = bytesRead + dataOffsetFromBufferStart;
-                            FinishProcessing(lineOffsetFromBufferStart, bufferEndOffset);
+                            FinishProcessing(lineOffsetFromBufferStart, bufferEndOffset, stream.Position);
                             return;
                         }
 
@@ -155,20 +155,20 @@ namespace LogGrokCore.Data
                     }
                 }
             
-                void FinishProcessing(int lastLineOffsetFromBufferStart, int bufferEndOffset)
+                void FinishProcessing(int lastLineOffsetFromBufferStart, int bufferEndOffset, long totalBytesRead)
                 {
                     _ = _lineDataConsumer.AddLineData(
                         bufferStartPosition + lastLineOffsetFromBufferStart,
                         buffer.AsSpan().Slice(
                             lastLineOffsetFromBufferStart,
                             bufferEndOffset - lastLineOffsetFromBufferStart));
+                    _lineDataConsumer.CompleteAdding(totalBytesRead);
                 }
             }
 
             finally
             {
                 ArrayPool<byte>.Shared.Return(buffer);
-                _lineDataConsumer.CompleteAdding();
             }
         }
 

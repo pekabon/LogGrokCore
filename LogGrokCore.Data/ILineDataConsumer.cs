@@ -6,6 +6,6 @@ namespace LogGrokCore.Data
     {
         bool AddLineData(long offset, Span<byte> lineData);
 
-        void CompleteAdding();
+        void CompleteAdding(long totalBytesRead);
     }
 }

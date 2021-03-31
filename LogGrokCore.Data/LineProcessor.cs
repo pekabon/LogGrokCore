@@ -33,14 +33,14 @@ namespace LogGrokCore.Data
             _parser = parser;
         }
 
-        public void CompleteAdding()
+        public void CompleteAdding(long totalBytesRead)
         {
             if (_currentString != null)
             {
                 _parsedBufferConsumer.AddParsedBuffer(_bufferOffset, _currentBufferLineCount, _currentString);
             }
             
-            _parsedBufferConsumer.CompleteAdding();
+            _parsedBufferConsumer.CompleteAdding(totalBytesRead);
         }
 
         public unsafe bool AddLineData(long lineOffset, Span<byte> lineData)

@@ -30,8 +30,18 @@ namespace LogGrokCore
         private static double GetRatio(LogMetaInformation logMetaInformation, string fileName)
         {
             var regex = new Regex(logMetaInformation.LineRegex);
-            var lines = File
-                .ReadLines(fileName)
+
+            IEnumerable<string> ReadLines()
+            {
+                using var fileStream =  new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var streamReader = new StreamReader(fileStream);
+                while (!streamReader.EndOfStream)
+                {
+                    yield return streamReader.ReadLine()!;
+                }
+            }
+
+            var lines = ReadLines()
                 .Take(ProbeSize)
                 .GroupBy(line => regex.IsMatch(line)).ToList();
 

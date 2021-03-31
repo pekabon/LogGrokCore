@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using LogGrokCore.Data.Index;
@@ -14,20 +15,18 @@ namespace LogGrokCore.Data
         private readonly Indexer _indexer;
         private readonly LogMetaInformation _logMetaInformation;
         private readonly StringPool _stringPool;
-        private readonly long _fileSize;
+        private long? _totalBytesRead;
 
         public ParsedBufferConsumer(
             LineIndex lineIndex,
             Indexer indexer,
             LogMetaInformation logMetaInformation,
-            LogFile logFile,
             StringPool stringPool)
         {
             _lineIndex = lineIndex;
             _indexer = indexer;
             _logMetaInformation = logMetaInformation;
             _stringPool = stringPool;
-            _fileSize = logFile.FileSize;
             Task.Factory.StartNew(ConsumeBuffers);
         }
 
@@ -36,8 +35,9 @@ namespace LogGrokCore.Data
             _queue.Add((bufferStartOffset, lineCount, parsedBuffer));
         }
 
-        public void CompleteAdding()
+        public void CompleteAdding(long totalBytesRead)
         {
+            _totalBytesRead = totalBytesRead;
             _queue.CompleteAdding();
         }
 
@@ -69,7 +69,11 @@ namespace LogGrokCore.Data
                 _stringPool.Return(buffer);
             }
 
-            _lineIndex.Finish((int) (_fileSize - lineOffsetFromBufferStart));
+            if (_totalBytesRead is not { } fileSize)
+            {
+                throw new InvalidOperationException();
+            }
+            _lineIndex.Finish((int) (fileSize - lineOffsetFromBufferStart));
             _indexer.Finish();
         }
     }
