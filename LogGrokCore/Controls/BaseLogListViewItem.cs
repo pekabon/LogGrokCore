@@ -71,7 +71,17 @@ namespace LogGrokCore.Controls
             if (oldContent == newContent || colorSettings == null) return;
             var text = newContent?.ToString();
             if (text == null) return;
-            var rule = colorSettings.Rules.FirstOrDefault(r => r.IsMatch(text));
+            ColorSettings.ColorRule? rule = null;
+            for (var i = 0; i < colorSettings.Rules.Count; i++)
+            {
+                var colorSettingsRule = colorSettings.Rules[i];
+                if (colorSettingsRule.IsMatch(text))
+                {
+                    rule = colorSettingsRule;
+                    break;
+                }
+            }
+
             _overrideForeground = rule?.Foreground;
             _overrideBackground = rule?.Background;
             CoerceValue(ForegroundProperty);

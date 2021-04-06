@@ -44,7 +44,7 @@ namespace LogGrokCore.Colors
             }
         }
 
-        public IEnumerable<ColorRule> Rules { get; }
+        public IReadOnlyList<ColorRule> Rules { get; }
 
         private static readonly ConcurrentDictionary<string, Brush?> CachedBruches = new();
         private static readonly ConcurrentDictionary<string, Regex> CachedRegexes = new();
@@ -69,7 +69,7 @@ namespace LogGrokCore.Colors
                     CachedBruches.GetOrAdd(rule.BackgroundColor, CreateBrush));
             }
 
-            Rules = colorSettingsConfiguration.Rules.Select(Convert);
+            Rules = colorSettingsConfiguration.Rules.Select(Convert).ToList();
         }
     }
 }
