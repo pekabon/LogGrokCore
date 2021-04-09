@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using LogGrokCore.Data.IndexTree;
 
 namespace LogGrokCore.Data.Index
 {
@@ -9,7 +8,6 @@ namespace LogGrokCore.Data.Index
     {
         private readonly Indexer _indexer;
         private readonly FilteredCountIndicesProvider<IndexKey> _filteredCountIndicesProvider;
-        private readonly IReadOnlyList<(IndexKey key, IndexTree<int, SimpleLeaf<int>>)> _keysAndIndices;
 
         public IndexedLinesProvider(
             Indexer indexer, 
@@ -37,13 +35,10 @@ namespace LogGrokCore.Data.Index
             }
 
             Predicate<IndexKey> isKeyIncluded = key => !IsKeyExcluded(key);
-            
             _filteredCountIndicesProvider =
                 new FilteredCountIndicesProvider<IndexKey>(
                     isKeyIncluded, countIndices,
                     countIndexGranularity);
-            
-            _keysAndIndices = _filteredCountIndicesProvider.GetAllKeys().Select(key => (key, _indexer.GetIndex(key))).ToList();
         }
 
         public int Count => _filteredCountIndicesProvider.Count;
@@ -76,18 +71,17 @@ namespace LogGrokCore.Data.Index
                 countIndicesItem.Counts.ToDictionary(item => item.key, 
                     item => item.count);
 
-            var filteredLineNumberCollectionsToMerge = new List<IEnumerable<int>>(_keysAndIndices.Count);
-            foreach (var keyAndIndex in _keysAndIndices)
+            var indices = _filteredCountIndicesProvider.GetAllKeys().Select(key =>
             {
-                var (key, index) = keyAndIndex;
-                filteredLineNumberCollectionsToMerge.Add(
-                    index.GetEnumerableFromIndex(
-                        startIndices.TryGetValue(key, out var startPosition)
-                            ? startPosition
-                            : 0));
-            }
-            
-            return CollectionUtlis.MergeSorted(filteredLineNumberCollectionsToMerge);
+                var index = _indexer.GetIndex(key);
+               
+                return index.GetEnumerableFromIndex(
+                    startIndices.TryGetValue(key, out var startPosition) 
+                        ? startPosition 
+                        : 0); 
+            });
+
+            return CollectionUtlis.MergeSorted(indices);
         }
 
         private IEnumerable<int> GetEnumerableFrom(int start)
