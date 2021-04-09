@@ -24,21 +24,16 @@ namespace LogGrokCore.Controls
             };
         }
 
-        public static readonly DependencyProperty IsCurrentItemContentProperty = DependencyProperty.RegisterAttached(
-            "IsCurrentItemContent", typeof(bool), typeof(BaseLogListViewItem), 
-            new FrameworkPropertyMetadata(default(bool), FrameworkPropertyMetadataOptions.Inherits));
+        public static readonly DependencyProperty IsCurrentItemProperty = DependencyProperty.Register(
+            "IsCurrentItem", typeof(bool), typeof(BaseLogListViewItem), 
+            new PropertyMetadata(false));
 
-        private static void SetIsCurrentItemContent(DependencyObject element, bool value)
+        public bool IsCurrentItem
         {
-            element.SetValue(IsCurrentItemContentProperty, value);
+            get => (bool) GetValue(IsCurrentItemProperty);
+            set => SetValue(IsCurrentItemProperty, value);
         }
 
-        public static bool GetIsCurrentItemContent(DependencyObject element)
-        {
-            return (bool) element.GetValue(IsCurrentItemContentProperty);
-        }
-
-        
         private new static readonly DependencyProperty ForegroundProperty = 
             TextElement.ForegroundProperty.AddOwner(typeof(BaseLogListViewItem), 
                 new FrameworkPropertyMetadata(SystemColors.ControlTextBrush, 
@@ -90,7 +85,7 @@ namespace LogGrokCore.Controls
         
         private void UpdateIsCurrentProperty()
         {
-            SetIsCurrentItemContent(this, Content == _itemsControl.Items.CurrentItem);
+            IsCurrentItem = Content == _itemsControl.Items.CurrentItem;
         }
     }
 }

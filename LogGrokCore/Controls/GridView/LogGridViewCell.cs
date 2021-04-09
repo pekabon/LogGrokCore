@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace LogGrokCore.Controls.GridView
 {
-    public partial class LogGridViewCell
+    public class LogGridViewCell : ContentControl 
     {
         public LogGridViewCell()
         {
-            InitializeComponent();
             DataContextChanged += (o, e) => UpdateValue();
             HorizontalAlignment = HorizontalAlignment.Stretch;
         }

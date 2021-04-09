@@ -2,10 +2,11 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:system="clr-namespace:System;assembly=System.Runtime"
                     xmlns:controls="clr-namespace:LogGrokCore.Controls"
-                    xmlns:selectableTextBlock="clr-namespace:LogGrokCore.Controls.SelectableTextBlock">
+                    xmlns:selectableTextBlock="clr-namespace:LogGrokCore.Controls.SelectableTextBlock"
+                    xmlns:gridView="clr-namespace:LogGrokCore.Controls.GridView">
     
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="../../Styles/LogViewContextMenu.xaml"/>
+        <ResourceDictionary Source="LogViewContextMenu.xaml"/>
         
     </ResourceDictionary.MergedDictionaries>    
     
@@ -22,19 +23,21 @@
             ContextMenu="{StaticResource LogViewContextMenu}"/>
     </DataTemplate>
     
-    <Style TargetType="ContentControl" x:Key="LogGridViewCellStyle">
+    <Style TargetType="{x:Type ContentControl}" x:Key="LogGridViewCellStyle">
         <Style.Triggers>
             <DataTrigger Value="False"
-                         Binding="{Binding (controls:BaseLogListViewItem.IsCurrentItemContent),
-                                RelativeSource={RelativeSource TemplatedParent}}">
+                         Binding="{Binding IsCurrentItem,
+                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type controls:BaseLogListViewItem}}}">
                 <Setter Property="ContentTemplate" Value="{StaticResource NormalTemplate}"/>
             </DataTrigger>
             <DataTrigger Value="True"
-                         Binding="{Binding (controls:BaseLogListViewItem.IsCurrentItemContent),
-                                RelativeSource={RelativeSource TemplatedParent}}">
+                         Binding="{Binding IsCurrentItem,
+                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type controls:BaseLogListViewItem}}}">
                 <Setter Property="ContentTemplate" Value="{StaticResource SelectableTemplate}"/>
             </DataTrigger>
         </Style.Triggers>
     </Style>
+    
+    <Style TargetType="{x:Type gridView:LogGridViewCell}" BasedOn="{StaticResource LogGridViewCellStyle}"/>
 
 </ResourceDictionary>

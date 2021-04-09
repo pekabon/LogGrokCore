@@ -13,7 +13,7 @@
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.contextmenu.xaml" />
         <ResourceDictionary Source="ListViewItemStyle.xaml" />
         <ResourceDictionary Source="LogViewContextMenu.xaml" />
-        <ResourceDictionary Source="../Controls/GridView/LogGridViewCellStyle.xaml" />
+        <ResourceDictionary Source="LogGridViewCellStyle.xaml" />
     </ResourceDictionary.MergedDictionaries>
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     <DataTemplate x:Key="MarkedLineCellTemplate">
