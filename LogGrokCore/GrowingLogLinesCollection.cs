@@ -3,8 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Linq;
-using LogGrokCore.Data.Index;
 
 namespace LogGrokCore
 {
@@ -34,7 +32,6 @@ namespace LogGrokCore
         
         public void UpdateCount()
         {
-            
             if (_logLinesCount == _sourceCollection.Count 
                 && _headerCollectionCount == _headerCollection.Count)
                 return;

@@ -7,6 +7,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
+using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
+using ItemCollection = System.Windows.Controls.ItemCollection;
 
 namespace LogGrokCore.Controls.VirtualizingStackPanel
 {
@@ -42,7 +44,9 @@ namespace LogGrokCore.Controls.VirtualizingStackPanel
                 };
 
                 GetItems().CurrentChanged += OnCurrentItemChanged;
-                
+                if (ItemsControl.GetItemsOwner(this).ItemsSource is IGrowingCollection growingCollection)
+                    growingCollection.CollectionGrown += _ => InvalidateMeasure();
+
             };
 
             _selection.Changed += () =>
@@ -58,13 +62,13 @@ namespace LogGrokCore.Controls.VirtualizingStackPanel
             UpdateExtent();
             
             var count = Items.Count;
+
             if (count > 0)
                 BuildVisibleItems(availableSize, VerticalOffset);
 
             var maxWidth = 
                 _visibleItems.Any() ? _visibleItems.Max(item => item.Element.DesiredSize.Width) : 0.0;
             
-
             return (double.IsPositiveInfinity(availableSize.Height)) ? 
                 new Size(maxWidth, _visibleItems.Sum(v => v.Height)) : 
                 new Size(Math.Max(maxWidth, availableSize.Width), availableSize.Height);
@@ -174,16 +178,7 @@ namespace LogGrokCore.Controls.VirtualizingStackPanel
             return (newItems, oldItems.ToList());
         }
 
-        private ReadOnlyCollection<object> Items
-        {
-            get
-            {
-                // necessary InternalChildren touch
-                // ReSharper disable once UnusedVariable
-                var v = InternalChildren;
-                return ((ItemContainerGenerator) ItemContainerGenerator).Items;
-            }
-        }
+        private  ItemCollection Items => ItemsControl.GetItemsOwner(this).Items;
 
         private void InsertAndMeasureItem(ListViewItem item, int itemIndex, bool isNewElement)
         {

@@ -49,12 +49,8 @@ namespace LogGrokCore
             var lineParser = _logModelFacade.LineParser;
             
             _lineViewModelCollectionProvider = lineViewModelCollectionProvider;
-            filterSettings.ExclusionsChanged += () =>
-            {
-                UpdateFilteredCollection();
-            };
+            filterSettings.ExclusionsChanged += UpdateFilteredCollection;
             
-
             var lineCollection =
                 new VirtualList<(int index, string str), ItemViewModel>(lineProvider,
                     (indexAndString) => 
@@ -197,10 +193,10 @@ namespace LogGrokCore
             IsLoading = true;
             while (!_logModelFacade.IsLoaded)
             {
+                Lines?.UpdateCount();
                 await Task.Delay(delay);
                 if (delay < 500)
                     delay *= 2;
-                Lines?.UpdateCount();
             }
 
             Lines?.UpdateCount();
