@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -201,15 +202,16 @@ namespace LogGrokCore.Search
             IsSearching = true;
             while (!progress.IsFinished)
             {
+                Lines?.UpdateCount();
+
+                IsIndeterminateProgress = false;
+                SearchProgress = progress.Value * 100.0;
+
                 await Task.Delay(delay);
                 if (cancellationToken.IsCancellationRequested)
                     return;
-
                 if (delay < 150)
                     delay *= 2;
-                Lines?.UpdateCount();
-                IsIndeterminateProgress = false;
-                SearchProgress = progress.Value * 100.0;
             }
 
             if (cancellationToken.IsCancellationRequested)

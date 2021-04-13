@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using LogGrokCore.Data.IndexTree;
-using NLog;
 
 namespace LogGrokCore.Data.Index
 {
@@ -15,11 +14,15 @@ namespace LogGrokCore.Data.Index
 
         private readonly ConcurrentDictionary<int, HashSet<IndexKey>> _components = new();
         
-        private readonly CountIndex<IndexTree<int, SimpleLeaf<int>>> _countIndex 
-            = new();
-
+        private readonly CountIndex<IndexTree<int, SimpleLeaf<int>>> _countIndex;
+            
         private readonly object _componentsLocker = new();
-        
+
+        public Indexer()
+        {
+            _countIndex = new CountIndex<IndexTree<int, SimpleLeaf<int>>>(_indices);
+        }
+
         public IEnumerable<string> GetAllComponents(int componentNumber)
         {
             if (!_components.TryGetValue(componentNumber, out var componentSet))

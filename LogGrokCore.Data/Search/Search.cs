@@ -112,7 +112,6 @@ namespace LogGrokCore.Data.Search
                     {
                         var currentSearchResultLineNumber = lineIndex.Add(index);
                         searchIndexer.Add(indexKey, currentSearchResultLineNumber);
-                        
                     }
 
                     SearchStringPool.Return(tempString);

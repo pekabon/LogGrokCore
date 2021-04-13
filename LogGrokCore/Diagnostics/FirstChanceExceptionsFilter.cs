@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace LogGrokCore.Diagnostics
 {
@@ -18,6 +19,7 @@ namespace LogGrokCore.Diagnostics
               DirectoryNotFoundException e => IsKnown(e, KnownDirectoryNotFoundExceptionMethods),
               Win32Exception e => IsKnown(e, KnownWin32ExceptionMethods),
               FileNotFoundException e => e.FileName != null && KnownSerializationAssemblies.Any(k => e.FileName.Contains(k)),
+              TaskCanceledException => true,
               _ when exception.GetType().Name == "TypeNameParserException" => true,
               _ => false
           };
