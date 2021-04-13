@@ -14,7 +14,7 @@ using LogGrokCore.Filter;
 
 namespace LogGrokCore.Search
 {
-    internal class SearchDocumentViewModel : ViewModelBase, IDisposable
+    public class SearchDocumentViewModel : ViewModelBase, IDisposable
     {
         private readonly GridViewFactory _viewFactory;
         private SearchPattern _searchPattern;

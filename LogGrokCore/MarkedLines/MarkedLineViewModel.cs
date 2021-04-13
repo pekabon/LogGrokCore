@@ -2,8 +2,7 @@
 
 namespace LogGrokCore.MarkedLines
 {
-
-    internal class MarkedLineViewModel : BaseLogLineViewModel
+    public class MarkedLineViewModel : BaseLogLineViewModel
     {
         public DocumentViewModel Document { get; }
         public string Text { get; }

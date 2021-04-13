@@ -17,7 +17,7 @@ using LogGrokCore.Filter;
 
 namespace LogGrokCore
 {
-    internal class LogViewModel : ViewModelBase
+    public class LogViewModel : ViewModelBase
     {
         private readonly GridViewFactory _viewFactory;
         private double _progress;

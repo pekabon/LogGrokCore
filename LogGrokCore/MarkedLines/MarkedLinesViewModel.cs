@@ -6,7 +6,7 @@ using System.Windows.Data;
 
 namespace LogGrokCore.MarkedLines
 {
-    internal class MarkedLinesViewModel : ViewModelBase
+    public class MarkedLinesViewModel : ViewModelBase
     {
         private readonly ObservableCollection<MarkedLineViewModel> _markedLines = new();
         private readonly ObservableCollection<DocumentViewModel> _documents;

@@ -8,7 +8,7 @@ using System.Windows.Threading;
 namespace LogGrokCore.Search
 {
     // ReSharper disable once ClassNeverInstantiated.Global
-    internal class SearchViewModel : ViewModelBase
+    public class SearchViewModel : ViewModelBase
     {
         private readonly Func<SearchPattern, SearchDocumentViewModel> _searchDocumentViewModelFactory;
         private string _textToSearch = string.Empty;

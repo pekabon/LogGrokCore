@@ -43,12 +43,12 @@ namespace LogGrokCore
 
     public partial class MainWindow
     {
-        public MainWindow()
+        public MainWindow(MainWindowViewModel mainWindowViewModel)
         {
+            DataContext = mainWindowViewModel;
             Closing += SaveLayout;
             Loaded += LoadLayoout;
 
-            DataContext = Locator.Current.GetService<MainWindowViewModel>();
             InitializeComponent();
         }
 

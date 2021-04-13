@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace LogGrokCore.Filter
 {
-    internal class ElementViewModel : ViewModelBase
+    public class ElementViewModel : ViewModelBase
     {
         public string Name { get; }
 

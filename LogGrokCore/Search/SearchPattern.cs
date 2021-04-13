@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace LogGrokCore.Search
 {
-    internal struct SearchPattern : IEquatable<SearchPattern>
+    public struct SearchPattern : IEquatable<SearchPattern>
     {
         public SearchPattern(string searchText, in bool isCaseSensitive, in bool useRegex)
         {

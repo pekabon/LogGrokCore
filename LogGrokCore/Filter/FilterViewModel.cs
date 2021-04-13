@@ -10,7 +10,7 @@ using LogGrokCore.Data.Index;
 
 namespace LogGrokCore.Filter
 {
-    internal class FilterViewModel : ViewModelBase
+    public class FilterViewModel : ViewModelBase
     {
         private readonly FilterSettings _filterSettings;
         private readonly Indexer _indexer;

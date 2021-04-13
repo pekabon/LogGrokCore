@@ -11,7 +11,7 @@ using LogGrokCore.Search;
 
 namespace LogGrokCore
 {
-    internal class DocumentViewModel : ViewModelBase
+    public class DocumentViewModel : ViewModelBase
     {
         private readonly Selection _markedLines;
         private bool _isCurrentDocument;

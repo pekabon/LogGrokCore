@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using LogGrokCore.AvalonDock;
@@ -9,8 +10,8 @@ using LogGrokCore.MarkedLines;
 using Microsoft.Win32;
 
 namespace LogGrokCore
-{ 
-    internal class MainWindowViewModel : ViewModelBase, IContentProvider
+{
+    public class MainWindowViewModel : ViewModelBase, IContentProvider
     {
         private DocumentViewModel? _currentDocument;
         private readonly ApplicationSettings _applicationSettings;
@@ -95,9 +96,12 @@ namespace LogGrokCore
             }
         }
 
-        private void AddDocument(string fileName)
+        public void AddDocument(string fileName)
         {
-            CurrentDocument = CreateDocument(fileName);
+            if (File.Exists(fileName))
+                CurrentDocument = CreateDocument(fileName);
+            else
+                Trace.TraceError($"File {fileName} is not exists");
         }
 
         private DocumentViewModel CreateDocument(string fileName)

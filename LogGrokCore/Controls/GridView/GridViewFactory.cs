@@ -7,7 +7,7 @@ using LogGrokCore.Filter;
 
 namespace LogGrokCore.Controls.GridView
 {
-    internal class GridViewFactory
+    public class GridViewFactory
     {
         private readonly LogMetaInformation _meta;
         private readonly Func<string, FilterViewModel>? _filterViewModelFactory;

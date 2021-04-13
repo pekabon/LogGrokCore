@@ -6,7 +6,7 @@ using LogGrokCore.Data.Index;
 
 namespace LogGrokCore.Filter
 {
-    internal class FilterSettings
+    public class FilterSettings
     {
         private readonly Dictionary<int, HashSet<string>> _exclusions = new();
         private readonly Indexer _indexer;
