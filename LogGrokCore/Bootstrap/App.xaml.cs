@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Windows;
@@ -31,7 +30,26 @@ namespace LogGrokCore.Bootstrap
 
             InitializeComponent();
         }
-        
+
+        public void OnNextInstanceStared(IEnumerable<string> commandLine)
+        {
+            ProcessCommandLine(commandLine);
+
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (MainWindow == null) throw new InvalidOperationException();
+                if (MainWindow.WindowState == WindowState.Minimized)
+                {
+                    MainWindow.WindowState = WindowState.Normal;
+                }
+
+                MainWindow.Activate();
+                MainWindow.Topmost = true;
+                MainWindow.Topmost = false;
+                MainWindow.Focus(); 
+            }));
+        }
+
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
@@ -49,7 +67,7 @@ namespace LogGrokCore.Bootstrap
             container.Register<MainWindow>();
         }
 
-        public void ProcessCommandLine(IEnumerable<string> commandLine)
+        private void ProcessCommandLine(IEnumerable<string> commandLine)
         {            
             var mainVm = _container.Resolve<MainWindowViewModel>();
             foreach (var item in commandLine)

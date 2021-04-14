@@ -28,7 +28,7 @@ namespace LogGrokCore.Bootstrap
                 using CancellationTokenSource exitCancellationTokenSource = new();
                 _app = new App();
                 StartListeningNextInstances(argsCommandLine => 
-                    _app.ProcessCommandLine(argsCommandLine), exitCancellationTokenSource.Token);
+                    _app.OnNextInstanceStared(argsCommandLine), exitCancellationTokenSource.Token);
                 _app.Run();
                 exitCancellationTokenSource.Cancel();
                 return;
