@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
@@ -32,15 +33,39 @@ namespace LogGrokCore
             Documents = new ObservableCollection<DocumentViewModel>();
             MarkedLinesViewModel = new MarkedLinesViewModel(Documents);
             OpenSettings = new DelegateCommand(() =>
-            {
-                using var process = new Process {StartInfo =
-                {
-                    FileName = ApplicationSettings.SettingsFileName,
-                    UseShellExecute = true
-                }};
-                process.Start();
-
+            { 
+                OpenExternalFile(ApplicationSettings.SettingsFileName);
             });
+        }
+
+        private void OpenExternalFile(string fileName)
+        {
+            void StartProcess(string verb)
+            {
+                using var process = new Process
+                {
+                    StartInfo =
+                    {
+                        FileName = fileName,
+                        UseShellExecute = true,
+                        Verb = verb
+                    }
+                };
+                process.Start();
+            }
+
+            try
+            {
+                StartProcess(string.Empty);
+            }
+            catch (Win32Exception e)
+            {
+                if (e.NativeErrorCode == 1155) // 'No application is associated with the specified file for this operation.'
+                {
+                    StartProcess("openas");
+                }
+                else throw;
+            }
         }
 
         public DocumentViewModel? CurrentDocument
