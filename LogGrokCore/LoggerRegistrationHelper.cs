@@ -10,7 +10,8 @@ namespace LogGrokCore
 
         static LoggerRegistrationHelper()
         {
-            var logFactory = LogManager.LoadConfiguration("nlog.config");
+            var logConfigPath = PathHelpers.GetLocalFilePath("nlog.config");
+            var logFactory = LogManager.LoadConfiguration(logConfigPath);
             LoggerProvider = new NLogLoggerProvider(new NLogProviderOptions(), logFactory);
         }
 
