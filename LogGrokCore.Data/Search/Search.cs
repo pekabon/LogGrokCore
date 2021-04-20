@@ -7,7 +7,6 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using LogGrokCore.Data.Index;
-using NLog;
 
 namespace LogGrokCore.Data.Search
 {

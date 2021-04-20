@@ -1,6 +1,5 @@
 using System.Windows;
 using System.Windows.Input;
-using LogGrokCore.Controls.FilterPopup;
 
 namespace LogGrokCore.Controls
 {

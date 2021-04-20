@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using DryIoc;
-using LogGrokCore.Colors.Configuration;
 using LogGrokCore.Controls;
 using LogGrokCore.Controls.GridView;
 using LogGrokCore.Data;

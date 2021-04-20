@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
-using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 using ItemCollection = System.Windows.Controls.ItemCollection;
 
 namespace LogGrokCore.Controls.VirtualizingStackPanel

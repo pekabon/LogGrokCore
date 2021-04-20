@@ -7,7 +7,6 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using LogGrokCore.AvalonDock;
-using Splat;
 using Xceed.Wpf.AvalonDock.Layout;
 using Xceed.Wpf.AvalonDock.Layout.Serialization;
 
