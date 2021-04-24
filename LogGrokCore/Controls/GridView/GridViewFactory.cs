@@ -2,6 +2,8 @@ using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using LogGrokCore.Data;
 using LogGrokCore.Filter;
 
@@ -16,12 +18,15 @@ namespace LogGrokCore.Controls.GridView
                 Func<string, FilterViewModel>? filterViewModelFactory)
         {
             _meta = meta;
-            if (canFilter && filterViewModelFactory != null)
-                _filterViewModelFactory = filterViewModelFactory;
-            else if (canFilter && filterViewModelFactory == null)
-                throw new ArgumentException($"filterViewModelFactory cannot be null if canFilter is true.");
-            else if (!canFilter && filterViewModelFactory != null)
-                throw new ArgumentException($"filterViewModelFactory must be null if canFilter is false.");
+            _filterViewModelFactory = canFilter switch
+            {
+                true when filterViewModelFactory != null => filterViewModelFactory,
+                true when filterViewModelFactory == null => throw new ArgumentException(
+                    $"filterViewModelFactory cannot be null if canFilter is true."),
+                false when filterViewModelFactory != null => throw new ArgumentException(
+                    $"filterViewModelFactory must be null if canFilter is false."),
+                _ => _filterViewModelFactory
+            };
         }
 
         public ViewBase CreateView()
@@ -35,10 +40,7 @@ namespace LogGrokCore.Controls.GridView
                 {
                     VisualTree = new FrameworkElementFactory(typeof(PinGridViewhHeader))
                 },
-                CellTemplate = new DataTemplate(typeof(DependencyObject))
-                {
-                    VisualTree = new FrameworkElementFactory(typeof(PinGridViewCell))
-                }
+                CellTemplate =  CreatePinCellTemplate()
             });
             
             foreach (var fieldHeader in indexFieldName.Yield().Concat(_meta.FieldNames))
@@ -66,25 +68,19 @@ namespace LogGrokCore.Controls.GridView
                 DataTemplate CreateCellTemplate()
                 {
                     var frameworkElementFactory = new FrameworkElementFactory(typeof(LogGridViewCell));
-
-                    Func<LineViewModel, string> GetComponent(string fieldName)
+                    var binding = new Binding
                     {
-                        var idx = Array.IndexOf(_meta.FieldNames, fieldName);
-                        return ln => ln.GetValue(idx);
-                    }
-
-                    if (fieldHeader == null) throw new InvalidOperationException();
-                    var valueGetter =
-                        fieldHeader == indexFieldName 
-                            ? ln => ln.Index.ToString()
-                            : GetComponent(fieldHeader);
-                    
-                    frameworkElementFactory.SetValue(LogGridViewCell.ValueGetterProperty,valueGetter);
+                        Path = 
+                            fieldHeader == indexFieldName ? 
+                                new PropertyPath(nameof(LineViewModel.Index)) : 
+                                new PropertyPath(".[(0)]", Array.IndexOf(_meta.FieldNames, fieldHeader)),
+                        Mode = BindingMode.OneWay
+                    };
+                    frameworkElementFactory.SetBinding(ContentControl.ContentProperty, binding);
                     var dataTemplate = new DataTemplate(typeof(DependencyObject))
                     {
                         VisualTree = frameworkElementFactory
                     };
-                    
                     return dataTemplate;
                 }
 
@@ -96,6 +92,19 @@ namespace LogGrokCore.Controls.GridView
             }
 
             return view;
+        }
+        
+        private static DataTemplate CreatePinCellTemplate()
+        {
+            var factory = new FrameworkElementFactory(typeof(PinControl));
+            var binding = new Binding
+            {
+                Path = new PropertyPath(nameof(LineViewModel.IsMarked)),
+                Mode = BindingMode.TwoWay,
+                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+            };
+            factory.SetBinding(ToggleButton.IsCheckedProperty, binding);
+            return new DataTemplate {VisualTree = factory};
         }
     }
 }

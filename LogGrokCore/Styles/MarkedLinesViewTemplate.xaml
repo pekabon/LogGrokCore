@@ -54,7 +54,7 @@
                         <GridViewColumn>
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate DataType="markedLines:MarkedLineViewModel">
-                                    <gridView:PinGridViewCell VerticalAlignment="Center" />
+                                    <gridView:PinControl IsChecked="{Binding IsMarked}"/>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>

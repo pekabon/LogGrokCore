@@ -1,12 +1,11 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
-    <Style x:Key="{x:Type CheckBox}"
-           TargetType="{x:Type CheckBox}">
+                    xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+                    xmlns:gridView="clr-namespace:LogGrokCore.Controls.GridView">
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    <Style TargetType="{x:Type gridView:PinControl}" x:Key="{x:Type gridView:PinControl}">
         <Setter Property="SnapsToDevicePixels"
-                Value="true" />
-        <Setter Property="OverridesDefaultStyle"
-                Value="true" />
+                Value="True" />
         <Setter Property="FocusVisualStyle"
                 Value="{DynamicResource CheckBoxFocusVisual}" />
         <Setter Property="Template">
