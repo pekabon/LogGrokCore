@@ -10,15 +10,13 @@ namespace LogGrokCore.Data.Tests
             _lineIndexMock = lineIndexMock;
         }
 
-        public bool AddLineData(long lineOffset, Span<byte> lineData)
+        public void AddLineData(long lineOffset, Span<byte> lineData)
         {
             var parsed = lineData[0] == 0;
             if (parsed)
             {
                 _lineIndexMock.Add(lineOffset);
             }
-
-            return parsed;
         }
 
         public void CompleteAdding(long totalBytesRead)

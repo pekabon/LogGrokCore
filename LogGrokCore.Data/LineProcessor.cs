@@ -43,7 +43,7 @@ namespace LogGrokCore.Data
             _parsedBufferConsumer.CompleteAdding(totalBytesRead);
         }
 
-        public unsafe bool AddLineData(long lineOffset, Span<byte> lineData)
+        public unsafe void AddLineData(long lineOffset, Span<byte> lineData)
         {
             var metaSizeChars =
                 LineMetaInformation.GetSizeChars(_componentCount); 
@@ -69,7 +69,6 @@ namespace LogGrokCore.Data
                 
                 var lineMetaInformation =
                     LineMetaInformation.Get(stringPointer, _componentCount);
-
                 
                 if (_parser.TryParse(_currentString, stringFrom, stringLength,
                     lineMetaInformation.ParsedLineComponents))
@@ -77,15 +76,13 @@ namespace LogGrokCore.Data
                     lineMetaInformation.LineOffsetFromBufferStart = (int)(lineOffset - _bufferOffset);
                     _currentOffset += lineMetaInformation.TotalSizeWithPayloadCharsAligned;
                     _currentBufferLineCount++;
-                    return true;
+                    return;
                 }
 
                 if (_currentOffset == 0)
                 {
                     _bufferOffset += lineData.Length;
                 }
-        
-                return false;
             }
 
             string SwitchToNewBuffer(int minimumBufferSizeChars, long currentLineOffset)
