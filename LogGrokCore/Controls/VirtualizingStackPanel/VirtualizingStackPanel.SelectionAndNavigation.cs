@@ -105,7 +105,7 @@ namespace LogGrokCore.Controls.VirtualizingStackPanel
             }
             else
             {
-                _selection.Clear();
+                _selection.Set(index);
             }
 
             CurrentPosition = index;

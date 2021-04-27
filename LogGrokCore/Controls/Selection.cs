@@ -49,6 +49,13 @@ namespace LogGrokCore.Controls
             Changed?.Invoke();
         }
 
+        public void Set(int index)
+        {
+            _indices.Clear();
+            _indices.Add(index);
+            Changed?.Invoke();
+        }
+
         public bool Contains(int index) => _indices.Contains(index);
 
         public event Action? Changed; 
