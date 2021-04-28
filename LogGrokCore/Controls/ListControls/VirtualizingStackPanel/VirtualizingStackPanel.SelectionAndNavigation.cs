@@ -5,7 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace LogGrokCore.Controls.VirtualizingStackPanel
+namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
 {
     public partial class VirtualizingStackPanel
     {
@@ -226,7 +226,7 @@ namespace LogGrokCore.Controls.VirtualizingStackPanel
 
         private void BringIndexIntoViewWhileNavigatingDown(int index)
         {
-            var screenBound = this.ActualHeight;
+            var screenBound = ActualHeight;
             VisibleItem? existed = _visibleItems.Find(v => v.Index == index);
 
             switch (existed)

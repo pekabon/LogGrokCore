@@ -5,8 +5,8 @@
                     xmlns:local="clr-namespace:LogGrokCore"
                     xmlns:localControls="clr-namespace:LogGrokCore.Controls"
                     xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
-                    xmlns:filterPopup="clr-namespace:LogGrokCore.Controls.FilterPopup"
-                    xmlns:virtualizingStackPanel="clr-namespace:LogGrokCore.Controls.VirtualizingStackPanel"
+                    xmlns:listControls="clr-namespace:LogGrokCore.Controls.ListControls"
+                    xmlns:virtualizingStackPanel1="clr-namespace:LogGrokCore.Controls.ListControls.VirtualizingStackPanel"
                     mc:Ignorable="d">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
@@ -28,7 +28,7 @@
                 HorizontalAlignment="Stretch"
                 Value="{Binding Progress}"
                 Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}" />
-            <localControls:ListView Grid.Row="1" ItemsSource="{Binding Lines}"
+            <listControls:ListView Grid.Row="1" ItemsSource="{Binding Lines}"
                                     FontFamily="Consolas"
                                     SelectionMode="Extended"
                                     ReadonlySelectedItems="{Binding SelectedItems,
@@ -46,15 +46,15 @@
                 
                 <ListView.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <virtualizingStackPanel:VirtualizingStackPanel
+                        <virtualizingStackPanel1:VirtualizingStackPanel
                             CurrentPosition="{Binding CurrentItemIndex}" 
                             localControls:HighlightedTextBlock.HighlightRegex="{Binding HighlightRegex}"
                             Tag="{Binding 
-                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type localControls:ListView}}}"
+                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"
                             ContextMenu="{StaticResource LogViewContextMenu}" />
                     </ItemsPanelTemplate>
                 </ListView.ItemsPanel>
-            </localControls:ListView>
+            </listControls:ListView>
         </Grid>
     </DataTemplate>
 </ResourceDictionary>

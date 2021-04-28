@@ -4,7 +4,7 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using LogGrokCore.Colors;
 
-namespace LogGrokCore.Controls
+namespace LogGrokCore.Controls.ListControls
 {
     public class BaseLogListViewItem : ListViewItem
     {
@@ -47,14 +47,14 @@ namespace LogGrokCore.Controls
                     (_, _) => { },
                     CoerceBackgroundProperty));
 
-        private static object CoerceBackgroundProperty(DependencyObject d, object basevalue)
+        private static object CoerceBackgroundProperty(DependencyObject d, object baseValue)
         {
-            return (d as BaseLogListViewItem)?._overrideBackground ?? basevalue;
+            return (d as BaseLogListViewItem)?._overrideBackground ?? baseValue;
         }
 
-        private static object CoerceForegroundProperty(DependencyObject d, object basevalue)
+        private static object CoerceForegroundProperty(DependencyObject d, object baseValue)
         {
-            return (d as BaseLogListViewItem)?._overrideForeground ?? basevalue;
+            return (d as BaseLogListViewItem)?._overrideForeground ?? baseValue;
         }
 
         protected override void OnContentChanged(object oldContent, object? newContent)
@@ -66,14 +66,14 @@ namespace LogGrokCore.Controls
             var text = newContent?.ToString();
             if (text == null) return;
             ColorSettings.ColorRule? rule = null;
+            // ReSharper disable once ForCanBeConvertedToForeach
+            // ReSharper disable once LoopCanBeConvertedToQuery
             for (var i = 0; i < colorSettings.Rules.Count; i++)
             {
                 var colorSettingsRule = colorSettings.Rules[i];
-                if (colorSettingsRule.IsMatch(text))
-                {
-                    rule = colorSettingsRule;
-                    break;
-                }
+                if (!colorSettingsRule.IsMatch(text)) continue;
+                rule = colorSettingsRule;
+                break;
             }
 
             _overrideForeground = rule?.Foreground;

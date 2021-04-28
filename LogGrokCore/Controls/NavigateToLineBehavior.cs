@@ -19,29 +19,29 @@ namespace LogGrokCore.Controls
             typeof(NavigateToLineBehavior), 
             new PropertyMetadata(false));
 
-        public static void SetChangeCurrentItem(ListView listView, bool value)
+        public static void SetChangeCurrentItem(ListControls.ListView listView, bool value)
         {
             listView.SetValue(ChangeCurrentItemProperty, value);
         }
 
-        public static bool GetChangeCurrentItem(ListView listView)
+        public static bool GetChangeCurrentItem(ListControls.ListView listView)
         {
             return (bool) listView.GetValue(ChangeCurrentItemProperty);
         }
         
-        public static void SetNavigateToLineRequest(ListView listView, NavigateToLineRequest request)
+        public static void SetNavigateToLineRequest(ListControls.ListView listView, NavigateToLineRequest request)
         {
             listView.SetValue(NavigateToLineRequestProperty, request);
         }
 
-        public static NavigateToLineRequest? GetNavigateToLineRequest(ListView listView)
+        public static NavigateToLineRequest? GetNavigateToLineRequest(ListControls.ListView listView)
         {
             return (NavigateToLineRequest) listView.GetValue(NavigateToLineRequestProperty);
         }
 
         private static void OnRequestChanged(DependencyObject? d , DependencyPropertyChangedEventArgs args)
         {
-            if (!(d is ListView listView)) return;
+            if (!(d is ListControls.ListView listView)) return;
             
             if (args.OldValue != null)
             {
@@ -66,7 +66,7 @@ namespace LogGrokCore.Controls
                 listView.BringIndexIntoView(lineNumber);
         }
 
-        private static readonly Dictionary<NavigateToLineRequest, ListView> SubscribersMap 
+        private static readonly Dictionary<NavigateToLineRequest, ListControls.ListView> SubscribersMap 
             = new();
     }
 }

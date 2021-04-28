@@ -14,5 +14,17 @@ namespace LogGrokCore
 
         public static readonly RoutedCommand ClearFilters = new RoutedUICommand(
             "Clear filters", "Clear filters", typeof(UIElement));
+
+        public static readonly RoutedUICommand CopyToClipboard;
+
+        static RoutedCommands()
+        {
+            CopyToClipboard = new RoutedUICommand(
+                ApplicationCommands.Copy.Text,
+                nameof(CopyToClipboard),
+                typeof(UIElement), new InputGestureCollection(ApplicationCommands.Copy.InputGestures));
+            
+            ApplicationCommands.Copy.InputGestures.Clear();
+        }
     }
 }

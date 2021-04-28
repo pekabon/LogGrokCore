@@ -3,7 +3,8 @@
                     xmlns:system="clr-namespace:System;assembly=System.Runtime"
                     xmlns:controls="clr-namespace:LogGrokCore.Controls"
                     xmlns:selectableTextBlock="clr-namespace:LogGrokCore.Controls.SelectableTextBlock"
-                    xmlns:gridView="clr-namespace:LogGrokCore.Controls.GridView">
+                    xmlns:gridView="clr-namespace:LogGrokCore.Controls.GridView"
+                    xmlns:listControls="clr-namespace:LogGrokCore.Controls.ListControls">
     
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="LogViewContextMenu.xaml"/>
@@ -16,10 +17,9 @@
     
     <DataTemplate x:Key="SelectableTemplate" DataType="{x:Type system:String}">
         <selectableTextBlock:SelectableTextBlock
-           
             Text="{Binding Mode=OneWay}"
             Tag="{Binding
-                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type controls:ListView}}}"
+                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"
             ContextMenu="{StaticResource LogViewContextMenu}"/>
     </DataTemplate>
     
@@ -27,17 +27,15 @@
         <Style.Triggers>
             <DataTrigger Value="False"
                          Binding="{Binding IsCurrentItem,
-                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type controls:BaseLogListViewItem}}}">
+                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:BaseLogListViewItem}}}">
                 <Setter Property="ContentTemplate" Value="{StaticResource NormalTemplate}"/>
             </DataTrigger>
             <DataTrigger Value="True"
                          Binding="{Binding IsCurrentItem,
-                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type controls:BaseLogListViewItem}}}">
+                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:BaseLogListViewItem}}}">
                 <Setter Property="ContentTemplate" Value="{StaticResource SelectableTemplate}"/>
             </DataTrigger>
         </Style.Triggers>
     </Style>
-    
     <Style TargetType="{x:Type gridView:LogGridViewCell}" BasedOn="{StaticResource LogGridViewCellStyle}"/>
-
 </ResourceDictionary>

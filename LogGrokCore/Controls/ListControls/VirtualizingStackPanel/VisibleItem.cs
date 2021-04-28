@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Windows.Controls;
 
-namespace LogGrokCore.Controls.VirtualizingStackPanel
+namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
 {
     internal readonly struct VisibleItem : IEquatable<VisibleItem>
     {
@@ -49,16 +49,7 @@ namespace LogGrokCore.Controls.VirtualizingStackPanel
             lowerBound = LowerBound;
         }
 
-        public override string ToString()
-        {
-            var elementDescriptor = Element switch
-            {
-                { } l => l.Content,
-                _ => Element
-            };
-            
-            return $"{Index}, {UpperBound:##.##} : {LowerBound:##.##} -- {Element}";
-        }
+        public override string ToString() => $"{Index}, {UpperBound:##.##} : {LowerBound:##.##} -- {Element}";
 
         public bool Equals(VisibleItem other)
         {

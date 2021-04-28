@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace LogGrokCore.Controls.SelectableTextBlock
@@ -48,6 +49,24 @@ namespace LogGrokCore.Controls.SelectableTextBlock
             
             EventManager.RegisterClassHandler(typeof(SelectableTextBlock), RequestBringIntoViewEvent, 
                 new RequestBringIntoViewEventHandler(OnRequestBringIntoView));
+
+            CommandManager.RegisterClassCommandBinding(typeof(SelectableTextBlock),
+                new CommandBinding(
+                    RoutedCommands.CopyToClipboard,
+                    (sender, args) =>
+                    {
+                        var text = ((SelectableTextBlock) sender).SelectedText;
+                        TextCopy.ClipboardService.SetText(text);
+                        args.Handled = true;
+                    },
+                    (sender, args) =>
+                    {
+                        if (sender is not SelectableTextBlock selectableTextBlock) return;
+                        selectableTextBlock.UpdateSelectedText();
+                        var haveSelectedText = !string.IsNullOrEmpty(selectableTextBlock.SelectedText);
+                        args.CanExecute = haveSelectedText;
+                        args.Handled = haveSelectedText;
+                    }));
         }
 
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
@@ -56,10 +75,15 @@ namespace LogGrokCore.Controls.SelectableTextBlock
         public SelectableTextBlock()
         {
             _editor = TextEditorWrapper.CreateFor(this);
-            _editor.SelectionChanged += (sender, args) =>
+            _editor.SelectionChanged += (_, _) =>
             {
-                SelectedText = _editor.GetSelectedText();
+                UpdateSelectedText();
             };
+        }
+
+        private void UpdateSelectedText()
+        {
+            SelectedText = _editor.GetSelectedText();
         }
 
         private static void OnRequestBringIntoView(object sender, RequestBringIntoViewEventArgs e)

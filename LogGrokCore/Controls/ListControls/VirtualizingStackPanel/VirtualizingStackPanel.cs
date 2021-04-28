@@ -8,7 +8,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using ItemCollection = System.Windows.Controls.ItemCollection;
 
-namespace LogGrokCore.Controls.VirtualizingStackPanel
+namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
 {
     public partial class VirtualizingStackPanel : VirtualizingPanel, IScrollInfo
     {
@@ -37,7 +37,7 @@ namespace LogGrokCore.Controls.VirtualizingStackPanel
                 {
                     if (Items.Count <= 0) return;
                         
-                    CurrentPosition = Math.Min((int) CurrentPosition, Items.Count - 1);
+                    CurrentPosition = Math.Min(CurrentPosition, Items.Count - 1);
                     GetItems().MoveCurrentToPosition(CurrentPosition);
                 };
 
@@ -213,7 +213,7 @@ namespace LogGrokCore.Controls.VirtualizingStackPanel
 
         private Size GetExtent()
         {
-            if (!(ItemsControl.GetItemsOwner(this) is ListView listView))
+            if (!(ItemsControl.GetItemsOwner(this) is System.Windows.Controls.ListView listView))
                 return new Size(0, 0);
 
             var extentWidth =

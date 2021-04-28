@@ -6,7 +6,7 @@
                     xmlns:localControls="clr-namespace:LogGrokCore.Controls"
                     xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
                     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
-                    xmlns:filterPopup="clr-namespace:LogGrokCore.Controls.FilterPopup"
+                    xmlns:listControls="clr-namespace:LogGrokCore.Controls.ListControls"
                     mc:Ignorable="d">
 
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
@@ -33,10 +33,10 @@
         </Style.Triggers>
     </Style>
     <ContextMenu
-        d:DataContext="{d:DesignInstance Type={x:Type localControls:ListView}, IsDesignTimeCreatable=False}"
+        d:DataContext="{d:DesignInstance Type={x:Type listControls:ListView}, IsDesignTimeCreatable=False}"
         x:Key="LogViewContextMenu"
         DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
-        <MenuItem Command="Copy"
+        <MenuItem Command="logGrokCore:RoutedCommands.CopyToClipboard"
                   Visibility="{Binding RelativeSource={RelativeSource Self},
                                               Path=IsEnabled,
                                               Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -47,7 +47,6 @@
                     Kind="ContentCopy" />
             </MenuItem.Icon>
         </MenuItem>
-
         <MenuItem Command="logGrokCore:RoutedCommands.SearchText"
                   Header="{Binding PlacementTarget.SelectedText,
                             Converter={localControls:FormatText},
@@ -66,21 +65,6 @@
                     Kind="Magnify" />
             </MenuItem.Icon>
         </MenuItem>
-
-        <MenuItem Command="{Binding CopyToClipboard}"
-                  Visibility="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=ContextMenu},
-                                                Path=Items[0].IsEnabled,
-                                                Converter={StaticResource InverseBoolToVisibilityConverter}}"
-                  Header="{x:Static localControls:CopyCommandProperties.Text}"
-                  InputGestureText="{x:Static localControls:CopyCommandProperties.GestureText}">
-            <MenuItem.Icon>
-                <iconPacks:PackIconMaterial 
-                    VerticalAlignment="Center"
-                    HorizontalAlignment="Center"
-                    Kind="ContentCopy" />
-            </MenuItem.Icon>
-        </MenuItem>
-
         <MenuItem Header="Exclude" Style="{StaticResource FilterContextMenuItem}"
                   DataContext="{Binding DataContext}"
                   d:DataContext="{d:DesignInstance Type={x:Type logGrokCore:LogViewModel}, IsDesignTimeCreatable=False}">

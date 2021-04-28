@@ -1,10 +1,11 @@
-﻿using System.Windows.Input;
+﻿using System.Windows.Controls;
+using System.Windows.Input;
 
-namespace LogGrokCore.Controls
+namespace LogGrokCore.Controls.ListControls
 {
     public class LogListViewItem : BaseLogListViewItem
     {
-        public LogListViewItem(ListView itemsControl) : base(itemsControl)
+        public LogListViewItem(ItemsControl itemsControl) : base(itemsControl)
         {
         }
 

@@ -7,11 +7,13 @@
                     xmlns:localBehaviors="clr-namespace:LogGrokCore.AvalonDock"
                     xmlns:controls="clr-namespace:LogGrokCore.Controls"
                     xmlns:search="clr-namespace:LogGrokCore.Search"
-                    xmlns:virtualizingStackPanel="clr-namespace:LogGrokCore.Controls.VirtualizingStackPanel"
+                    xmlns:listControls="clr-namespace:LogGrokCore.Controls.ListControls"
+                    xmlns:virtualizingStackPanel="clr-namespace:LogGrokCore.Controls.ListControls.VirtualizingStackPanel"
                     mc:Ignorable="d">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="ListViewItemStyle.xaml" />
         <ResourceDictionary Source="ToggleButtonStyle.xaml" />
+        <ResourceDictionary Source="LogViewContextMenu.xaml"/>
         <ResourceDictionary Source="../Resources/Icons.xaml" />
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/themes/light.blue.xaml" />
@@ -33,7 +35,7 @@
                                               Converter={StaticResource BooleanToVisibilityConverter}}"
                          Value="{Binding SearchProgress,
                                         Mode=OneWay}" />
-            <controls:ListView Grid.Row="1"
+            <listControls:ListView Grid.Row="1"
                                FontFamily="Consolas"
                                IsTextSearchEnabled="False"
                                ItemContainerStyle="{StaticResource ItemContainerStyle}"
@@ -43,27 +45,19 @@
                                VirtualizingStackPanel.VirtualizationMode="Recycling"
                                controls:NavigateToLineBehavior.NavigateToLineRequest=
                                "{Binding NavigateToLineRequest}"
-                               controls:NavigateToLineBehavior.ChangeCurrentItem="False">
-                <controls:ListView.ItemsPanel>
+                               controls:NavigateToLineBehavior.ChangeCurrentItem="False"
+                               ContextMenu="{StaticResource LogViewContextMenu}">
+                <listControls:ListView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <virtualizingStackPanel:VirtualizingStackPanel
                             CurrentPosition="{Binding CurrentItemIndex}" 
                             controls:HighlightedTextBlock.HighlightRegex="{Binding HighlightRegex}"
                             Tag="{Binding 
-                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type controls:ListView}}}">
-                            <virtualizingStackPanel:VirtualizingStackPanel.ContextMenu>
-                                <ContextMenu>
-                                    <MenuItem 
-                                        Command="{Binding PlacementTarget.Tag.CopyToClipboard, 
-                                            RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContextMenu}}}"
-                                            Header="{x:Static controls:CopyCommandProperties.Text}"
-                                            InputGestureText="{x:Static controls:CopyCommandProperties.GestureText}"/>
-                                </ContextMenu>
-                            </virtualizingStackPanel:VirtualizingStackPanel.ContextMenu>
+                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}">
                         </virtualizingStackPanel:VirtualizingStackPanel>
                     </ItemsPanelTemplate>
-                </controls:ListView.ItemsPanel>
-            </controls:ListView>
+                </listControls:ListView.ItemsPanel>
+            </listControls:ListView>
         </Grid>
     </DataTemplate>
 
