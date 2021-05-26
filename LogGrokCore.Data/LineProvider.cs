@@ -45,7 +45,7 @@ namespace LogGrokCore.Data
             {
                 var (offset, len) = lineIndices[i];
                 var lineSpan = span.Slice((int)(offset - startOffset), len);
-                values[i] = (start+i, _encoding.GetString(lineSpan).TrimEnd());
+                values[i] = (start+i, _encoding.GetString(lineSpan));
             }
         }
     }
