@@ -20,7 +20,7 @@
     <DataTemplate x:Key="MarkedLineCellTemplate">
         <ContentControl Content="{Binding}" Style="{StaticResource LogGridViewCellStyle}" />
     </DataTemplate>
-    <Style x:Key="MarkedLinesItemContainerStyle" TargetType="{x:Type ListViewItem}"
+    <Style x:Key="MarkedLinesItemContainerStyle" TargetType="{x:Type listControls:BaseLogListViewItem}"
            BasedOn="{StaticResource ItemContainerStyle}">
         <Style.Setters>
             <Setter Property="colors:ColorSettings.ColorSettings" Value="{Binding ColorSettings}" />

@@ -31,8 +31,7 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
         {
             var panel = (VirtualizingStackPanel) d;
             var newValue = (int) e.NewValue;
-            panel._selection.Add(newValue);
-            panel.UpdateSelection();
+            panel.UpdateListViewSelectedItems();
             panel.ListView.Items.MoveCurrentToPosition(newValue);
         }
 
@@ -43,12 +42,11 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
         }
         
         private readonly Selection _selection = new();
+        
         private ScrollContentPresenter? _scrollContentPresenter;
 
         public IEnumerable<int> SelectedIndices => _selection;
 
-        public event Action? SelectionChanged;
-        
         public bool ProcessKeyDown(Key key)
         {
             switch (key)
@@ -92,24 +90,25 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
             
             if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
             {
-                if (item.IsSelected)
-                {
+                if (index != CurrentPosition)
+                    _selection.Add(CurrentPosition);
+                if (_selection.Contains(index))
                     _selection.Remove(index);
-                    item.IsSelected = false;
-                    return true;
-                }
+                else
+                    _selection.Add(index);
             } 
             else  if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
             {
-                _selection.AddRangeToValue(index);
+                _selection.AddRange(Math.Min(CurrentPosition, index), Math.Max(CurrentPosition, index));
+                //_selection.AddRangeToValue(index);
             }
             else
             {
-                _selection.Set(index);
+                _selection.Clear();
             }
 
             CurrentPosition = index;
-
+            UpdateSelection();
             FocusManager.SetFocusedElement(item, item);
             return true;
         }
@@ -145,7 +144,6 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
         {
             _selection.Clear();
             CurrentPosition = index;
-            _selection.Add(index);
             BringIndexIntoView(CurrentPosition);
             UpdateSelection();
         }
@@ -179,6 +177,7 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
 
             if (CurrentPosition == min)
             {
+                _selection.Add(CurrentPosition);
                 CurrentPosition--;
                 _selection.Add(CurrentPosition);
             }
@@ -186,7 +185,7 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
             if (CurrentPosition == max)
             {
                 _selection.Remove(CurrentPosition);
-                CurrentPosition = max;
+                CurrentPosition--;
             }
 
             BringIndexIntoView(CurrentPosition);
@@ -198,18 +197,19 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
             if (CurrentPosition >= Items.Count - 1 || 
                 _selection.Bounds is not {min: var min, max: var max}) return;
 
-            if (CurrentPosition == max)
+            if (CurrentPosition >= max)
             {
+                _selection.Add(CurrentPosition);
                 CurrentPosition++;
                 _selection.Add(CurrentPosition);
             }
 
-            if (CurrentPosition == min)
+            if (CurrentPosition <= min)
             {
                 _selection.Remove(CurrentPosition);
                 CurrentPosition = min;
             }
-            
+
             BringIndexIntoViewWhileNavigatingDown(CurrentPosition);
             UpdateSelection();
         }

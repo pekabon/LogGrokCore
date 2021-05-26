@@ -17,17 +17,25 @@ namespace LogGrokCore.Controls
             Changed?.Invoke();
         }
 
-        public void AddRangeToValue(int selectedValue)
+        public void AddRange(int from, int to)
+        {
+            foreach (var index in Enumerable.Range(from, to - from))
+            {
+                Add(index);
+            }   
+        }
+
+        public void AddRangeToValue(int indexSelectTo)
         {
             if (Bounds is not {min: var min, max: var max})
             {
-                Add(selectedValue);
+                Add(indexSelectTo);
             }
             else
             {
-                var valueFrom = selectedValue > max ? max : min;
-                for (var index = Math.Min(valueFrom, selectedValue);
-                    index <= Math.Max(valueFrom, selectedValue);
+                var valueFrom = indexSelectTo > max ? max : min;
+                for (var index = Math.Min(valueFrom, indexSelectTo);
+                    index <= Math.Max(valueFrom, indexSelectTo);
                     index++)
                 {
                     Add(index);

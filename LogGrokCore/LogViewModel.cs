@@ -76,7 +76,10 @@ namespace LogGrokCore
                 () => _filterSettings.HaveExclusions);
 
             CopySelectedItemsToClipboardCommand = new DelegateCommand(CopySelectedItemsToClipboard, 
-                () => SelectedItems?.Cast<object>().Any() ?? false); 
+                () => SelectedItems?.Cast<object>().Any() ?? false);
+
+            ToggleMarkCommand = new DelegateCommand(ToggleMark,
+                () => Lines != null && CurrentItemIndex > 0);
             
             _viewFactory = viewFactory;
             UpdateDocumentWhileLoading();
@@ -137,6 +140,8 @@ namespace LogGrokCore
         public ICommand ExcludeAllButCommand { get; }
         
         public ICommand ClearExclusionsCommand { get; }
+
+        public ICommand ToggleMarkCommand { get; }
 
         public IEnumerable? SelectedItems
         {
@@ -215,6 +220,17 @@ namespace LogGrokCore
         public void NavigateTo(in int logLineNumber)
         {
             NavigateToLineRequest.Raise(_getIndexByValue(logLineNumber) + _headerCollection.Count);
+        }
+
+        private void ToggleMark()
+        {
+            var currentItem = Lines?[CurrentItemIndex];
+            if (currentItem is not BaseLogLineViewModel lineViewModel) return;
+            lineViewModel.IsMarked = !lineViewModel.IsMarked;
+            if (CurrentItemIndex < Lines?.Count - 1)
+            {
+                CurrentItemIndex++;
+            }
         }
     }
 }

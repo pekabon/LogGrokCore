@@ -42,8 +42,15 @@
                                     localControls:NavigateToLineBehavior.NavigateToLineRequest=
                                         "{Binding NavigateToLineRequest}"
                                     localControls:NavigateToLineBehavior.ChangeCurrentItem="True"
+                                    localControls:RoutedCommandBehavior.RoutedCommandToCommandBinding=
+                                        "{localControls:RoutedCommandToCommandBinding
+                                            RoutedCommand={x:Static local:RoutedCommands.ToggleMark},
+                                            Command={Binding ToggleMarkCommand}}"
                                     x:Name="ItemsListView">
-                
+                <ListView.InputBindings>
+                    <KeyBinding Key="Space"
+                                Command="{x:Static local:RoutedCommands.ToggleMark}"/>
+                </ListView.InputBindings>
                 <ListView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <virtualizingStackPanel1:VirtualizingStackPanel

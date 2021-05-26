@@ -3,7 +3,8 @@
                     xmlns:logGrokCore="clr-namespace:LogGrokCore"
                     xmlns:controls="clr-namespace:LogGrokCore.Controls"
                     xmlns:markedLines="clr-namespace:LogGrokCore.MarkedLines"
-                    xmlns:gridView="clr-namespace:LogGrokCore.Controls.GridView">
+                    xmlns:gridView="clr-namespace:LogGrokCore.Controls.GridView"
+                    xmlns:listControls="clr-namespace:LogGrokCore.Controls.ListControls">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/themes/light.blue.xaml" />
@@ -38,7 +39,7 @@
         </Grid>
     </ControlTemplate>
 
-    <Style x:Key="ItemContainerStyle" TargetType="{x:Type ListViewItem}">
+    <Style x:Key="ItemContainerStyle" TargetType="{x:Type listControls:BaseLogListViewItem}">
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="UseLayoutRounding" Value="True" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -63,6 +64,11 @@
                 <Setter Property="Background" Value="{StaticResource MahApps.Brushes.Accent3}" />
                 <Setter Property="BorderBrush" Value="{StaticResource MahApps.Brushes.Accent2}" />
             </Trigger>
+            <Trigger Property="IsCurrentItem" Value="True">
+                <!-- <Setter Property="Background" Value="{StaticResource MahApps.Brushes.Accent2}" /> -->
+                <Setter Property="BorderBrush" Value="Black" />
+            </Trigger>
+
             <MultiTrigger>
                 <MultiTrigger.Conditions>
                     <Condition Property="IsMouseOver" Value="True" />

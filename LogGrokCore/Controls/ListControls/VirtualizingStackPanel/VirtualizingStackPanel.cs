@@ -47,11 +47,15 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
 
             };
 
-            _selection.Changed += () =>
-            {
-                ListView.UpdateReadonlySelectedItems(_selection);
-                SelectionChanged?.Invoke();
-            };
+            _selection.Changed += UpdateListViewSelectedItems;
+        }
+
+        private void UpdateListViewSelectedItems()
+        {
+            ListView.UpdateReadonlySelectedItems(
+                (CurrentPosition > 0 && CurrentPosition < Items.Count 
+                    ? CurrentPosition.Yield() : Enumerable.Empty<int>())
+                .Concat(_selection));
         }
 
         protected override Size MeasureOverride(Size availableSize)
