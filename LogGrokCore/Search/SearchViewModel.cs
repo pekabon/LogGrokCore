@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Windows.Input;
@@ -8,7 +9,7 @@ using System.Windows.Threading;
 namespace LogGrokCore.Search
 {
     // ReSharper disable once ClassNeverInstantiated.Global
-    public class SearchViewModel : ViewModelBase
+    public class SearchViewModel : ViewModelBase, IDataErrorInfo
     {
         private readonly Func<SearchPattern, SearchDocumentViewModel> _searchDocumentViewModelFactory;
         private string _textToSearch = string.Empty;
@@ -18,6 +19,7 @@ namespace LogGrokCore.Search
         private DispatcherTimer? _searchPatternThrottleTimer;
         private SearchPattern _searchPattern = new(string.Empty, false, false);
         private SearchDocumentViewModel? _currentDocument;
+        
         public SearchViewModel(Func<SearchPattern, SearchDocumentViewModel> searchDocumentViewModelFactory)
         {
             _searchDocumentViewModelFactory =
@@ -83,7 +85,11 @@ namespace LogGrokCore.Search
         public bool UseRegex
         {
             get => _useRegex;
-            set => CommitSearchPattern(ref _useRegex, value, TimeSpan.Zero);
+            set
+            {
+                CommitSearchPattern(ref _useRegex, value, TimeSpan.Zero);
+                InvokePropertyChanged(nameof(TextToSearch));
+            }
         }
 
         public bool IsFilterEnabled
@@ -157,7 +163,11 @@ namespace LogGrokCore.Search
 
         private void CommitSearchPatternImmediately(string searchText, in bool isCaseSensitive, in bool useRegex)
         {
-            _searchPattern = new SearchPattern(searchText, isCaseSensitive, useRegex);
+            var newSearchPattern = new SearchPattern(searchText, isCaseSensitive, useRegex);
+            if (!newSearchPattern.IsValid)
+                return;
+            
+            _searchPattern = newSearchPattern;
             CurrentSearchChanged?.Invoke(_searchPattern.GetRegex(RegexOptions.None));
 
             InvokePropertyChanged(nameof(IsFilterEnabled));
@@ -180,12 +190,22 @@ namespace LogGrokCore.Search
             }
             else
             {
-                var newDocument = _searchDocumentViewModelFactory(_searchPattern);;
+                var newDocument = _searchDocumentViewModelFactory(_searchPattern);
                 Documents.Add(newDocument);
                 CurrentDocument = newDocument;
             }
         }
 
         public ObservableCollection<SearchDocumentViewModel> Documents { get; }
+
+        public string Error => string.Empty;
+
+        public string this[string columnName] =>
+            columnName switch
+            {
+                nameof(TextToSearch) =>
+                    new SearchPattern(TextToSearch, IsCaseSensitive, UseRegex).RegexParseError,
+                _ => string.Empty
+            };
     }
 }
