@@ -13,7 +13,7 @@ namespace LogGrokCore.MarkedLines
         {
             Document = document;
     
-            Text = text;
+            Text = text.TrimEnd();
             ColorSettings = document.ColorSettings;
         }
 
