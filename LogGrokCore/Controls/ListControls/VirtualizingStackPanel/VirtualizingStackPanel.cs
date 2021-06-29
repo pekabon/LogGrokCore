@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -176,7 +177,7 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
             return (newItems, oldItems.ToList());
         }
 
-        private  ItemCollection Items => ItemsControl.GetItemsOwner(this).Items;
+        private IList Items => ItemsControl.GetItemsOwner(this)?.Items ?? (IList)new ArrayList();
 
         private void InsertAndMeasureItem(ListViewItem item, int itemIndex, bool isNewElement)
         {
@@ -200,7 +201,7 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
 
             if (isNewElement)
             {
-                ListView.PrepareItemContainer(item, Items[itemIndex]);
+                ListView.PrepareItemContainer(item, Items[itemIndex]!);
                 UpdateItem(item);
             }
             else
