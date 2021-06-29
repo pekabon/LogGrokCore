@@ -21,9 +21,9 @@ namespace LogGrokCore
         public string GetValue(int index)
         {
             var lineMeta = _parseResult.Get().ParsedLineComponents;
-            return _sourceString.Substring(lineMeta.ComponentStart(index),
-                    lineMeta.ComponentLength(index))
-                .TrimEnd('\0').TrimEnd();
+            var text = _sourceString.Substring(lineMeta.ComponentStart(index),
+                lineMeta.ComponentLength(index));
+            return TextOperations.Normalize(text);
         }
 
         public override string ToString()

@@ -168,8 +168,8 @@ namespace LogGrokCore.Controls
                         Brush foreground,
                         TextFormattingMode textFormattingMode,
                         double pixelsPerDip) p) =>
-                    GetFormattedTextUncached(p.value, p.flowDirection, p.fontFamily, p.fontStyle, p.fontWeight,
-                        p.fontStretch, p.fontSize, p.foreground, p.textFormattingMode, p.pixelsPerDip));
+                            GetFormattedTextUncached(p.value, p.flowDirection, p.fontFamily, p.fontStyle, p.fontWeight,
+                            p.fontStretch, p.fontSize, p.foreground, p.textFormattingMode, p.pixelsPerDip));
 
             var parameters = (value, flowDirection, fontFamily, fontStyle, fontWeight,
                 fontStretch, fontSize, foreground, textFormattingMode, pixelsPerDip);
@@ -195,7 +195,19 @@ namespace LogGrokCore.Controls
                 fontSize,
                 foreground,
                 null,
-                textFormattingMode, pixelsPerDip);
+                textFormattingMode, pixelsPerDip)
+            {
+                MaxLineCount = CountLines(0, value)
+            };
+        }
+        
+        private static int CountLines(int from, string str)
+        {
+            if (from >= str.Length) return 1;
+            var indexof = str.IndexOf('\n', from);
+            if (indexof > 0)
+                return 1 + CountLines(indexof + 1, str);
+            return 1;
         }
     }
 }

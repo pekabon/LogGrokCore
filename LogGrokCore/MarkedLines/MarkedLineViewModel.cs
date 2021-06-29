@@ -1,4 +1,5 @@
 ﻿using LogGrokCore.Colors;
+using LogGrokCore.Controls;
 
 namespace LogGrokCore.MarkedLines
 {
@@ -13,7 +14,7 @@ namespace LogGrokCore.MarkedLines
         {
             Document = document;
     
-            Text = text.TrimEnd();
+            Text = TextOperations.Normalize(text);
             ColorSettings = document.ColorSettings;
         }
 
