@@ -28,7 +28,7 @@ namespace LogGrokCore
 
         public override string ToString()
         {
-            return _sourceString;
+            return _sourceString.TrimEnd();
         }
     }
 }
