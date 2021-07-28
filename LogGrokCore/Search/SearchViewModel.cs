@@ -45,8 +45,9 @@ namespace LogGrokCore.Search
             CommitSearchPatternImmediately(TextToSearch, IsCaseSensitive, UseRegex);
         }
 
-        private void CloseDocument(SearchDocumentViewModel  d)
+        private void CloseDocument(SearchDocumentViewModel searchDocumentViewModel)
         {
+            searchDocumentViewModel.Dispose();
             if (Documents.Count != 0) return;
             TextToSearch = string.Empty;
             CurrentDocument = null;
