@@ -16,6 +16,9 @@ namespace LogGrokCore
             "Clear filters", "Clear filters", typeof(UIElement));
 
         public static readonly RoutedUICommand CopyToClipboard;
+        
+        public static readonly RoutedCommand ToggleMarks = new RoutedUICommand(
+            "Mark", "Mark lines", typeof(UIElement));
 
         static RoutedCommands()
         {

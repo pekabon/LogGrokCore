@@ -41,12 +41,25 @@
                                               Path=IsEnabled,
                                               Converter={StaticResource BooleanToVisibilityConverter}}">
             <MenuItem.Icon>
-                <iconPacks:PackIconMaterial 
+                <iconPacks:PackIconMaterial
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
                     Kind="ContentCopy" />
             </MenuItem.Icon>
         </MenuItem>
+        <MenuItem Command="logGrokCore:RoutedCommands.ToggleMarks"
+                  Header="Toggle marks"
+                  Visibility="{Binding RelativeSource={RelativeSource Self},
+                                              Path=IsEnabled,
+                                              Converter={StaticResource BooleanToVisibilityConverter}}">
+            <MenuItem.Icon>
+                <iconPacks:PackIconMaterial
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center" 
+                    Kind="CheckboxMultipleBlankCircle" />
+            </MenuItem.Icon>
+        </MenuItem>
+
         <MenuItem Command="logGrokCore:RoutedCommands.SearchText"
                   Header="{Binding PlacementTarget.SelectedText,
                             Converter={localControls:FormatText},
@@ -59,7 +72,7 @@
                                               Path=IsEnabled,
                                               Converter={StaticResource BooleanToVisibilityConverter}}">
             <MenuItem.Icon>
-                <iconPacks:PackIconMaterial 
+                <iconPacks:PackIconMaterial
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
                     Kind="Magnify" />

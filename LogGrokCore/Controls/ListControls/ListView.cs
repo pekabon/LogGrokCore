@@ -15,8 +15,28 @@ namespace LogGrokCore.Controls.ListControls
         public static readonly DependencyProperty ReadonlySelectedItemsProperty =
             DependencyProperty.Register(nameof(ReadonlySelectedItems), typeof(IEnumerable), typeof(ListView));
 
-        public ListViewItem GetContainerForItem() => new LogListViewItem(this); 
-        
+        public ListViewItem GetContainerForItem() => new LogListViewItem(this);
+
+        public ListView()
+        {
+            CommandBindings.Add(new CommandBinding(RoutedCommands.ToggleMarks,
+                (_, args) =>
+                {
+                    var items = GetSelectedIndices().Select(i => Items[i]).OfType<BaseLogLineViewModel>();
+                    foreach (var item in items)
+                    {
+                        item.IsMarked = !item.IsMarked;
+                    }
+
+                    args.Handled = true;
+                },
+                (_, args) =>
+                {
+                    args.CanExecute = GetSelectedIndices().Any();
+                    args.Handled = true;
+                }));
+        }
+
         public void UpdateReadonlySelectedItems(IEnumerable<int> selectedIndices)
         {
             ReadonlySelectedItems =
