@@ -58,12 +58,8 @@ namespace LogGrokCore.Search
             SearchPattern = searchPattern;
         }
         
-        public string Title
-        {
-            get => _title;
-            set => SetAndRaiseIfChanged(ref _title, value);
-        }
-        
+        public string Title => $"{SearchPattern.Pattern} ({Lines?.Count})";
+
         public NavigateToLineRequest NavigateToLineRequest { get; } = new();
 
         public bool IsIndeterminateProgress
@@ -106,8 +102,8 @@ namespace LogGrokCore.Search
             {
                 if (_searchPattern.Equals(value)) return;
                 _searchPattern = value;
-                Title = _searchPattern.Pattern;
                 HighlightRegex = _searchPattern.GetRegex(RegexOptions.None);
+                InvokePropertyChanged(nameof(Title));
                 StartSearch();
             }
         }
@@ -201,8 +197,11 @@ namespace LogGrokCore.Search
             IsSearching = true;
             while (!progress.IsFinished)
             {
+                var count = Lines?.Count;
                 Lines?.UpdateCount();
-
+                if (count != Lines?.Count)
+                    InvokePropertyChanged(nameof(Title));
+                
                 IsIndeterminateProgress = false;
                 SearchProgress = progress.Value * 100.0;
 
