@@ -28,7 +28,8 @@ namespace LogGrokCore
                         Title=""Marked lines"" 
                         IsSelected=""True"" 
                         ContentId=""###MarkedLinesContentId"" 
-                        CanClose=""False"" />
+                        CanClose=""False"" 
+                        CanHide=""False""/>
                     </LayoutAnchorablePane>
                     </RootPanel>
                     <TopSide />
@@ -46,12 +47,12 @@ namespace LogGrokCore
         {
             DataContext = mainWindowViewModel;
             Closing += SaveLayout;
-            Loaded += LoadLayoout;
+            Loaded += LoadLayout;
 
             InitializeComponent();
         }
 
-        private void LoadLayoout(object sender, RoutedEventArgs e)
+        private void LoadLayout(object sender, RoutedEventArgs e)
         {
             var settingsFileName = GetSettingsFileName();
             using var reader =
@@ -65,13 +66,25 @@ namespace LogGrokCore
             layoutSerializer.LayoutSerializationCallback += (_, args) =>
             {
                 if (args.Model is LayoutDocument)
+                {
                     args.Cancel = true;
+                    return;
+                }
 
                 var content = contentProvider.GetContent(args.Model.ContentId);
                 if (content != null)
+                {
                     args.Content = new ContentControl { Content = content };
+                }
             };
             layoutSerializer.Deserialize(reader);
+
+            foreach (var layoutAnchorable in DockingManager.Layout.Children
+                .OfType<LayoutAnchorable>()
+                .Where(l => l.IsHidden).ToList())
+            {
+                layoutAnchorable.Show();
+            }
         }
 
         private void SaveLayout(object sender, CancelEventArgs e)
