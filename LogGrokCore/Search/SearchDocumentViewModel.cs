@@ -103,7 +103,6 @@ namespace LogGrokCore.Search
                 if (_searchPattern.Equals(value)) return;
                 _searchPattern = value;
                 HighlightRegex = _searchPattern.GetRegex(RegexOptions.None);
-                InvokePropertyChanged(nameof(Title));
                 StartSearch();
             }
         }
@@ -155,6 +154,7 @@ namespace LogGrokCore.Search
 
             UpdateLines();
             UpdateDocumentWhileLoading(progress, newCancellationTokenSource.Token);
+            InvokePropertyChanged(nameof(Title));
         }
 
         private GrowingLogLinesCollection GetLineCollection(
@@ -193,31 +193,37 @@ namespace LogGrokCore.Search
         private async void UpdateDocumentWhileLoading(Data.Search.Search.Progress progress,
             CancellationToken cancellationToken)
         {
-            var delay = 10;
-            IsSearching = true;
-            while (!progress.IsFinished)
+            try
             {
-                var count = Lines?.Count;
-                Lines?.UpdateCount();
-                if (count != Lines?.Count)
-                    InvokePropertyChanged(nameof(Title));
-                
-                IsIndeterminateProgress = false;
-                SearchProgress = progress.Value * 100.0;
+                var delay = 10;
+                IsSearching = true;
+                while (!progress.IsFinished)
+                {
+                    var count = Lines?.Count;
+                    Lines?.UpdateCount();
+                    if (count != Lines?.Count)
+                        InvokePropertyChanged(nameof(Title));
 
-                await Task.Delay(delay);
+                    IsIndeterminateProgress = false;
+                    SearchProgress = progress.Value * 100.0;
+
+                    await Task.Delay(delay, cancellationToken);
+                    if (cancellationToken.IsCancellationRequested)
+                        return;
+                    if (delay < 150)
+                        delay *= 2;
+                }
+
                 if (cancellationToken.IsCancellationRequested)
                     return;
-                if (delay < 150)
-                    delay *= 2;
-            }
 
-            if (cancellationToken.IsCancellationRequested)
-                return;
-            
-            Lines?.UpdateCount();
-            SearchProgress = progress.Value * 100.0;
-            IsSearching = false;
+                Lines?.UpdateCount();
+                SearchProgress = progress.Value * 100.0;
+                IsSearching = false;
+            }
+            catch (OperationCanceledException)
+            {
+            }
         }
 
         private void UpdateLines()

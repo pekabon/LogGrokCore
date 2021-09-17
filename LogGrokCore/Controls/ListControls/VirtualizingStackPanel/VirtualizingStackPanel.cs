@@ -23,10 +23,21 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
 
         public VirtualizingStackPanel()
         {
+            IGrowingCollection? currentItems;
+
             ItemCollection GetItems()
             {
                 var itemsOwner = ItemsControl.GetItemsOwner(this);
                 return itemsOwner.Items;
+            }
+
+            void UpdateGrowingCollectionSubscription()
+            {
+                if (ItemsControl.GetItemsOwner(this).ItemsSource is not IGrowingCollection newItems ||
+                    currentItems == newItems) return;
+                
+                currentItems = newItems;
+                currentItems.CollectionGrown += _ => InvalidateMeasure();
             }
 
             Loaded += (_, _) =>
@@ -34,18 +45,18 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
                 // ReSharper disable once UnusedVariable
                 var necessaryChildrenTouch = Children;
                 var itemContainerGenerator = (ItemContainerGenerator) ItemContainerGenerator;
-                itemContainerGenerator.ItemsChanged += (_, _) =>
+                currentItems = ItemsControl.GetItemsOwner(this).ItemsSource as IGrowingCollection;
+                itemContainerGenerator.ItemsChanged += (sender, args) =>
                 {
+                    UpdateGrowingCollectionSubscription();
+
                     if (Items.Count <= 0) return;
-                        
+
                     CurrentPosition = Math.Min(CurrentPosition, Items.Count - 1);
                     GetItems().MoveCurrentToPosition(CurrentPosition);
                 };
 
-                GetItems().CurrentChanged += OnCurrentItemChanged;
-                if (ItemsControl.GetItemsOwner(this).ItemsSource is IGrowingCollection growingCollection)
-                    growingCollection.CollectionGrown += _ => InvalidateMeasure();
-
+                UpdateGrowingCollectionSubscription();
             };
 
             _selection.Changed += () =>
@@ -334,12 +345,6 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
             _offset = newOffset;
             ScrollOwner?.InvalidateScrollInfo();
             InvalidateMeasure();
-        }
-
-        private void OnCurrentItemChanged(object? sender, EventArgs e)
-        {
-            // TODO
-            // throw new NotImplementedException();
         }
 
         private void ScrollUp(double distance)
