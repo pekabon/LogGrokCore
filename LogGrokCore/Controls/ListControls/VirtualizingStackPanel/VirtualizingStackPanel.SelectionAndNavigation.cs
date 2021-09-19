@@ -7,6 +7,16 @@ using System.Windows.Input;
 
 namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
 {
+    public class ElementClickedEventArgs : RoutedEventArgs
+    {
+        public ElementClickedEventArgs(RoutedEvent routedEvent, object source, int elementIndex) : base(routedEvent, source)
+        {
+            ElementIndex = elementIndex;
+
+        }
+        public int ElementIndex { get; init; }
+    }
+
     public partial class VirtualizingStackPanel
     {
         public static readonly DependencyProperty CurrentPositionProperty = DependencyProperty.Register(
@@ -17,6 +27,16 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
         public static readonly DependencyProperty IsCurrentItemProperty = DependencyProperty.RegisterAttached(
             "IsCurrentItem", typeof(bool), typeof(VirtualizingStackPanel), new PropertyMetadata(default(bool)));
 
+        public static readonly RoutedEvent ElementClickedEvent = 
+            EventManager.RegisterRoutedEvent("ElementClicked", RoutingStrategy.Bubble, 
+                typeof(RoutedEventHandler), typeof(VirtualizingStackPanel));
+        
+        public event RoutedEventHandler ElementClicked
+        {
+            add => AddHandler(ElementClickedEvent, value);
+            remove => RemoveHandler(ElementClickedEvent, value);
+        }
+        
         public static void SetIsCurrentItem(ListBoxItem listViewItem, bool value)
         {
             listViewItem.SetValue(IsCurrentItemProperty, value);
@@ -77,6 +97,21 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
 
             UpdateSelection();
             return true;
+        }
+
+        public bool ProcessPreviewMouseDown(MouseButton changedButton)
+        {
+            var item = GetItemUnderMouse();
+            var suitableVisibleItems = _visibleItems.Where(i => i.Element == item).ToList();
+
+            if (item == null) return false;
+            if (!suitableVisibleItems.Any()) return false;
+
+            var element = suitableVisibleItems.Single();
+            
+            RaiseEvent(new ElementClickedEventArgs(ElementClickedEvent, this, element.Index));
+      
+            return false;
         }
 
         public bool ProcessMouseDown(MouseButton changedButton)

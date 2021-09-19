@@ -4,8 +4,10 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Controls;
+using System.Windows.Input;
 using LogGrokCore.Controls;
 using LogGrokCore.Controls.GridView;
+using LogGrokCore.Controls.ListControls.VirtualizingStackPanel;
 using LogGrokCore.Data;
 using LogGrokCore.Data.Index;
 using LogGrokCore.Data.Search;
@@ -20,7 +22,7 @@ namespace LogGrokCore.Search
         private SearchPattern _searchPattern;
         
         private GrowingLogLinesCollection? _lines;
-        public Action<int>? SelectedIndexChanged;
+        public Action<int>? NavigateToIndexRequested;
         private string _title;
         private  bool _isIndeterminateProgress;
 
@@ -56,8 +58,25 @@ namespace LogGrokCore.Search
             _markedLines = markedLines;
      
             SearchPattern = searchPattern;
+            ElementClickedCommand = new DelegateCommand(
+                param =>
+                {
+                    if (param is not ElementClickedEventArgs args)
+                        return;
+                    var elementIndex = args.ElementIndex;
+
+                    if (_currentItemIndex == elementIndex)                    
+                        RequestNavigation(elementIndex);
+                });
         }
-        
+
+        private void RequestNavigation(int elementIndex)
+        {
+            var lineIndex = (Lines?[elementIndex] as LineViewModel)?.Index;
+            if (lineIndex is { } index)
+                NavigateToIndexRequested?.Invoke(index);
+        }
+
         public string Title => $"{SearchPattern.Pattern} ({Lines?.Count})";
 
         public NavigateToLineRequest NavigateToLineRequest { get; } = new();
@@ -85,8 +104,7 @@ namespace LogGrokCore.Search
             get => _highlightRegex;
             set => SetAndRaiseIfChanged(ref _highlightRegex, value);
         }
-
-        
+       
         public GrowingLogLinesCollection? Lines
         {
             get => _lines;
@@ -114,11 +132,14 @@ namespace LogGrokCore.Search
             {
                 SetAndRaiseIfChanged(ref _currentItemIndex, value < 0 ? null : value);
                 if (_currentItemIndex is not { } currentItemIndex) return;
-                
-                var lineIndex = (Lines?[currentItemIndex] as LineViewModel)?.Index;
-                if (lineIndex is { } index)
-                    SelectedIndexChanged?.Invoke(index);
+                RequestNavigation(currentItemIndex);
             }
+        }
+
+        public ICommand ElementClickedCommand
+        {
+            get;
+            private set;
         }
 
         private void StartSearch()

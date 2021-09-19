@@ -26,7 +26,7 @@ namespace LogGrokCore.Search
                 pattern =>
                 {
                     var newDocument = searchDocumentViewModelFactory(pattern);
-                    newDocument.SelectedIndexChanged += i => CurrentLineChanged?.Invoke(i);
+                    newDocument.NavigateToIndexRequested += i => CurrentLineChanged?.Invoke(i);
                     return newDocument;
                 };
                 

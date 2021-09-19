@@ -9,6 +9,7 @@
                     xmlns:search="clr-namespace:LogGrokCore.Search"
                     xmlns:listControls="clr-namespace:LogGrokCore.Controls.ListControls"
                     xmlns:virtualizingStackPanel="clr-namespace:LogGrokCore.Controls.ListControls.VirtualizingStackPanel"
+                    xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
                     mc:Ignorable="d">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="ListViewItemStyle.xaml" />
@@ -54,6 +55,14 @@
                             controls:HighlightedTextBlock.HighlightRegex="{Binding HighlightRegex}"
                             Tag="{Binding 
                                 RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}">
+                            <b:Interaction.Triggers>
+                                <b:EventTrigger EventName="ElementClicked">
+                                    <b:InvokeCommandAction Command="{Binding ElementClickedCommand}"
+                                                           PassEventArgsToCommand="True">
+                                        
+                                    </b:InvokeCommandAction>
+                                </b:EventTrigger>
+                            </b:Interaction.Triggers>
                         </virtualizingStackPanel:VirtualizingStackPanel>
                     </ItemsPanelTemplate>
                 </listControls:ListView.ItemsPanel>
