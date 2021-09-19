@@ -41,7 +41,8 @@
                 VirtualizingStackPanel.IsVirtualizing="True"
                 VirtualizingStackPanel.VirtualizationMode="Recycling"
                 IsSynchronizedWithCurrentItem="True"
-                ReadonlySelectedItems="{Binding SelectedItems, Mode=OneWayToSource}">
+                ReadonlySelectedItems="{Binding SelectedItems, Mode=OneWayToSource}"
+                listControls:BaseLogListViewItem.OnItemActivatedCommand="{Binding ItemActivatedCommand}">
                 <listControls:MarkedLinesListView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <VirtualizingStackPanel

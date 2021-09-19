@@ -36,7 +36,7 @@ namespace LogGrokCore
             SearchViewModel = searchViewModel;
             ColorSettings = colorSettings;
             
-            SearchViewModel.CurrentLineChanged += lineNumber => LogViewModel.NavigateTo(lineNumber);
+            SearchViewModel.CurrentLineChanged += lineNumber => NavigateTo(lineNumber);
             SearchViewModel.CurrentSearchChanged += regex => LogViewModel.HighlightRegex = regex;
 
             _markedLines = markedLines;
@@ -57,6 +57,11 @@ namespace LogGrokCore
         
         public ICommand OpenContainingFolderCommand { get; }
 
+        public void NavigateTo(int lineNumber)
+        {
+            LogViewModel.NavigateTo(lineNumber);
+        }
+        
         public ObservableCollection<(int number, string text)> MarkedLineViewModels
         {
             get

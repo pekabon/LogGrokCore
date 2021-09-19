@@ -47,7 +47,8 @@
                                controls:NavigateToLineBehavior.NavigateToLineRequest=
                                "{Binding NavigateToLineRequest}"
                                controls:NavigateToLineBehavior.ChangeCurrentItem="False"
-                               ContextMenu="{StaticResource LogViewContextMenu}">
+                               ContextMenu="{StaticResource LogViewContextMenu}"
+                               listControls:BaseLogListViewItem.OnItemActivatedCommand="{Binding ItemActivatedCommand}">
                 <listControls:ListView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <virtualizingStackPanel:VirtualizingStackPanel
@@ -55,14 +56,6 @@
                             controls:HighlightedTextBlock.HighlightRegex="{Binding HighlightRegex}"
                             Tag="{Binding 
                                 RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}">
-                            <b:Interaction.Triggers>
-                                <b:EventTrigger EventName="ElementClicked">
-                                    <b:InvokeCommandAction Command="{Binding ElementClickedCommand}"
-                                                           PassEventArgsToCommand="True">
-                                        
-                                    </b:InvokeCommandAction>
-                                </b:EventTrigger>
-                            </b:Interaction.Triggers>
                         </virtualizingStackPanel:VirtualizingStackPanel>
                     </ItemsPanelTemplate>
                 </listControls:ListView.ItemsPanel>

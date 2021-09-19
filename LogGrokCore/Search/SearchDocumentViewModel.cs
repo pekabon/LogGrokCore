@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using LogGrokCore.Controls;
 using LogGrokCore.Controls.GridView;
+using LogGrokCore.Controls.ListControls;
 using LogGrokCore.Controls.ListControls.VirtualizingStackPanel;
 using LogGrokCore.Data;
 using LogGrokCore.Data.Index;
@@ -58,23 +59,14 @@ namespace LogGrokCore.Search
             _markedLines = markedLines;
      
             SearchPattern = searchPattern;
-            ElementClickedCommand = new DelegateCommand(
+            ItemActivatedCommand = new DelegateCommand(
                 param =>
                 {
-                    if (param is not ElementClickedEventArgs args)
+                    if (param is not BaseLogLineViewModel itemViewModel)
                         return;
-                    var elementIndex = args.ElementIndex;
 
-                    if (_currentItemIndex == elementIndex)                    
-                        RequestNavigation(elementIndex);
+                    NavigateToIndexRequested?.Invoke(itemViewModel.Index);
                 });
-        }
-
-        private void RequestNavigation(int elementIndex)
-        {
-            var lineIndex = (Lines?[elementIndex] as LineViewModel)?.Index;
-            if (lineIndex is { } index)
-                NavigateToIndexRequested?.Invoke(index);
         }
 
         public string Title => $"{SearchPattern.Pattern} ({Lines?.Count})";
@@ -128,15 +120,10 @@ namespace LogGrokCore.Search
         public int? CurrentItemIndex
         {
             get => _currentItemIndex;
-            set
-            {
-                SetAndRaiseIfChanged(ref _currentItemIndex, value < 0 ? null : value);
-                if (_currentItemIndex is not { } currentItemIndex) return;
-                RequestNavigation(currentItemIndex);
-            }
+            set => SetAndRaiseIfChanged(ref _currentItemIndex, value < 0 ? null : value);
         }
 
-        public ICommand ElementClickedCommand
+        public ICommand ItemActivatedCommand
         {
             get;
             private set;

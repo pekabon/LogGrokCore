@@ -89,16 +89,6 @@ namespace LogGrokCore.Controls.ListControls
             base.OnMouseDown(e);
         }
 
-        protected override void OnPreviewMouseDown(MouseButtonEventArgs e)
-        {
-            if (GetPanel()?.ProcessPreviewMouseDown(e.ChangedButton) == true)
-            {
-                e.Handled = true;
-            }
-            
-            base.OnPreviewMouseDown(e);
-        }
-
         private int _previousItemCount;
 
         protected override void OnItemsSourceChanged(IEnumerable? oldValue, IEnumerable? newValue)

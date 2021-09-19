@@ -36,9 +36,15 @@ namespace LogGrokCore
             { 
                 OpenExternalFile(ApplicationSettings.SettingsFileName);
             });
+
+            MarkedLinesViewModel.NavigationRequested += (document, index) =>
+            {
+                CurrentDocument = document;
+                document.NavigateTo(index);
+            };
         }
 
-        private void OpenExternalFile(string fileName)
+        private static void OpenExternalFile(string fileName)
         {
             void StartProcess(string verb)
             {

@@ -1,7 +1,10 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 using System.Windows.Data;
 
 namespace LogGrokCore.MarkedLines
@@ -15,6 +18,8 @@ namespace LogGrokCore.MarkedLines
         public ObservableCollection<MarkedLineViewModel> MarkedLines => _markedLines;
 
         public DelegateCommand CopyLinesCommand { get; }
+
+        public DelegateCommand ItemActivatedCommand { get; }
 
         public bool HaveMarkedLines => _markedLines.Count != 0;
         
@@ -46,6 +51,13 @@ namespace LogGrokCore.MarkedLines
 
                     TextCopy.ClipboardService.SetText(string.Join("\r\n", linesToCopy).Trim('\0'));
                 });
+
+            ItemActivatedCommand = new DelegateCommand(
+                o =>
+                {
+                    if (o is not MarkedLineViewModel item) return;
+                    NavigationRequested?.Invoke(item.Document, item.Index);
+                });
             
             var view = (CollectionView)CollectionViewSource.GetDefaultView(MarkedLines);
             var groupDescription = new PropertyGroupDescription("Document");
@@ -53,6 +65,8 @@ namespace LogGrokCore.MarkedLines
             UpdateLinesCollection();
         }
         
+        public event Action<DocumentViewModel, int>? NavigationRequested;
+
         private void SubscribeToNewDocumentChanges(ObservableCollection<DocumentViewModel> documents)
         {
             var newDocuments = new HashSet<DocumentViewModel>(documents);
