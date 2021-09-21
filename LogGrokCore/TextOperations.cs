@@ -42,5 +42,42 @@ namespace LogGrokCore
 
             return sb.ToString();
         }
+
+        public static int CountLines(string source)
+        {
+            return CountLines(source.AsSpan());
+        }
+
+        public static (string resultString, int linesTrimmed) TrimLines(string source, uint maxLines)
+        {
+            var sourceSpan = source.AsSpan();
+            var toTrimOffset = SkipLines(sourceSpan, maxLines);
+            return (new string(sourceSpan[..toTrimOffset]), CountLines(sourceSpan[toTrimOffset..]));
+        }
+
+        private static int SkipLines(ReadOnlySpan<char> source, uint linesToSkip)
+        {
+            if (linesToSkip == 0) return 0;
+            var offset = 0;
+            var span = source;
+            while (true)
+            {
+                var indexOfLf = span.IndexOf('\n');
+                if (indexOfLf == -1)
+                    return offset + span.Length;
+                
+                offset += indexOfLf + 1;
+                if (linesToSkip == 1) return offset;
+                span = source[(offset)..];
+                linesToSkip -= 1;
+            }
+        }
+
+        private static int CountLines(ReadOnlySpan<char> source)
+        {
+            if (source.IsEmpty) return 0;
+            var indexof = source.IndexOf('\n');
+            return indexof > 0 ? 1 + CountLines(source[(indexof + 1)..]) : 1;
+        }
     }
 }

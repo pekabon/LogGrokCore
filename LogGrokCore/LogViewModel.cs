@@ -182,7 +182,7 @@ namespace LogGrokCore
         private IEnumerable<string> GetComponentsInSelectedLines(int componentIndex)
         {
             var lineViewModels = SelectedItems?.OfType<LineViewModel>() ?? Enumerable.Empty<LineViewModel>();
-            return lineViewModels.Select(line => line[componentIndex]).Distinct();
+            return lineViewModels.Select(line => line[componentIndex].FullText).Distinct();
         }
 
         private async void UpdateDocumentWhileLoading()

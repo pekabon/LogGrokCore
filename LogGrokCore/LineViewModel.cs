@@ -16,14 +16,15 @@ namespace LogGrokCore
             _parseResult = parser.Parse(sourceString);
         }
 
-        public string this[int index] => GetValue(index);
+        public LinePartViewModel this[int index] => GetValue(index);
 
-        public string GetValue(int index)
+        public LinePartViewModel GetValue(int index)
         {
             var lineMeta = _parseResult.Get().ParsedLineComponents;
             var text = _sourceString.Substring(lineMeta.ComponentStart(index),
                 lineMeta.ComponentLength(index));
-            return TextOperations.Normalize(text);
+
+            return new LinePartViewModel(text);
         }
 
         public override string ToString()

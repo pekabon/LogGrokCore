@@ -72,7 +72,7 @@ namespace LogGrokCore.Controls.GridView
                     {
                         Path = 
                             fieldHeader == indexFieldName ? 
-                                new PropertyPath(nameof(LineViewModel.Index)) : 
+                                new PropertyPath(nameof(LineViewModel.IndexViewModel)) : 
                                 new PropertyPath(".[(0)]", Array.IndexOf(_meta.FieldNames, fieldHeader)),
                         Mode = BindingMode.OneWay
                     };

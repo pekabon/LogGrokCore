@@ -6,7 +6,7 @@ namespace LogGrokCore.MarkedLines
     public class MarkedLineViewModel : BaseLogLineViewModel
     {
         public DocumentViewModel Document { get; }
-        public string Text { get; }
+        public LinePartViewModel Text { get; }
         public ColorSettings ColorSettings { get; }
 
         public MarkedLineViewModel(DocumentViewModel document, int lineNumber, string text)
@@ -14,10 +14,10 @@ namespace LogGrokCore.MarkedLines
         {
             Document = document;
     
-            Text = TextOperations.Normalize(text);
+            Text = new LinePartViewModel(text);
             ColorSettings = document.ColorSettings;
         }
 
-        public override string ToString() => Text;
+        public override string ToString() => Text.FullText ?? string.Empty;
     }
 }

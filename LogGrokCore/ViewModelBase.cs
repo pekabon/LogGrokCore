@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -10,6 +11,11 @@ namespace LogGrokCore
         protected void InvokePropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        protected void RaiseAllPropertiesChanged()
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(String.Empty));
         }
 
         protected void SetAndRaiseIfChanged<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)

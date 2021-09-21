@@ -9,12 +9,15 @@ namespace LogGrokCore
         protected BaseLogLineViewModel(int index, Selection markedLines)
         {
             Index = index;
+            IndexViewModel = new LinePartViewModel(Index.ToString());
             _markedLines = markedLines;
             _markedLines.Changed += () => InvokePropertyChanged(nameof(IsMarked));
         }
         
         public int Index { get; }
 
+        public LinePartViewModel IndexViewModel { get; }
+        
         public bool IsMarked
         {
             get => _markedLines.Contains(Index);

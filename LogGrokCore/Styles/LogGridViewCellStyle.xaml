@@ -4,37 +4,121 @@
                     xmlns:controls="clr-namespace:LogGrokCore.Controls"
                     xmlns:selectableTextBlock="clr-namespace:LogGrokCore.Controls.SelectableTextBlock"
                     xmlns:gridView="clr-namespace:LogGrokCore.Controls.GridView"
-                    xmlns:listControls="clr-namespace:LogGrokCore.Controls.ListControls">
+                    xmlns:listControls="clr-namespace:LogGrokCore.Controls.ListControls"
+                    xmlns:logGrokCore="clr-namespace:LogGrokCore">
     
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="LogViewContextMenu.xaml"/>
-        
     </ResourceDictionary.MergedDictionaries>    
     
-    <DataTemplate x:Key="NormalTemplate" DataType="{x:Type system:String}">
-        <controls:HighlightedTextBlock Text="{Binding}"/>
+    <DataTemplate x:Key="ShowLinesTemplate" DataType="logGrokCore:LinePartViewModel">
+        <ContentControl Content="{Binding}">
+            <ContentControl.Style>
+                <Style TargetType="{x:Type ContentControl}">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsTrimmedLinesHidden}" Value="True">
+                        <Setter Property="ContentTemplate">
+                            <Setter.Value>
+                            <DataTemplate DataType="logGrokCore:LinePartViewModel">
+                                <TextBlock Foreground="Gray" FontStyle="Italic">
+                                    <Hyperlink Command="{Binding ExpandCommand}"><Run Text="Expand and show "/><Run Text="{Binding TrimmedLinesCount, Mode=OneWay}"/><Run Text=" hidden lines >>>"/></Hyperlink>
+                                </TextBlock>
+                            </DataTemplate>
+                                </Setter.Value>
+                        </Setter>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsTrimmedLinesHidden}" Value="False">
+                        <Setter Property="ContentTemplate">
+                            <Setter.Value>
+                            <DataTemplate DataType="logGrokCore:LinePartViewModel">
+                                <TextBlock Foreground="Gray" FontStyle="Italic">
+                                    <Hyperlink Command="{Binding CollapseCommand}"><Run Text="&lt;&lt;&lt; Collapse this line"/></Hyperlink>
+                                </TextBlock>
+                            </DataTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </DataTrigger>
+                </Style.Triggers>
+                </Style>
+            </ContentControl.Style>
+            
+        </ContentControl>
+
     </DataTemplate>
     
-    <DataTemplate x:Key="SelectableTemplate" DataType="{x:Type system:String}">
+    <DataTemplate x:Key="NormalTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
+        <controls:HighlightedTextBlock Text="{Binding Text, Mode=OneWay}"/>
+    </DataTemplate>
+    
+    <DataTemplate x:Key="SelectableTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
         <selectableTextBlock:SelectableTextBlock
-            Text="{Binding Mode=OneWay}"
+            Text="{Binding Text, Mode=OneWay}"
             Tag="{Binding
                                 RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"
             ContextMenu="{StaticResource LogViewContextMenu}"/>
     </DataTemplate>
     
+    <DataTemplate x:Key="NormalWithTrimmedTextTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
+        <StackPanel>
+            <controls:HighlightedTextBlock Text="{Binding Text, Mode=OneWay}"/>
+            <ContentPresenter ContentTemplate="{StaticResource ShowLinesTemplate}"/>
+        </StackPanel>
+    </DataTemplate>
+    
+    <DataTemplate x:Key="SelectableWithTrimmedTextTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
+        <StackPanel>
+            <selectableTextBlock:SelectableTextBlock
+                Text="{Binding Text, Mode=OneWay}"
+                Tag="{Binding
+                                    RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"
+                ContextMenu="{StaticResource LogViewContextMenu}"/>
+            <ContentPresenter ContentTemplate="{StaticResource ShowLinesTemplate}"/>
+        </StackPanel>
+    </DataTemplate>
+    
     <Style TargetType="{x:Type ContentControl}" x:Key="LogGridViewCellStyle">
         <Style.Triggers>
-            <DataTrigger Value="False"
-                         Binding="{Binding IsCurrentItem,
-                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:BaseLogListViewItem}}}">
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsCurrentItem,
+                                    RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:BaseLogListViewItem}}}"
+                               Value="False"/>
+                    <Condition Binding="{Binding Content.IsCollapsible,
+                                    RelativeSource={RelativeSource Self}}" Value="False"/>
+                </MultiDataTrigger.Conditions>
                 <Setter Property="ContentTemplate" Value="{StaticResource NormalTemplate}"/>
-            </DataTrigger>
-            <DataTrigger Value="True"
-                         Binding="{Binding IsCurrentItem,
-                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:BaseLogListViewItem}}}">
+            </MultiDataTrigger>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsCurrentItem,
+                                    RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:BaseLogListViewItem}}}"
+                               Value="True"/>
+                    
+                    <Condition Binding="{Binding Content.IsCollapsible,
+                                    RelativeSource={RelativeSource Self}}" Value="False"/>
+                </MultiDataTrigger.Conditions>
                 <Setter Property="ContentTemplate" Value="{StaticResource SelectableTemplate}"/>
-            </DataTrigger>
+            </MultiDataTrigger>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsCurrentItem,
+                                    RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:BaseLogListViewItem}}}"
+                               Value="False"/>
+                    <Condition Binding="{Binding Content.IsCollapsible,
+                                    RelativeSource={RelativeSource Self}}" Value="True"/>
+                </MultiDataTrigger.Conditions>
+                <Setter Property="ContentTemplate" Value="{StaticResource NormalWithTrimmedTextTemplate}"/>
+            </MultiDataTrigger>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsCurrentItem,
+                                    RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:BaseLogListViewItem}}}"
+                               Value="True"/>
+                    <Condition Binding="{Binding Content.IsCollapsible,
+                                    RelativeSource={RelativeSource Self}}" Value="True"/>
+                </MultiDataTrigger.Conditions>
+                <Setter Property="ContentTemplate" Value="{StaticResource SelectableWithTrimmedTextTemplate}"/>
+            </MultiDataTrigger>
         </Style.Triggers>
     </Style>
     <Style TargetType="{x:Type gridView:LogGridViewCell}" BasedOn="{StaticResource LogGridViewCellStyle}"/>

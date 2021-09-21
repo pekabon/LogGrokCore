@@ -188,7 +188,7 @@ namespace LogGrokCore.Controls
             TextFormattingMode textFormattingMode,
             double pixelsPerDip)
         {
-            return new(value,
+            return new FormattedText(value,
                 CultureInfo.CurrentUICulture,
                 flowDirection,
                 new Typeface(fontFamily, fontStyle, fontWeight, fontStretch),
