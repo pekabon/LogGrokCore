@@ -23,7 +23,7 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
 
         public VirtualizingStackPanel()
         {
-            IGrowingCollection? currentItems;
+            IGrowingCollection? currentItems = null;
 
             ItemCollection GetItems()
             {
@@ -45,7 +45,6 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
                 // ReSharper disable once UnusedVariable
                 var necessaryChildrenTouch = Children;
                 var itemContainerGenerator = (ItemContainerGenerator) ItemContainerGenerator;
-                currentItems = ItemsControl.GetItemsOwner(this).ItemsSource as IGrowingCollection;
                 itemContainerGenerator.ItemsChanged += (sender, args) =>
                 {
                     UpdateGrowingCollectionSubscription();
