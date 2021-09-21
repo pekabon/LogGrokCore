@@ -87,7 +87,7 @@ namespace LogGrokCore
             }
         }
 
-        private void SaveLayout(object sender, CancelEventArgs e)
+        private void SaveLayout(object? sender, CancelEventArgs e)
         {
             var fileName = GetSettingsFileName();
             var serializer = new XmlLayoutSerializer(DockingManager);
