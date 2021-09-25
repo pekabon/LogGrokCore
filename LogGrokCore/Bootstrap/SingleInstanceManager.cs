@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Threading;
@@ -49,6 +50,7 @@ namespace LogGrokCore.Bootstrap
                     await server.WaitForConnectionAsync(token);
                     using var reader = new StreamReader(server);
                     var message = await reader.ReadToEndAsync();
+                    Trace.TraceInformation($"Another instance started with parameters: {message}");
                     onNextInstanceStarted(message.Split(MessageSeparator));
                     server.Disconnect();                
                 }
@@ -60,8 +62,9 @@ namespace LogGrokCore.Bootstrap
 
         private void TransferArgumentsToFirstInstance(string[] args)
         {
+            Trace.TraceInformation($"Transfer parameters to another instance: {args}");
             using var client = new NamedPipeClientStream(".", PipeName, PipeDirection.Out);
-            client.ConnectAsync();
+            client.Connect();
             using var writer = new StreamWriter(client);
             writer.Write(string.Join(MessageSeparator, args));
         }
