@@ -39,13 +39,12 @@ namespace LogGrokCore.Search
         private readonly LogModelFacade _logModelFacade;
         private SearchLineIndex? _currentSearchLineIndex;
         private readonly Selection _markedLines;
-        private readonly SearchAutocompleteCache _searchAutocompleteCache;
 
         public SearchDocumentViewModel(LogModelFacade logModelFacade,
             FilterSettings filterSettings,
             GridViewFactory viewFactory,
             SearchPattern searchPattern,
-            Selection markedLines, SearchAutocompleteCache searchAutocompleteCache)
+            Selection markedLines)
         {
             
             _viewFactory = viewFactory;
@@ -58,8 +57,6 @@ namespace LogGrokCore.Search
 
             _markedLines = markedLines;
 
-            _searchAutocompleteCache = searchAutocompleteCache;
-     
             SearchPattern = searchPattern;
             ItemActivatedCommand = new DelegateCommand(
                 param =>
@@ -114,7 +111,6 @@ namespace LogGrokCore.Search
             {
                 if (_searchPattern.Equals(value)) return;
                 _searchPattern = value;
-                _searchAutocompleteCache.Add(value.Pattern);
                 HighlightRegex = _searchPattern.GetRegex(RegexOptions.None);
                 StartSearch();
             }

@@ -18,6 +18,11 @@ namespace LogGrokCore.Search
         private bool _useRegex;
 
         private DispatcherTimer? _searchPatternThrottleTimer;
+        private DispatcherTimer? _autocompletionThrottleTimer;
+        
+        private readonly TimeSpan searchPatternCommitThrottleInterval = TimeSpan.FromMilliseconds(500);
+        private readonly TimeSpan AutoCompletionThrottleInterval = TimeSpan.FromSeconds(10);
+
         private SearchPattern _searchPattern = new(string.Empty, false, false);
         private SearchDocumentViewModel? _currentDocument;
         private readonly SearchAutocompleteCache _searchAutocompleteCache;
@@ -79,7 +84,10 @@ namespace LogGrokCore.Search
         public string TextToSearch
         {
             get => _textToSearch;
-            set => CommitSearchPattern(ref _textToSearch, value, TimeSpan.FromMilliseconds(500)); 
+            set
+            {
+                CommitSearchPattern(ref _textToSearch, value, searchPatternCommitThrottleInterval);
+            }
         }
 
         public bool IsCaseSensitive
@@ -107,8 +115,7 @@ namespace LogGrokCore.Search
         {
             get => _searchPattern.IsEmpty;
         }
-
-        
+      
         public ICommand ClearSearchCommand { get; private set; }
 
         public ICommand CloseDocumentCommand { get; private set; }
@@ -145,7 +152,13 @@ namespace LogGrokCore.Search
             if (Equals(field, newValue)) return;
             SetAndRaiseIfChanged(ref field, newValue, propertyName);
             Throttle(ref _searchPatternThrottleTimer, 
-                () => CommitSearchPatternImmediately(TextToSearch, IsCaseSensitive, UseRegex), 
+                () =>
+                {
+                    CommitSearchPatternImmediately(TextToSearch, IsCaseSensitive, UseRegex);
+                    Throttle(ref _autocompletionThrottleTimer, () => _searchAutocompleteCache.Add(TextToSearch),
+                        AutoCompletionThrottleInterval);
+                },
+                
                 timeSpan);
         }
 
