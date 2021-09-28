@@ -9,7 +9,7 @@
                     xmlns:search="clr-namespace:LogGrokCore.Search"
                     xmlns:listControls="clr-namespace:LogGrokCore.Controls.ListControls"
                     xmlns:virtualizingStackPanel="clr-namespace:LogGrokCore.Controls.ListControls.VirtualizingStackPanel"
-                    xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
+                    xmlns:behaviors="clr-namespace:WPFTextBoxAutoComplete;assembly=WPFTextBoxAutoComplete"
                     mc:Ignorable="d">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="ListViewItemStyle.xaml" />
@@ -117,7 +117,9 @@
                      mahapps:TextBoxHelper.ButtonCommand="{Binding ClearSearchCommand,
                                                                                              Mode=OneWay}"
                      mahapps:TextBoxHelper.SelectAllOnFocus="True"
-                     mahapps:TextBoxHelper.Watermark="Search...">
+                     mahapps:TextBoxHelper.Watermark="Search..."
+                     behaviors:AutoCompleteBehavior.AutoCompleteItemsSource="{Binding AutoCompleteList, Mode=OneWay}"
+                     behaviors:AutoCompleteBehavior.AutoCompleteStringComparison="InvariantCultureIgnoreCase">
                 <TextBox.InputBindings>
                     <KeyBinding Key="Escape" Command="{Binding ClearSearchCommand}" />
                 </TextBox.InputBindings>

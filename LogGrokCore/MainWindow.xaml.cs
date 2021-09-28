@@ -1,8 +1,6 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -95,20 +93,9 @@ namespace LogGrokCore
             
             serializer.Serialize(writer);
         }
-
-        private string GetSettingsFileName()
+        private static string GetSettingsFileName()
         {
-            return Path.Combine(EnsureDirectoryExists(), "layout.settings");
-        }
-
-        private static string EnsureDirectoryExists()
-        {
-            var dirName  = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                Path.GetFileNameWithoutExtension(Assembly.GetCallingAssembly().Modules.First().Name),
-                "LayoutSettings");
-            Directory.CreateDirectory(dirName);
-            return dirName;
+            return DataFilePathProvider.GetDataFileFullPath("layout.settings");
         }
     }
 }

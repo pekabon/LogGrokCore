@@ -52,6 +52,7 @@
     <PackageReference Include="Splat.DryIoc" Version="13.1.10" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="5.0.0" />
     <PackageReference Include="TextCopy" Version="4.3.1" />
+    <PackageReference Include="WPFTextBoxAutoComplete" Version="1.0.5" />
   </ItemGroup>
 
 

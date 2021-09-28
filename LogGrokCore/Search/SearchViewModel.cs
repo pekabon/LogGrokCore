@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -19,8 +20,10 @@ namespace LogGrokCore.Search
         private DispatcherTimer? _searchPatternThrottleTimer;
         private SearchPattern _searchPattern = new(string.Empty, false, false);
         private SearchDocumentViewModel? _currentDocument;
-        
-        public SearchViewModel(Func<SearchPattern, SearchDocumentViewModel> searchDocumentViewModelFactory)
+        private readonly SearchAutocompleteCache _searchAutocompleteCache;
+
+        public SearchViewModel(Func<SearchPattern, SearchDocumentViewModel> searchDocumentViewModelFactory,
+            SearchAutocompleteCache searchAutocompleteCache)
         {
             _searchDocumentViewModelFactory =
                 pattern =>
@@ -35,6 +38,8 @@ namespace LogGrokCore.Search
             AddNewSearchCommand = new DelegateCommand(() => AddNewSearch(_searchPattern.Clone()));
             SearchTextCommand = new DelegateCommand(SearchText, text => !string.IsNullOrEmpty(text as string));
             Documents = new ObservableCollection<SearchDocumentViewModel>();
+
+            _searchAutocompleteCache = searchAutocompleteCache;
         }
 
         public DelegateCommand SearchTextCommand { get; set; }
@@ -200,6 +205,8 @@ namespace LogGrokCore.Search
         public ObservableCollection<SearchDocumentViewModel> Documents { get; }
 
         public string Error => string.Empty;
+
+        public IEnumerable<string> AutoCompleteList => _searchAutocompleteCache.Items;
 
         public string this[string columnName] =>
             columnName switch

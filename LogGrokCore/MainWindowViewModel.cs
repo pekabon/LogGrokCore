@@ -4,18 +4,21 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection.Metadata;
 using System.Windows;
 using System.Windows.Input;
 using LogGrokCore.AvalonDock;
 using LogGrokCore.MarkedLines;
+using LogGrokCore.Search;
 using Microsoft.Win32;
 
 namespace LogGrokCore
 {
-    public class MainWindowViewModel : ViewModelBase, IContentProvider
+    public class MainWindowViewModel : ViewModelBase, IContentProvider, IDisposable
     {
         private DocumentViewModel? _currentDocument;
         private readonly ApplicationSettings _applicationSettings;
+        private readonly SearchAutocompleteCache _searchAutocompleteCache;
 
         public ObservableCollection<DocumentViewModel> Documents { get; }
 
@@ -27,9 +30,10 @@ namespace LogGrokCore
             obj=> OpenFiles((IEnumerable<string>)obj), 
             o => o is IEnumerable<string>);
 
-        public MainWindowViewModel(ApplicationSettings applicationSettings)
+        public MainWindowViewModel(ApplicationSettings applicationSettings, SearchAutocompleteCache searchAutocompleteCache)
         {
             _applicationSettings = applicationSettings;
+            _searchAutocompleteCache = searchAutocompleteCache;
             Documents = new ObservableCollection<DocumentViewModel>();
             MarkedLinesViewModel = new MarkedLinesViewModel(Documents);
             OpenSettings = new DelegateCommand(() =>
@@ -137,7 +141,7 @@ namespace LogGrokCore
 
         private DocumentViewModel CreateDocument(string fileName)
         {
-            var container = new DocumentContainer(fileName, _applicationSettings);
+            var container = new DocumentContainer(fileName, _applicationSettings, _searchAutocompleteCache);
             var viewModel = container.GetDocumentViewModel();
             Documents.Add(viewModel);
             Documents.CollectionChanged += (o, e) =>
@@ -154,6 +158,11 @@ namespace LogGrokCore
         public object? GetContent(string contentId)
         {
             return contentId == Constants.MarkedLinesContentId ? MarkedLinesViewModel : null;
+        }
+
+        public void Dispose()
+        {
+            Documents.Clear();
         }
     }
 }

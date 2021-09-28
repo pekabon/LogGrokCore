@@ -26,7 +26,7 @@ namespace LogGrokCore
         }
 
         private readonly Container _container;
-        public DocumentContainer(string fileName, ApplicationSettings applicationSettings)
+        public DocumentContainer(string fileName, ApplicationSettings applicationSettings, SearchAutocompleteCache autocompleteCache)
         {
             _container = new Container(rules =>
                 rules
@@ -36,6 +36,7 @@ namespace LogGrokCore
 
             LoggerRegistrationHelper.Register(_container);
             
+            _container.RegisterInstance(autocompleteCache);
             _container.Register<StringPool>(Reuse.Singleton);
             _container.Register<LogModelFacade>(
                 made: Parameters.Of.Type<ILineParser>(serviceKey: ParserType.Full));
@@ -97,8 +98,9 @@ namespace LogGrokCore
                     var filterSettings = r.Resolve<FilterSettings>();
                     var viewFactory = r.Resolve<GridViewFactory>(GridViewType.NotFilteringGridViewType);
                     var markedLines = r.Resolve<Selection>();
+                    var searchAutocompleteCache = r.Resolve<SearchAutocompleteCache>();
                     return pattern => new SearchDocumentViewModel(logModelFacade, filterSettings, viewFactory, pattern,
-                        markedLines);
+                        markedLines, searchAutocompleteCache);
                 });
             
             // view

@@ -7,6 +7,7 @@ using System.Text;
 using System.Windows;
 using DryIoc;
 using LogGrokCore.Diagnostics;
+using LogGrokCore.Search;
 using Splat.DryIoc;
 
 namespace LogGrokCore.Bootstrap
@@ -61,10 +62,17 @@ namespace LogGrokCore.Bootstrap
             ProcessCommandLine(e.Args.Where(item => item != null));
         }
 
+        protected override void OnExit(ExitEventArgs e)
+        {
+            _container.Resolve<SearchAutocompleteCache>().Save();
+            _container.Dispose();
+        }
+
         private void RegisterDependencies(IRegistrator container)
         {
             container.RegisterDelegate(ApplicationSettings.Load);
             container.Register<MainWindowViewModel>(Reuse.Singleton);
+            container.Register<SearchAutocompleteCache>(Reuse.Singleton);
             container.Register<MainWindow>();
         }
 
