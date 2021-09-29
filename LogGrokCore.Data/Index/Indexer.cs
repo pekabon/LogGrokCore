@@ -160,7 +160,7 @@ namespace LogGrokCore.Data.Index
                 .Select(j => j.ToString()));
 
             Debug.WriteLine($"Start values: {startValues}"); 
-            return CollectionUtlis.MergeSorted(cursors, IsNext);
+            return CollectionUtils.MergeSorted(cursors, IsNext);
         }
     
         public Indexer CreateFilteredIndexer(IAsyncEnumerable<IEnumerable<int>> filterSequence)
@@ -191,7 +191,7 @@ namespace LogGrokCore.Data.Index
                         .Select(value => (kv.Key, value)).GetEnumerator())
                         .Where(c => c.MoveNext());
             
-            var merged = CollectionUtlis.MergeSorted(cursors, (k1, k2) => k2.value == k1.value + 1);
+            var merged = CollectionUtils.MergeSorted(cursors, (k1, k2) => k2.value == k1.value + 1);
             using var sourceSequenceEnumerator = merged.GetEnumerator();
 
             while (sourceSequenceEnumerator.MoveNext())

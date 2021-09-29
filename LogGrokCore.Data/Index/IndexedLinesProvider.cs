@@ -81,7 +81,7 @@ namespace LogGrokCore.Data.Index
                         : 0); 
             });
 
-            return CollectionUtlis.MergeSorted(indices);
+            return CollectionUtils.MergeSorted(indices);
         }
 
         private IEnumerable<int> GetEnumerableFrom(int start)
