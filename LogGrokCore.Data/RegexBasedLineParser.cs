@@ -39,20 +39,21 @@ namespace LogGrokCore.Data
             if (!match.Success)
                 return false;
 
-            var groups = match.Groups;
-
             var index = 0;
             
             var lastComponentStart = 0;
             var lastComponentLength = 0;
 
+            var caps = MatchSurgery.GetCaptures(match);
             foreach (var fieldToStore in _fieldsToStore)
             {
-                var componentLength = groups[fieldToStore + 1].Length;
-
-                if (componentLength != 0)
+                var cap = caps[fieldToStore + 1];
+                if (cap != null)
                 {
-                    lastComponentStart = groups[fieldToStore + 1].Index - beginning;
+                    var componentStartIndex = cap[0];
+                    var componentLength =  cap[1];
+
+                    lastComponentStart = componentStartIndex - beginning;
                     lastComponentLength = componentLength;
                 }
                 else
@@ -60,9 +61,6 @@ namespace LogGrokCore.Data
                     lastComponentStart += lastComponentLength;
                     lastComponentLength = 0;
                 }
-                
-                Debug.Assert(lastComponentStart >= 0);
-                Debug.Assert(componentLength >= 0);
 
                 parsedLineComponents.ComponentStart(index) = lastComponentStart;
                 parsedLineComponents.ComponentLength(index) = lastComponentLength;
