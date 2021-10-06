@@ -8,7 +8,6 @@ namespace LogGrokCore.Data.Virtualization
 {
     public class VirtualList<TSource, T> : IList<T>, IReadOnlyList<T>, IList where T : class 
 	{
-        
         private readonly IItemProvider<TSource> _itemProvider;
 
         public int Count => _itemProvider.Count;
@@ -29,12 +28,7 @@ namespace LogGrokCore.Data.Virtualization
 
         public T this[int index]
         {
-            get
-            {
-                var (pageIndex, page) = QueryPage(index);
-                return page[pageIndex];
-            }
-
+            get => GetValue(index);
             set => throw new NotSupportedException();
         }
 
@@ -85,7 +79,7 @@ namespace LogGrokCore.Data.Virtualization
 
         public void CopyTo(Array array, int index) => throw new NotSupportedException();
 
-        private (int indexOnPage, T[] page) QueryPage(int index) 
+        private T GetValue(int index) 
         {
             var pageIndex = index / PageSize;
             var pageStart = pageIndex * PageSize;
@@ -93,22 +87,22 @@ namespace LogGrokCore.Data.Virtualization
             if (_pageCache.TryGetValue(pageIndex, out var pageWithGeneration))
             {
                 var (page, _) = pageWithGeneration;
-                if (index - pageStart < page.Length) 
-                    return (index - pageStart, page);
+                if (index - pageStart < page.Count) 
+                    return page[index - pageStart];
 
-                var count = Math.Min(PageSize, Count - pageStart) - page.Length;
-                FetchAndConvert(pageStart + page.Length, count, page);
-                return (index - pageStart, page);
+                var count = Math.Min(PageSize, Count - pageStart) - page.Count;
+                FetchAndConvert(pageStart + page.Count, count, page);
+                return page[index - pageStart];
             }
 
-            var tempPage = ArrayPool<T>.Shared.Rent(PageSize);
+            var tempPage = new Page();
 
             FetchAndConvert(pageStart, Math.Min(PageSize, Count - pageStart), tempPage);
             _pageCache[pageIndex] = (tempPage, ++ _pageCounter);
             CleanupCache();
-            return (index - pageStart, tempPage);
+            return tempPage[index - pageStart];
             
-            void FetchAndConvert(int start, int count, T[] pageToAdd)
+            void FetchAndConvert(int start, int count, Page pageToAdd)
             {
                 var arrayPool = ArrayPool<TSource>.Shared;
                 var newLines = arrayPool.Rent(count);
@@ -117,9 +111,8 @@ namespace LogGrokCore.Data.Virtualization
                     _itemProvider.Fetch(start, newLines.AsSpan(0, count));
                     for (var idx = 0; idx < count; idx++)
                     {
-                        var lineIndex = idx;
-                        var sourceString = newLines[lineIndex];
-                        pageToAdd[idx] = _converter(sourceString); 
+                        var sourceString = newLines[idx];
+                        pageToAdd.Add(_converter(sourceString)); 
                     }
                 }
                 finally
@@ -136,14 +129,41 @@ namespace LogGrokCore.Data.Virtualization
                 var oldestKey = _pageCache.OrderBy(pair => pair.Value.Item2).First().Key;
                 var (pageToReturn, _) = _pageCache[oldestKey];
                 _ = _pageCache.Remove(oldestKey);
-                ArrayPool<T>.Shared.Return(pageToReturn);
+                pageToReturn.Dispose();
             }
         }
 
         private const int PageSize = 128;
         private const int MaxCacheSize = 10;
         private readonly Func<TSource, T> _converter;
-        private readonly Dictionary<int, (T[], int)> _pageCache = new();
+        private readonly Dictionary<int, (Page, int genearation)> _pageCache = new();
         private int _pageCounter;
+
+        private class Page : IDisposable
+        {
+            public Page()
+            {
+                _data = ArrayPool<T>.Shared.Rent(PageSize);
+                _count = 0;
+            }
+
+            public void Add(T value)
+            {
+                _data[_count] = value;
+                _count++;
+            }
+
+            public int Count => _count;
+
+            public T this[int index] => _data[index];
+
+            public void Dispose()
+            {
+                ArrayPool<T>.Shared.Return(_data);
+            }
+            
+            private readonly T[] _data;
+            private int _count; 
+        }
     }
 }
