@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Markup;
+using ImTools;
 using LogGrokCore.Data;
 
 namespace LogGrokCore.Controls
@@ -19,25 +20,24 @@ namespace LogGrokCore.Controls
             if (values.Length != 3)
                 return null;
 
-            switch (values[0], values[1], values[2])
+            if (values[2] is not IEnumerable<object> selectedItems || !selectedItems.Any())
+                return null;
+
+            return (values[0], values[1]) switch
             {
-                case (LogMetaInformation meta, ICommand command, IEnumerable<object> selectedItems):
-                    return selectedItems.Any() ? ConvertCore(meta, command, selectedItems) : null;
-                case (ICommand command, LogMetaInformation meta, IEnumerable<object> selectedItems): 
-                    return selectedItems.Any() ? ConvertCore(meta, command, selectedItems) : null;
-                default:
-                    return null;
-            }
+                (LogMetaInformation meta, ICommand command) => ConvertCore(meta, command, selectedItems),
+                (ICommand command, LogMetaInformation meta) => ConvertCore(meta, command, selectedItems),
+                _ => null
+            };
         }
 
-        private object? ConvertCore(LogMetaInformation meta, ICommand command, IEnumerable<object> selectedItems)
+        private static object? ConvertCore(LogMetaInformation meta, ICommand command, IEnumerable<object> selectedItems)
         {
-            var isMultiSelection = selectedItems.Skip(1).Any();
-            if (!isMultiSelection)
-            {
-                if (selectedItems.Single() is LogHeaderViewModel)
-                    return null;
-            }
+            var singleObject = selectedItems.SingleOrDefaultIfMany();
+            if (singleObject is LogHeaderViewModel)
+                return null;
+
+            var isMultiSelection = singleObject == null;
 
             MenuItem CreateMenuItem(string fieldName, int fieldIndex)
             {
@@ -48,8 +48,8 @@ namespace LogGrokCore.Controls
                 }
                 else
                 {
-                    menuItem.DataContext = selectedItems.Single();
-                    _ = menuItem.SetBinding(MenuItem.HeaderProperty, new Binding($"[{fieldIndex}]"));
+                    menuItem.DataContext = singleObject;
+                    _ = menuItem.SetBinding(MenuItem.HeaderProperty, new Binding($"[{fieldIndex}].Text"));
                     menuItem.HeaderStringFormat = $"{fieldName}: {{0}}";
                 }
                 return menuItem;
