@@ -33,6 +33,10 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
             var newValue = (int) e.NewValue;
             panel._selection.Add(newValue);
             panel.UpdateSelection();
+            foreach (var visibleItem in panel._visibleItems)
+            {
+                 SetIsCurrentItem(visibleItem.Element, visibleItem.Index == newValue);
+            }
             panel.ListView.Items.MoveCurrentToPosition(newValue);
         }
 

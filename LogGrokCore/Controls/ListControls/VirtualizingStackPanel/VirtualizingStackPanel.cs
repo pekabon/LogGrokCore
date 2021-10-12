@@ -52,7 +52,11 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
                     if (Items.Count <= 0) return;
 
                     CurrentPosition = Math.Min(CurrentPosition, Items.Count - 1);
-                    GetItems().MoveCurrentToPosition(CurrentPosition);
+                    
+                    foreach (var visibleItem in _visibleItems)
+                    {
+                        SetIsCurrentItem(visibleItem.Element, visibleItem.Index == CurrentPosition);
+                    }
                 };
 
                 UpdateGrowingCollectionSubscription();
@@ -156,10 +160,10 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
             while ((currentOffset == null || currentOffset < heightToBuild) && currentIndex < Items.Count)
             {
                 var index = currentIndex;
-                var currentItem = 
-                    currentVisibleItems.Search(current => 
-                        current.Index == index && current is {Element: ContentControl contentControl} 
-                        && contentControl.Content == Items[index]);
+                var currentItem =
+                    currentVisibleItems.Search(current =>
+                        current.Index == index && current is { Element: ContentControl contentControl }
+                                               && (contentControl.Content?.Equals(Items[index]) ?? false));
 
                 ListViewItem? itemToAdd;
                 
@@ -202,11 +206,7 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
                 itm.Content = context;
                 if (itm.IsSelected) itm.IsSelected = false;
 
-                itm.InvalidateMeasure();
-                foreach (var i in itm.GetVisualChildren<UIElement>())
-                {
-                    i.InvalidateMeasure();
-                }
+                item.Measure(new Size(Double.PositiveInfinity, Double.PositiveInfinity));
             }
 
             if (isNewElement)
@@ -218,8 +218,7 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
             {
                 UpdateItem(item);
             }
-
-            item.Measure(new Size(Double.PositiveInfinity, Double.PositiveInfinity));
+            
         }
 
         private Size GetExtent()

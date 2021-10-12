@@ -27,7 +27,8 @@ namespace LogGrokCore
             _markedLines = markedLines;
         }
 
-        public (GrowingLogLinesCollection lineViewModelsCollection, Func<int, int> getIndexByValue) 
+        public (IReadOnlyList<ItemViewModel> headerCollection, IReadOnlyList<ItemViewModel> linesCollectoin, 
+            Func<int, int> getIndexByValue) 
             GetLogLinesCollection(
                 Indexer indexer, // index: Components -> log line numbers
                 IReadOnlyDictionary<int, IEnumerable<string>> exclusions)
@@ -37,10 +38,7 @@ namespace LogGrokCore
                 new VirtualList<(int index, string str), ItemViewModel>(itemProvider,
                     indexAndString => 
                         new LineViewModel(indexAndString.index, indexAndString.str, _lineParser, _markedLines));
-            return (new GrowingLogLinesCollection(
-                    _headerCollection,
-                    lineCollection),
-                    getIndexByValue);
+            return (_headerCollection,  lineCollection, getIndexByValue);
         }
         
         private (IItemProvider<(int index, string str)> itemProvider, Func<int, int> GetIndexByValue) GetLineProvider(

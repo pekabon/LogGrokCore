@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Linq;
 
 namespace LogGrokCore
 {
@@ -13,21 +14,29 @@ namespace LogGrokCore
 
     public class GrowingLogLinesCollection: IList<ItemViewModel>, IList, INotifyCollectionChanged, INotifyPropertyChanged, IGrowingCollection
     {
-        private readonly IList<ItemViewModel> _sourceCollection;
+        private IReadOnlyList<ItemViewModel> _sourceCollection;
         private int _logLinesCount;
-        private readonly IReadOnlyList<ItemViewModel> _headerCollection;
+        private IReadOnlyList<ItemViewModel> _headerCollection;
         private int _headerCollectionCount;
 
         private IList SourceList => (IList)_sourceCollection;
 
         public GrowingLogLinesCollection(
                 IReadOnlyList<ItemViewModel> headerCollection, 
-                IList<ItemViewModel> sourceCollection)
+                IReadOnlyList<ItemViewModel> sourceCollection)
         {
             _sourceCollection = sourceCollection;
             _headerCollection = headerCollection;
             _logLinesCount = sourceCollection.Count;
             _headerCollectionCount = headerCollection.Count;
+        }
+
+        public void Reset(IReadOnlyList<ItemViewModel> headerCollection,
+            IReadOnlyList<ItemViewModel> sourceCollection)
+        {
+            _sourceCollection = sourceCollection;
+            _headerCollection = headerCollection;
+            UpdateCount();
         }
         
         public void UpdateCount()
@@ -86,7 +95,7 @@ namespace LogGrokCore
 
         public void Clear() =>  throw new NotSupportedException();
 
-        public bool Contains(ItemViewModel item) => _sourceCollection.Contains(item);
+        public bool Contains(ItemViewModel item) => _sourceCollection.Any(i => i == item);
 
         public bool Contains(object? value) => SourceList.Contains(value);
 

@@ -164,7 +164,7 @@ namespace LogGrokCore.Controls.ListControls
 
         private void UpdateIsCurrentProperty()
         {
-            IsCurrentItem = Content == _itemsControl.Items.CurrentItem;
+            IsCurrentItem = Content.Equals(_itemsControl.Items.CurrentItem);
         }
     }
 }

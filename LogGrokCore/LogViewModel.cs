@@ -23,7 +23,6 @@ namespace LogGrokCore
         private bool _isLoading;
         private IEnumerable? _selectedItems;
         private readonly LineViewModelCollectionProvider _lineViewModelCollectionProvider;
-        private GrowingLogLinesCollection? _lines;
         private Regex? _highlightRegex;
         private Func<int, int> _getIndexByValue = x => x;
         private readonly FilterSettings _filterSettings;
@@ -48,13 +47,11 @@ namespace LogGrokCore
             
             _lineViewModelCollectionProvider = lineViewModelCollectionProvider;
             filterSettings.ExclusionsChanged += UpdateFilteredCollection;
-            
-            var lineCollection =
+
+            Lines = new GrowingLogLinesCollection(headerCollection, 
                 new VirtualList<(int index, string str), ItemViewModel>(lineProvider,
-                    (indexAndString) => 
-                        new LineViewModel(indexAndString.index, indexAndString.str, lineParser, markedLines));
-            
-            Lines = new GrowingLogLinesCollection(headerCollection, lineCollection);
+                        (indexAndString) => 
+                            new LineViewModel(indexAndString.index, indexAndString.str, lineParser, markedLines)));
             
             ExcludeCommand = DelegateCommand.Create(
                     (int componentIndex) => {
@@ -101,20 +98,29 @@ namespace LogGrokCore
             TextCopy.ClipboardService.SetText(text.ToString());
         }
 
-        private void UpdateFilteredCollection()
+        private async void UpdateFilteredCollection()
         {
             var currentItemIndex = CurrentItemIndex;
-            var item = Lines?[currentItemIndex];
-            var originalLineIndex = (item as LineViewModel)?.Index; 
+            var item = Lines[currentItemIndex];
+            var originalLineIndex = (item as LineViewModel)?.Index;
 
-            var (lineViewModelCollection, getIndexByValue) = 
-                _lineViewModelCollectionProvider.GetLogLinesCollection(_logModelFacade.Indexer, 
-                    _filterSettings.Exclusions);
+            var exclusionsCopy = _filterSettings.Exclusions.ToDictionary(kv 
+                => kv.Key, kv => kv.Value); 
+            var (headerCollection, linesCollection, getIndexByValue) 
+                = await Task.Factory.StartNew(() => _lineViewModelCollectionProvider.GetLogLinesCollection(
+                    _logModelFacade.Indexer,
+                    _filterSettings.Exclusions));
 
+            var newExclusionsCopy = _filterSettings.Exclusions.ToList();
+            if (!exclusionsCopy.SequenceEqual(newExclusionsCopy))
+            {
+                return;
+            }
+            
             _getIndexByValue = getIndexByValue;
-            Lines = lineViewModelCollection;
+            Lines.Reset(headerCollection, linesCollection);
 
-            if (originalLineIndex is {} index)
+            if (originalLineIndex is { } index)
             {
                 NavigateTo(index);
             }
@@ -173,11 +179,7 @@ namespace LogGrokCore
 
         public NavigateToLineRequest NavigateToLineRequest { get; } = new();
         
-        public GrowingLogLinesCollection? Lines
-        {
-            get => _lines;
-            private set => SetAndRaiseIfChanged(ref _lines, value);
-        }
+        public GrowingLogLinesCollection Lines { get; }
 
         private IEnumerable<string> GetComponentsInSelectedLines(int componentIndex)
         {
@@ -191,13 +193,13 @@ namespace LogGrokCore
             IsLoading = true;
             while (!_logModelFacade.IsLoaded)
             {
-                Lines?.UpdateCount();
+                Lines.UpdateCount();
                 await Task.Delay(delay);
                 if (delay < 500)
                     delay *= 2;
             }
 
-            Lines?.UpdateCount();
+            Lines.UpdateCount();
             IsLoading = false;
         }
 

@@ -22,9 +22,7 @@ namespace LogGrokCore.Search
         private readonly GridViewFactory _viewFactory;
         private SearchPattern _searchPattern;
         
-        private GrowingLogLinesCollection? _lines;
         public Action<int>? NavigateToIndexRequested;
-        private string _title;
         private  bool _isIndeterminateProgress;
 
         private readonly object _cancellationTokenSourceLock = new();
@@ -50,8 +48,7 @@ namespace LogGrokCore.Search
             _viewFactory = viewFactory;
 
             _logModelFacade = logModelFacade;
-            _title = searchPattern.Pattern;
-            
+
             _filterSettings = filterSettings;
             _filterSettings.ExclusionsChanged += UpdateLines;
 
@@ -95,13 +92,10 @@ namespace LogGrokCore.Search
             get => _highlightRegex;
             set => SetAndRaiseIfChanged(ref _highlightRegex, value);
         }
-       
-        public GrowingLogLinesCollection? Lines
-        {
-            get => _lines;
-            private set => SetAndRaiseIfChanged(ref _lines,  value);
-        }
 
+        public GrowingLogLinesCollection Lines { get; } = 
+            new(new List<ItemViewModel>(), new List<ItemViewModel>());
+        
         public ViewBase CustomView => _viewFactory.CreateView();
 
         public SearchPattern SearchPattern
@@ -164,7 +158,7 @@ namespace LogGrokCore.Search
             InvokePropertyChanged(nameof(Title));
         }
 
-        private GrowingLogLinesCollection GetLineCollection(
+        private IReadOnlyList<ItemViewModel> GetLineCollection(
             Indexer searchIndexer,          // components -> searchResultLineNumber
             SearchLineIndex searchLineIndex, // searchResultLineNumber -> originalLogLineNumber mapping
 
@@ -182,21 +176,12 @@ namespace LogGrokCore.Search
                 new ItemProviderMapper<(int originalLogLineNumber, string str)>(
                     filteredOriginalLineNumbersProvider, lineProvider);
 
-            var virtualList = 
-                new VirtualList<(int originalLogLineNumber, string str), ItemViewModel>(
+            return new VirtualList<(int originalLogLineNumber, string str), ItemViewModel>(
                     filteredLineWithOriginalLineNumber, indexAndString =>
                         new LineViewModel(indexAndString.originalLogLineNumber, indexAndString.str, lineParser, 
                             _markedLines));
-
-            for (int i = 0; i < Math.Min(virtualList.Count, 10); i++)
-            {
-                Console.Write(virtualList[i]);
-            }
-
-            return new GrowingLogLinesCollection(new List<ItemViewModel>(), virtualList);
-        }
+        } 
         
-
         private async void UpdateDocumentWhileLoading(Data.Search.Search.Progress progress,
             CancellationToken cancellationToken)
         {
@@ -241,12 +226,14 @@ namespace LogGrokCore.Search
             var currentItemIndex = CurrentItemIndex;
             var originalLineIndex = currentItemIndex switch
             {
-                { } ind => (Lines?[ind] as LineViewModel)?.Index,
+                { } ind => (Lines[ind] as LineViewModel)?.Index,
                 _ => null
             };
 
-            Lines = GetLineCollection(
+            var foundLines = GetLineCollection(
                 _currentSearchIndexer, _currentSearchLineIndex, _filterSettings.Exclusions);
+            
+            Lines.Reset(new List<ItemViewModel>(), foundLines);
 
             if (originalLineIndex is not { } index) return;
             
