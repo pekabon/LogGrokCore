@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -90,7 +91,7 @@ namespace LogGrokCore.Controls.ListControls
         }
 
         private int _previousItemCount;
-
+        private bool _headerAdusted = false;
         protected override void OnItemsSourceChanged(IEnumerable? oldValue, IEnumerable? newValue)
         {
             base.OnItemsSourceChanged(oldValue, newValue);
@@ -100,13 +101,13 @@ namespace LogGrokCore.Controls.ListControls
                 _previousItemCount = 0;
                 return;
             }
-
+            
             if (newValue is IGrowingCollection growingCollection)
             {
+                _headerAdusted = false;
                 growingCollection.CollectionGrown += ScheduleRemeasure;
             }
             
-
             if (oldValue is IGrowingCollection oldCollection)
             {
                 oldCollection.CollectionGrown -= ScheduleRemeasure;
@@ -118,7 +119,7 @@ namespace LogGrokCore.Controls.ListControls
         private void ScheduleRemeasure(int _)
         {
             var itemsCount = Items.Count;
-            if (itemsCount > _previousItemCount) ScheduleResetColumnsWidth();
+            if (!_headerAdusted && itemsCount > _previousItemCount) ScheduleResetColumnsWidth();
             _previousItemCount = itemsCount;
             _panel?.InvalidateMeasure();
         }
@@ -135,16 +136,21 @@ namespace LogGrokCore.Controls.ListControls
 
         private void ScheduleResetColumnsWidth()
         {
+            var panel = GetPanel();
+            if (panel != null) ScheduleResetColumnsWidthCore(panel);
+        }
+
+        private void ScheduleResetColumnsWidthCore(VirtualizingStackPanel.VirtualizingStackPanel panel)
+        {
             double CalculateRemainingSpace(System.Windows.Controls.GridView view)
             {
-                
                 if (double.IsNaN(ActualWidth))
                     Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-                    
-                return ActualWidth - view.Columns
-                                       .Take(view.Columns.Count - 1)
-                                       .Sum(c => c.ActualWidth) 
-                    - SystemParameters.ScrollWidth * 2;
+
+                return Math.Max(panel.VisibleItemsMaxWidth, ActualWidth) - view.Columns
+                                                      .Take(view.Columns.Count - 1)
+                                                      .Sum(c => c.ActualWidth) 
+                                                  - SystemParameters.ScrollWidth * 2;
             }
               
             void UpdateLastColumnWidth(System.Windows.Controls.GridView view)
@@ -168,8 +174,14 @@ namespace LogGrokCore.Controls.ListControls
 
             _ = Dispatcher.BeginInvoke(() =>
             {
-                if (View is System.Windows.Controls.GridView gridView) 
+                if (View is System.Windows.Controls.GridView gridView)
+                {
                     ResetWidth(gridView);
+                    if (GetPanel()?.IsViewportIsCompletelyFilled ?? false)
+                    {
+                        _headerAdusted = true;
+                    }
+                }
                 else
                 {
                     ScheduleResetColumnsWidth();

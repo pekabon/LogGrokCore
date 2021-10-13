@@ -81,12 +81,19 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
 
             var maxWidth = 
                 _visibleItems.Any() ? _visibleItems.Max(item => item.Element.DesiredSize.Width) : 0.0;
+            VisibleItemsMaxWidth = maxWidth;
+
+            var visibleItemsHeight = _visibleItems.Sum(v => v.Height);
+            IsViewportIsCompletelyFilled = visibleItemsHeight >= availableSize.Height;
             
-            return (double.IsPositiveInfinity(availableSize.Height)) ? 
-                new Size(maxWidth, _visibleItems.Sum(v => v.Height)) : 
+            return double.IsPositiveInfinity(availableSize.Height) ? 
+                new Size(maxWidth, visibleItemsHeight) : 
                 new Size(Math.Max(maxWidth, availableSize.Width), availableSize.Height);
         }
-
+        
+        public double VisibleItemsMaxWidth { get; private set; }
+        public bool IsViewportIsCompletelyFilled { get; private set; }
+        
         protected override Size ArrangeOverride(Size finalSize)
         {
             foreach (var (item, _, upperBound, lowerBound) in _visibleItems)
