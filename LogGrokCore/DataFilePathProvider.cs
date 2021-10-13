@@ -16,10 +16,12 @@ namespace LogGrokCore
         {
             var dirName  = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                Path.GetFileNameWithoutExtension(Assembly.GetCallingAssembly().Modules.First().Name),
+                Path.GetFileNameWithoutExtension(DirName),
                 "Data");
             Directory.CreateDirectory(dirName);
             return dirName;
         }
+        
+        private const string DirName ="LogGrok2";
     }
 }
