@@ -1,9 +1,12 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Shell;
 using LogGrokCore.AvalonDock;
 using Xceed.Wpf.AvalonDock.Layout;
 using Xceed.Wpf.AvalonDock.Layout.Serialization;
@@ -43,10 +46,18 @@ namespace LogGrokCore
     {
         public MainWindow(MainWindowViewModel mainWindowViewModel)
         {
+            var operatingSystem = Environment.OSVersion;
+            if (operatingSystem.Version.Build >= 22000) // windows 11 heuristic
+            {
+                Trace.TraceInformation("Windows 11 detected");
+                WindowChrome.SetWindowChrome(this, new WindowChrome() { CaptionHeight = 0 });
+                WindowStyle = WindowStyle.None;
+            }
+            
             DataContext = mainWindowViewModel;
             Closing += SaveLayout;
             Loaded += LoadLayout;
-
+            
             InitializeComponent();
         }
 
