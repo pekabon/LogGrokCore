@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -91,7 +92,7 @@ namespace LogGrokCore.Controls.ListControls
         }
 
         private int _previousItemCount;
-        private bool _headerAdusted = false;
+        private bool _headerAdjusted;
         protected override void OnItemsSourceChanged(IEnumerable? oldValue, IEnumerable? newValue)
         {
             base.OnItemsSourceChanged(oldValue, newValue);
@@ -102,10 +103,12 @@ namespace LogGrokCore.Controls.ListControls
                 return;
             }
             
+           
             if (newValue is IGrowingCollection growingCollection)
             {
-                _headerAdusted = false;
+                _headerAdjusted = false;
                 growingCollection.CollectionGrown += ScheduleRemeasure;
+                ScheduleMandatoryRemeasure();
             }
             
             if (oldValue is IGrowingCollection oldCollection)
@@ -116,10 +119,24 @@ namespace LogGrokCore.Controls.ListControls
             ScheduleRemeasure(0);
         }
 
+        // ad hoc 
+        // TODO redo columns tuning
+        private async void ScheduleMandatoryRemeasure()
+        {
+            for (var i = 0; i< 10 && !_headerAdjusted; i++)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(500));
+                if (Items.Count < 2) continue;
+                
+                ScheduleRemeasure(0);
+                return;
+            }            
+        }
+
         private void ScheduleRemeasure(int _)
         {
             var itemsCount = Items.Count;
-            if (!_headerAdusted && itemsCount > _previousItemCount) ScheduleResetColumnsWidth();
+            if (!_headerAdjusted && itemsCount > _previousItemCount) ScheduleResetColumnsWidth();
             _previousItemCount = itemsCount;
             _panel?.InvalidateMeasure();
         }
@@ -174,12 +191,12 @@ namespace LogGrokCore.Controls.ListControls
 
             _ = Dispatcher.BeginInvoke(() =>
             {
-                if (View is System.Windows.Controls.GridView gridView)
+                if (View is System.Windows.Controls.GridView gridView && Items.Count > 0)
                 {
                     ResetWidth(gridView);
                     if (GetPanel()?.IsViewportIsCompletelyFilled ?? false)
                     {
-                        _headerAdusted = true;
+                        _headerAdjusted = true;
                     }
                 }
                 else
