@@ -74,10 +74,7 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
             UpdateViewPort(availableSize);
             UpdateExtent();
             
-            var count = Items.Count;
-
-            if (count > 0)
-                BuildVisibleItems(availableSize, VerticalOffset);
+            BuildVisibleItems(availableSize, VerticalOffset);
 
             var maxWidth = 
                 _visibleItems.Any() ? _visibleItems.Max(item => item.Element.DesiredSize.Width) : 0.0;
