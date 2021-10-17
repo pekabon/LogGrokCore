@@ -125,7 +125,7 @@ namespace LogGrokCore.Controls.ListControls
         {
             for (var i = 0; i< 10 && !_headerAdjusted; i++)
             {
-                await Task.Delay(TimeSpan.FromMilliseconds(500));
+                await Task.Delay(TimeSpan.FromMilliseconds(200));
                 if (Items.Count < 2) continue;
                 
                 ScheduleRemeasure(0);
@@ -136,8 +136,14 @@ namespace LogGrokCore.Controls.ListControls
         private void ScheduleRemeasure(int _)
         {
             var itemsCount = Items.Count;
-            if (!_headerAdjusted && itemsCount > _previousItemCount) ScheduleResetColumnsWidth();
-            _previousItemCount = itemsCount;
+            var panel = GetPanel();
+            
+            if (!_headerAdjusted && itemsCount > _previousItemCount && panel != null)
+            {
+                ScheduleResetColumnsWidth(panel);
+                _previousItemCount = itemsCount;
+
+            }
             _panel?.InvalidateMeasure();
         }
 
@@ -145,19 +151,15 @@ namespace LogGrokCore.Controls.ListControls
         {
             base.OnItemsChanged(e);
 
-            if (_previousItemCount == 0 && Items.Count > 0)
-                ScheduleResetColumnsWidth();
-            
-            _previousItemCount = Items.Count;            
-        }
-
-        private void ScheduleResetColumnsWidth()
-        {
             var panel = GetPanel();
-            if (panel != null) ScheduleResetColumnsWidthCore(panel);
+            if (_previousItemCount == 0 && Items.Count > 0 && panel != null)
+            {
+                ScheduleResetColumnsWidth(panel);
+                _previousItemCount = Items.Count;            
+            }
         }
-
-        private void ScheduleResetColumnsWidthCore(VirtualizingStackPanel.VirtualizingStackPanel panel)
+        
+        private void ScheduleResetColumnsWidth(VirtualizingStackPanel.VirtualizingStackPanel panel)
         {
             double CalculateRemainingSpace(System.Windows.Controls.GridView view)
             {
@@ -201,7 +203,7 @@ namespace LogGrokCore.Controls.ListControls
                 }
                 else
                 {
-                    ScheduleResetColumnsWidth();
+                    ScheduleResetColumnsWidth(panel);
                 }
             }, DispatcherPriority.ApplicationIdle);
         }
