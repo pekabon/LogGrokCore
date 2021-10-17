@@ -20,8 +20,8 @@ namespace LogGrokCore.Search
         private DispatcherTimer? _searchPatternThrottleTimer;
         private DispatcherTimer? _autocompletionThrottleTimer;
         
-        private readonly TimeSpan searchPatternCommitThrottleInterval = TimeSpan.FromMilliseconds(500);
-        private readonly TimeSpan AutoCompletionThrottleInterval = TimeSpan.FromSeconds(10);
+        private readonly TimeSpan _searchPatternCommitThrottleInterval = TimeSpan.FromMilliseconds(500);
+        private readonly TimeSpan _autoCompletionThrottleInterval = TimeSpan.FromSeconds(2);
 
         private SearchPattern _searchPattern = new(string.Empty, false, false);
         private SearchDocumentViewModel? _currentDocument;
@@ -86,7 +86,7 @@ namespace LogGrokCore.Search
             get => _textToSearch;
             set
             {
-                CommitSearchPattern(ref _textToSearch, value, searchPatternCommitThrottleInterval);
+                CommitSearchPattern(ref _textToSearch, value, _searchPatternCommitThrottleInterval);
             }
         }
 
@@ -156,7 +156,7 @@ namespace LogGrokCore.Search
                 {
                     CommitSearchPatternImmediately(TextToSearch, IsCaseSensitive, UseRegex);
                     Throttle(ref _autocompletionThrottleTimer, () => _searchAutocompleteCache.Add(TextToSearch),
-                        AutoCompletionThrottleInterval);
+                        _autoCompletionThrottleInterval);
                 },
                 
                 timeSpan);
@@ -171,7 +171,7 @@ namespace LogGrokCore.Search
             };
 
             DispatcherTimer? timer = throttleTimer;
-            throttleTimer.Tick += (o, e) =>
+            throttleTimer.Tick += (_, _) =>
             {
                 timer.Stop();
                 timer = null;
