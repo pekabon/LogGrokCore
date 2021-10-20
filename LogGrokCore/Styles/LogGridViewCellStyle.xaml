@@ -32,7 +32,7 @@
                             <Setter.Value>
                             <DataTemplate DataType="logGrokCore:LinePartViewModel">
                                 <TextBlock Foreground="Gray" FontStyle="Italic">
-                                    <Hyperlink Command="{Binding CollapseCommand}"><Run Text="&lt;&lt;&lt; Collapse this line"/></Hyperlink>
+                                    <Hyperlink Command="{Binding CollapseCommand}"><Run Text="&lt;&lt;&lt; Collapse"/></Hyperlink>
                                 </TextBlock>
                             </DataTemplate>
                             </Setter.Value>
