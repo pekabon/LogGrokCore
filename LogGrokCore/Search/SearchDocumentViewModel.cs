@@ -212,6 +212,7 @@ namespace LogGrokCore.Search
                 Lines?.UpdateCount();
                 SearchProgress = progress.Value * 100.0;
                 IsSearching = false;
+                InvokePropertyChanged(nameof(Title));
             }
             catch (OperationCanceledException)
             {
