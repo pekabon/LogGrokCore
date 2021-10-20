@@ -37,7 +37,7 @@ namespace LogGrokCore.Controls.ListControls
             var  text = new StringBuilder();
             foreach (var line in items)
             {
-                _ = text.Append(line);
+                _ = text.Append(line.ToString()?.TrimEnd());
                 _ = text.Append("\r\n");
             }
             _ = text.Replace("\0", string.Empty);
