@@ -81,5 +81,8 @@
       <XamlRuntime>Wpf</XamlRuntime>
     </ApplicationDefinition>
   </ItemGroup>
-
+  <ItemGroup>
+    <None Remove="Fonts\JetBrainsMono-Regular.ttf" />
+    <Resource Include="Fonts\JetBrainsMono-Regular.ttf" />
+  </ItemGroup>
 </Project>

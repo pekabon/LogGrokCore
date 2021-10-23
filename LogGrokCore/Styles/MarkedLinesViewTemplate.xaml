@@ -34,7 +34,6 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <listControls:MarkedLinesListView
-                FontFamily="Consolas"
                 SelectionMode="Extended"
                 Grid.Row="1" ItemsSource="{Binding MarkedLines}"
                 ItemContainerStyle="{StaticResource MarkedLinesItemContainerStyle}"

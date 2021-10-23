@@ -29,7 +29,6 @@
                 Value="{Binding Progress}"
                 Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}" />
             <listControls:ListView Grid.Row="1" ItemsSource="{Binding Lines}"
-                                    FontFamily="Consolas"
                                     SelectionMode="Extended"
                                     ReadonlySelectedItems="{Binding SelectedItems,
                                                             Mode=OneWayToSource}"

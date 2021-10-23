@@ -7,6 +7,7 @@
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/themes/light.blue.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            <FontFamily x:Key="JetBrainsMono">pack://application:,,,/LogGrokCore;component/Fonts/#JetBrains Mono</FontFamily>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

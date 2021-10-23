@@ -37,7 +37,6 @@
                          Value="{Binding SearchProgress,
                                         Mode=OneWay}" />
             <listControls:ListView Grid.Row="1"
-                               FontFamily="Consolas"
                                IsTextSearchEnabled="False"
                                ItemContainerStyle="{StaticResource ItemContainerStyle}"
                                ItemsSource="{Binding Lines}"
