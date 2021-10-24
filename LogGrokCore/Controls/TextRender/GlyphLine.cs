@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using LogGrokCore.Data;
@@ -7,14 +8,29 @@ namespace LogGrokCore.Controls.TextRender
 {
     public class GlyphLine : IDisposable
     {
-        private GlyphRun? _run;
-        public Size Size { get; private set; }
+        private readonly GlyphRun? _run;
+        public Size Size { get; }
+        public double AdvanceHeight { get; }
 
         private readonly PooledList<ushort> _glyphIndices = new();
         private readonly PooledList<double> _advanceWidths = new();
-        
-        public GlyphLine(ReadOnlySpan<char> text, GlyphTypeface typeface, double fontSize)
+        private readonly PooledList<double> _advanceWidthForChar = new();
+
+        public StringRange Text { get; }
+
+        public Rect GetTextBounds(Point startPoint, int firstTextSourceCharacterIndex, int textLength)
         {
+            var height = Size.Height;
+            var start = _advanceWidthForChar.Take(firstTextSourceCharacterIndex).Sum();
+            var width = _advanceWidthForChar.Skip(firstTextSourceCharacterIndex).Take(textLength).Sum();
+
+            return new Rect(start + startPoint.X, startPoint.Y, width, height);
+        }
+
+        public GlyphLine(StringRange text, GlyphTypeface typeface, double fontSize, float pixelsPerDip)
+        {
+            Text = text;
+            var span = text.Span;
             if (text.Length == 0)
             {
                 _run = null;
@@ -31,29 +47,39 @@ namespace LogGrokCore.Controls.TextRender
 
                 ushort glyphIndex;
                 double width;
-                if (text[n] == '\t')
+                if (span[n] == '\t')
                 {
-                    while (indexOfGlyph % 7 != 0)
+                    var advanceWidthForChar = 0.0;
+
+                    var spaceCount = indexOfGlyph % 8 == 0 ? 8 : (8 - indexOfGlyph % 8); 
+                    while (spaceCount > 0)
                     {
                         typeface.CharacterToGlyphMap.TryGetValue(' ', out glyphIndex);
                         _glyphIndices.Add(glyphIndex);
                         width = typeface.AdvanceWidths[glyphIndex] * fontSize;
+                        
                         _advanceWidths.Add(width);
+                        advanceWidthForChar += width;
                         totalWidth += width;
                         indexOfGlyph++;
+                        spaceCount--;
                     }
+
+                    _advanceWidthForChar.Add(advanceWidthForChar);
                     continue;
                 }
-                typeface.CharacterToGlyphMap.TryGetValue(text[n], out glyphIndex);
+                
+                typeface.CharacterToGlyphMap.TryGetValue(span[n], out glyphIndex);
                 _glyphIndices.Add(glyphIndex);
                 width = typeface.AdvanceWidths[glyphIndex] * fontSize;
+                AdvanceHeight = Math.Max(AdvanceHeight, typeface.AdvanceHeights[glyphIndex] * fontSize);
                 _advanceWidths.Add(width);
+                _advanceWidthForChar.Add(width);
                 totalWidth += width;
             }
-
+            
             var height = typeface.Height* fontSize;
             
-            Size = new Size(totalWidth, height);
             _run = new GlyphRun(typeface,
                 bidiLevel: 0,
                 isSideways: false,
@@ -66,7 +92,10 @@ namespace LogGrokCore.Controls.TextRender
                 deviceFontName: null,
                 clusterMap: null,
                 caretStops: null,
-                language: null);
+                language: null, pixelsPerDip:pixelsPerDip);
+            
+            //GlyphRunSurgery.SetDisplayTextFormattingMode(_run);
+            Size = new Size(totalWidth, height);
         }
 
         public void Render(Point position, Brush brush, DrawingContext drawingContext)
@@ -80,6 +109,7 @@ namespace LogGrokCore.Controls.TextRender
         public void Dispose()
         {
             _advanceWidths.Dispose();
+            _advanceWidthForChar.Dispose();
             _glyphIndices.Dispose();
         }
     }

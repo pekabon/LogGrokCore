@@ -7,6 +7,7 @@
                     xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
                     xmlns:listControls="clr-namespace:LogGrokCore.Controls.ListControls"
                     xmlns:virtualizingStackPanel1="clr-namespace:LogGrokCore.Controls.ListControls.VirtualizingStackPanel"
+                    xmlns:textRender="clr-namespace:LogGrokCore.Controls.TextRender"
                     mc:Ignorable="d">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
@@ -48,7 +49,7 @@
                     <ItemsPanelTemplate>
                         <virtualizingStackPanel1:VirtualizingStackPanel
                             CurrentPosition="{Binding CurrentItemIndex}" 
-                            localControls:HighlightedTextBlock.HighlightRegex="{Binding HighlightRegex}"
+                            textRender:FastTextBlock.HighlightRegex="{Binding HighlightRegex}"
                             Tag="{Binding 
                                 RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"
                             ContextMenu="{StaticResource LogViewContextMenu}" />

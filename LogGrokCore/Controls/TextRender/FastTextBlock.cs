@@ -1,21 +1,42 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using LogGrokCore.Data;
 
 namespace LogGrokCore.Controls.TextRender
 {
     public class FastTextBlock : Control
     {
-        private Lazy<GlyphLine[]>? _textLines;
-        private int _lineCount;
-
+        private Lazy<PooledList<GlyphLine>>? _textLines;
         private readonly Lazy<GlyphTypeface> _glyphTypeface;
 
         private static readonly Dictionary<(FontFamily, FontStyle, FontWeight, FontStretch), GlyphTypeface> 
             TypefaceCache = new();
+        
+        public static DependencyProperty HighlightRegex  = DependencyProperty.RegisterAttached(
+            nameof(HighlightRegex),
+            typeof(Regex),
+            typeof(FastTextBlock),
+            new FrameworkPropertyMetadata(null,
+                FrameworkPropertyMetadataOptions.Inherits | FrameworkPropertyMetadataOptions.AffectsRender)
+        );
+
+        public static Regex? GetHighlightRegex(DependencyObject? d)
+        {
+            if (d == null) throw new NullReferenceException(nameof(d));
+            return d.GetValue(HighlightRegex) as Regex;
+        }
+
+        public static void SetHighlightRegex(DependencyObject? d, Regex value)
+        {
+            if (d == null) throw new NullReferenceException(nameof(d));
+            d.SetValue(HighlightRegex, value);
+        }
+        
         public FastTextBlock()
         {
             _glyphTypeface = new Lazy<GlyphTypeface>(CreateGlyphTypeface);
@@ -43,11 +64,11 @@ namespace LogGrokCore.Controls.TextRender
             
             if (_textLines is { IsValueCreated: true })
             {
-                foreach (var textLine in _textLines.Value.AsSpan(0, _lineCount))
+                foreach (var textLine in _textLines.Value)
                 {
                     textLine.Dispose();
                 }
-                ArrayPool<GlyphLine>.Shared.Return(_textLines.Value);
+                _textLines.Value.Dispose();
             }
 
             if (newText == null)
@@ -55,18 +76,17 @@ namespace LogGrokCore.Controls.TextRender
                 _textLines = null;
                 return;
             }
-            
-            var strings = newText.Split(Environment.NewLine);
-            _lineCount = strings.Length;
-            _textLines = new Lazy<GlyphLine[]>(() =>
+
+            _textLines = new Lazy<PooledList<GlyphLine>>(() =>
             {
-                var textLinesArray = ArrayPool<GlyphLine>.Shared.Rent(_lineCount);
-                for (var i = 0; i < strings.Length; i++)
+                var list = new PooledList<GlyphLine>(16);
+                var glyphTypeFace = _glyphTypeface.Value;
+                var pixelsPerDip = (float)VisualTreeHelper.GetDpi(this).PixelsPerDip;
+                foreach (var stringRange in newText.Tokenize())
                 {
-                    textLinesArray[i] = 
-                        new GlyphLine(strings[i], _glyphTypeface.Value, FontSize);
+                    list.Add(new GlyphLine(stringRange, glyphTypeFace, FontSize, pixelsPerDip));
                 }
-                return textLinesArray;
+                return list;
             });
         }
 
@@ -79,13 +99,23 @@ namespace LogGrokCore.Controls.TextRender
         {
             var verticalPosition = 0.0;
             var textLines = _textLines?.Value;
-            if (textLines != null)
+
+            if (textLines == null) return;
+            
+            var drawingGeometries = 
+                GetHighlightGeometries(Text, 
+                    GetHighlightRegex(this));
+                
+            if(drawingGeometries != null)
+                drawingContext.DrawGeometry(Brushes.Moccasin, 
+                    new Pen(Brushes.Moccasin, 0), 
+                    drawingGeometries);
+            
+            var pixelsPerDip = VisualTreeHelper.GetDpi(this).PixelsPerDip;    
+            foreach (var textLine in textLines)
             {
-                foreach (var textLine in textLines.AsSpan(0,_lineCount))
-                {
-                    textLine.Render( new Point(0, verticalPosition), Foreground, drawingContext);
-                    verticalPosition += textLine.Size.Height;
-                }
+                textLine.Render( new Point(0, Math.Round(verticalPosition * pixelsPerDip, MidpointRounding.ToEven) / pixelsPerDip), Foreground, drawingContext);
+                verticalPosition += textLine.AdvanceHeight;
             }
         }
         protected override Size MeasureOverride(Size constraint)
@@ -95,9 +125,9 @@ namespace LogGrokCore.Controls.TextRender
             var height = 0.0;
             var width = 0.0;
             
-            foreach (var textLine in textLines.AsSpan(0, _lineCount))
+            foreach (var textLine in textLines)
             {
-                height += textLine.Size.Height;
+                height += textLine.AdvanceHeight;
                 width = Math.Max(width, textLine.Size.Width);
             }
             
@@ -116,5 +146,48 @@ namespace LogGrokCore.Controls.TextRender
             TypefaceCache[key] = glyphTypeface;
             return glyphTypeface;
         }
+        
+        private Geometry? GetHighlightGeometries(string? text, Regex? regex)
+        {
+            _cachedGetDrawingGeometries ??=
+                Cached.Of<(string? text, Regex? regex), Geometry?>(
+                    value => GetDrawingGeometriesUncached(
+                                            _textLines?.Value, value.regex));
+            return _cachedGetDrawingGeometries((text, regex));
+        }
+
+        private Rect Inflate(Rect rect, double inflateValue)
+        {
+            return new Rect(rect.X - inflateValue, rect.Y - inflateValue, rect.Width + inflateValue * 2,
+                rect.Height + inflateValue * 2);
+        }
+        
+        private Geometry? GetDrawingGeometriesUncached(PooledList<GlyphLine>? textLines, Regex? regex)
+        {
+            if (textLines == null || regex == null || textLines.Count == 0)
+            {
+                return null;
+            }
+
+            var accumulatedGeometry = new GeometryGroup {FillRule = FillRule.Nonzero};
+
+            var y = 0.0;
+            foreach (var textLine in textLines)
+            {
+                var line = textLine.Text.ToString();
+                var matches = regex.Matches(line).ToList();
+                foreach(var match in matches.Where(m => m.Length > 0))
+                {
+                    var rect = textLine.GetTextBounds(new Point(0, y), match.Index, match.Length);
+                    var geometry = new RectangleGeometry(Inflate(rect, 2), 5, 5);
+                    accumulatedGeometry.Children.Add(geometry);
+                }
+                y += textLine.Size.Height;
+            }
+
+            return accumulatedGeometry;
+        }
+        
+        private Func<(string? text, Regex? regex), Geometry?>? _cachedGetDrawingGeometries;
     }
 }

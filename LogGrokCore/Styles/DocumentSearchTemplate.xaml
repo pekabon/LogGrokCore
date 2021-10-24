@@ -10,6 +10,7 @@
                     xmlns:listControls="clr-namespace:LogGrokCore.Controls.ListControls"
                     xmlns:virtualizingStackPanel="clr-namespace:LogGrokCore.Controls.ListControls.VirtualizingStackPanel"
                     xmlns:behaviors="clr-namespace:WPFTextBoxAutoComplete;assembly=WPFTextBoxAutoComplete"
+                    xmlns:textRender="clr-namespace:LogGrokCore.Controls.TextRender"
                     mc:Ignorable="d">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="ListViewItemStyle.xaml" />
@@ -53,7 +54,7 @@
                     <ItemsPanelTemplate>
                         <virtualizingStackPanel:VirtualizingStackPanel
                             CurrentPosition="{Binding CurrentItemIndex}" 
-                            controls:HighlightedTextBlock.HighlightRegex="{Binding HighlightRegex}"
+                            textRender:FastTextBlock.HighlightRegex="{Binding HighlightRegex}"
                             Tag="{Binding 
                                 RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}">
                         </virtualizingStackPanel:VirtualizingStackPanel>

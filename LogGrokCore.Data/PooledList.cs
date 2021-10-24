@@ -8,7 +8,7 @@ namespace LogGrokCore.Data
 {
     public class PooledList<T> : IList<T>, IList, IDisposable 
     {
-        private T?[] _data;
+        private T[] _data;
         private int _count;
         private const int DefaultCapacity = 128;
 
@@ -99,7 +99,7 @@ namespace LogGrokCore.Data
             
         public bool IsFixedSize => false;
 
-        public T? this[int index] 
+        public T this[int index] 
         {
             get => _data[index];
             set => _data[index] = value;
@@ -107,10 +107,10 @@ namespace LogGrokCore.Data
         } 
         public void Dispose()
         {
-            ArrayPool<T?>.Shared.Return(_data);
+            ArrayPool<T>.Shared.Return(_data);
         }
 
-        public IEnumerator<T?> GetEnumerator()
+        public IEnumerator<T> GetEnumerator()
         {
             for (var i = 0; i < _count; i++)
             {

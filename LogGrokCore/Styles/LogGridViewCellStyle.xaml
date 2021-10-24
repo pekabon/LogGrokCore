@@ -61,7 +61,7 @@
     
     <DataTemplate x:Key="NormalWithTrimmedTextTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
         <StackPanel>
-            <controls:HighlightedTextBlock Text="{Binding Text, Mode=OneWay}"/>
+            <textRender:FastTextBlock Text="{Binding Text, Mode=OneWay}"/>
             <ContentPresenter ContentTemplate="{StaticResource ShowLinesTemplate}"/>
         </StackPanel>
     </DataTemplate>
