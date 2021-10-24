@@ -13,7 +13,7 @@ namespace LogGrokCore.Search
             (IsValid, RegexParseError) = GetRegexParseError(useRegex, searchText);
         }
 
-        public static SearchPattern Empty => new(string.Empty, false, false);
+        public static SearchPattern Empty => new(string.Empty, false, true);
 
         public string Pattern { get; }
         public bool IsCaseSensitive { get; }

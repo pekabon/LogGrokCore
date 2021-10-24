@@ -15,7 +15,7 @@ namespace LogGrokCore.Search
         private readonly Func<SearchPattern, SearchDocumentViewModel> _searchDocumentViewModelFactory;
         private string _textToSearch = string.Empty;
         private  bool _isCaseSensitive;
-        private bool _useRegex;
+        private bool _useRegex = true;
 
         private DispatcherTimer? _searchPatternThrottleTimer;
         private DispatcherTimer? _autocompletionThrottleTimer;
