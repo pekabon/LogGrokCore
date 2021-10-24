@@ -4,36 +4,21 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Media.TextFormatting;
 
 namespace LogGrokCore.Controls.TextRender
 {
-    public class SingleThreadedObjectPool<T>
-    {
-        public SingleThreadedObjectPool(Func<T> factory) => _factory = factory;
-
-        public T Get() => _cachedObjects.TryPop(out var obj) ? obj : _factory();
-
-        public void Return(T obj) => _cachedObjects.Push(obj);
-
-        private readonly Stack<T> _cachedObjects = new Stack<T>();
-        private readonly Func<T> _factory;
-    }
-
     public class FastTextBlock : Control
     {
-  
         private Lazy<GlyphLine[]>? _textLines;
         private int _lineCount;
 
         private readonly Lazy<GlyphTypeface> _glyphTypeface;
-        private readonly TextFormatter _formatter = TextFormatter.Create(TextFormattingMode.Display);
 
-        private static Dictionary<(FontFamily, FontStyle, FontWeight, FontStretch), GlyphTypeface> 
-            _typefaceCache = new();
+        private static readonly Dictionary<(FontFamily, FontStyle, FontWeight, FontStretch), GlyphTypeface> 
+            TypefaceCache = new();
         public FastTextBlock()
         {
-            _glyphTypeface = new Lazy<GlyphTypeface>(() => CreateGlyphTypeface());
+            _glyphTypeface = new Lazy<GlyphTypeface>(CreateGlyphTypeface);
         }
 
         private static readonly DependencyProperty TextProperty = DependencyProperty.Register(
@@ -122,13 +107,13 @@ namespace LogGrokCore.Controls.TextRender
         private GlyphTypeface CreateGlyphTypeface()
         {
             var key = (FontFamily, FontStyle, FontWeight, FontStretch);
-            if (_typefaceCache.TryGetValue(key, out var glyphTypeface))
+            if (TypefaceCache.TryGetValue(key, out var glyphTypeface))
                 return glyphTypeface;
             
             var typeface = new Typeface(FontFamily, FontStyle, FontWeight, FontStretch);
             if(!typeface.TryGetGlyphTypeface(out glyphTypeface))
                 throw  new NotSupportedException();
-            _typefaceCache[key] = glyphTypeface;
+            TypefaceCache[key] = glyphTypeface;
             return glyphTypeface;
         }
     }
