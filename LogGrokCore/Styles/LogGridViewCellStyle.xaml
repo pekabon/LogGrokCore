@@ -5,7 +5,8 @@
                     xmlns:selectableTextBlock="clr-namespace:LogGrokCore.Controls.SelectableTextBlock"
                     xmlns:gridView="clr-namespace:LogGrokCore.Controls.GridView"
                     xmlns:listControls="clr-namespace:LogGrokCore.Controls.ListControls"
-                    xmlns:logGrokCore="clr-namespace:LogGrokCore">
+                    xmlns:logGrokCore="clr-namespace:LogGrokCore"
+                    xmlns:textRender="clr-namespace:LogGrokCore.Controls.TextRender">
     
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="LogViewContextMenu.xaml"/>
@@ -47,7 +48,7 @@
     </DataTemplate>
     
     <DataTemplate x:Key="NormalTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
-        <controls:HighlightedTextBlock Text="{Binding Text, Mode=OneWay}"/>
+        <textRender:FastTextBlock Text="{Binding Text, Mode=OneWay}"/>
     </DataTemplate>
     
     <DataTemplate x:Key="SelectableTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">

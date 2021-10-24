@@ -41,6 +41,7 @@
                                     localControls:NavigateToLineBehavior.NavigateToLineRequest=
                                         "{Binding NavigateToLineRequest}"
                                     localControls:NavigateToLineBehavior.ChangeCurrentItem="True"
+                                    FontFamily="{StaticResource JetBrainsMono}"
                                     x:Name="ItemsListView">
                 
                 <ListView.ItemsPanel>

@@ -4,9 +4,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace LogGrokCore.Data.Virtualization
+ namespace LogGrokCore.Data.Virtualization
 {
-    public class VirtualList<TSource, T> : IList<T>, IReadOnlyList<T>, IList where T : class 
+    public class VirtualList<TSource, T> : IList<T>, IReadOnlyList<T>, IList where T : class
 	{
         private readonly IItemProvider<TSource> _itemProvider;
 
@@ -26,7 +26,7 @@ namespace LogGrokCore.Data.Virtualization
             set => throw new NotSupportedException();
         }
 
-        public T this[int index]
+        public T? this[int index]
         {
             get => GetValue(index);
             set => throw new NotSupportedException();
@@ -38,7 +38,7 @@ namespace LogGrokCore.Data.Virtualization
             _converter = converter;
         }
 
-        public IEnumerator<T> GetEnumerator() 
+        public IEnumerator<T?> GetEnumerator() 
 		{
             for(var index = 0; index < Count; index++)
             {
@@ -79,7 +79,7 @@ namespace LogGrokCore.Data.Virtualization
 
         public void CopyTo(Array array, int index) => throw new NotSupportedException();
 
-        private T GetValue(int index) 
+        private T? GetValue(int index) 
         {
             var pageIndex = index / PageSize;
             var pageStart = pageIndex * PageSize;
@@ -95,14 +95,14 @@ namespace LogGrokCore.Data.Virtualization
                 return page[index - pageStart];
             }
 
-            var tempPage = new Page();
+            var tempPage = new PooledList<T>(PageSize);
 
             FetchAndConvert(pageStart, Math.Min(PageSize, Count - pageStart), tempPage);
             _pageCache[pageIndex] = (tempPage, ++ _pageCounter);
             CleanupCache();
             return tempPage[index - pageStart];
             
-            void FetchAndConvert(int start, int count, Page pageToAdd)
+            void FetchAndConvert(int start, int count, PooledList<T> pageToAdd)
             {
                 var arrayPool = ArrayPool<TSource>.Shared;
                 var newLines = arrayPool.Rent(count);
@@ -136,34 +136,7 @@ namespace LogGrokCore.Data.Virtualization
         private const int PageSize = 128;
         private const int MaxCacheSize = 10;
         private readonly Func<TSource, T> _converter;
-        private readonly Dictionary<int, (Page, int genearation)> _pageCache = new();
+        private readonly Dictionary<int, (PooledList<T>, int genearation)> _pageCache = new();
         private int _pageCounter;
-
-        private class Page : IDisposable
-        {
-            public Page()
-            {
-                _data = ArrayPool<T>.Shared.Rent(PageSize);
-                _count = 0;
-            }
-
-            public void Add(T value)
-            {
-                _data[_count] = value;
-                _count++;
-            }
-
-            public int Count => _count;
-
-            public T this[int index] => _data[index];
-
-            public void Dispose()
-            {
-                ArrayPool<T>.Shared.Return(_data);
-            }
-            
-            private readonly T[] _data;
-            private int _count; 
-        }
     }
 }

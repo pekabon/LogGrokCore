@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Buffers;
-using System.Globalization;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -8,74 +8,32 @@ using System.Windows.Media.TextFormatting;
 
 namespace LogGrokCore.Controls.TextRender
 {
-    public struct GlyphLine
+    public class SingleThreadedObjectPool<T>
     {
-        private GlyphRun? _run;
+        public SingleThreadedObjectPool(Func<T> factory) => _factory = factory;
 
-        public Size Size { get; }
+        public T Get() => _cachedObjects.TryPop(out var obj) ? obj : _factory();
 
-        public GlyphLine(string text, GlyphTypeface typeface, double fontSize)
-        {
-            if (string.IsNullOrEmpty(text))
-            {
-                _run = null;
-                return;
-            }
-            var glyphIndexes = new ushort[text.Length];
-            var advanceWidths = new double[text.Length];
-            double totalWidth = 0;
-            for (int n = 0; n < text.Length; n++) {
-                ushort glyphIndex;
-                
-                typeface.CharacterToGlyphMap.TryGetValue(text[n], out glyphIndex);
-                glyphIndexes[n] = glyphIndex;
-                var width = typeface.AdvanceWidths[glyphIndex] * fontSize;
-                
-                advanceWidths[n] = width;
-                totalWidth += width;
-            }
+        public void Return(T obj) => _cachedObjects.Push(obj);
 
-            var height = typeface.Height* fontSize;
-            
-            Size = new Size(totalWidth, height);
-            _run = new GlyphRun(typeface,
-                bidiLevel: 0,
-                isSideways: false,
-                renderingEmSize: fontSize,
-                glyphIndices: glyphIndexes,
-                baselineOrigin: new Point(0, Math.Round(typeface.Baseline * fontSize)),
-                advanceWidths: advanceWidths,
-                glyphOffsets: null,
-                characters: null,
-                deviceFontName: null,
-                clusterMap: null,
-                caretStops: null,
-                language: null);
-            
-            
-        }
-
-        public void Render(Point position, Brush brush, DrawingContext drawingContext)
-        {
-            if (_run == null) return; 
-            drawingContext.PushTransform(new TranslateTransform(position.X, position.Y));
-            drawingContext.DrawGlyphRun(brush, _run);
-            drawingContext.Pop();
-        }
+        private readonly Stack<T> _cachedObjects = new Stack<T>();
+        private readonly Func<T> _factory;
     }
 
     public class FastTextBlock : Control
     {
+  
         private Lazy<GlyphLine[]>? _textLines;
         private int _lineCount;
-        private readonly Lazy<Typeface> _typeFace;
+
         private readonly Lazy<GlyphTypeface> _glyphTypeface;
         private readonly TextFormatter _formatter = TextFormatter.Create(TextFormattingMode.Display);
 
+        private static Dictionary<(FontFamily, FontStyle, FontWeight, FontStretch), GlyphTypeface> 
+            _typefaceCache = new();
         public FastTextBlock()
         {
-            _typeFace = new Lazy<Typeface>(CreateTypeface);
-            _glyphTypeface = new Lazy<GlyphTypeface>(() => CreateGlyphTypeface(_typeFace.Value));
+            _glyphTypeface = new Lazy<GlyphTypeface>(() => CreateGlyphTypeface());
         }
 
         private static readonly DependencyProperty TextProperty = DependencyProperty.Register(
@@ -97,12 +55,14 @@ namespace LogGrokCore.Controls.TextRender
 
         private void UpdateTextLine(string? newText)
         {
-            if (_textLines != null)
+            
+            if (_textLines is { IsValueCreated: true })
             {
-                foreach (var textLine in _textLines.Value)
+                foreach (var textLine in _textLines.Value.AsSpan(0, _lineCount))
                 {
-                    //textLine.Dispose();
+                    textLine.Dispose();
                 }
+                ArrayPool<GlyphLine>.Shared.Return(_textLines.Value);
             }
 
             if (newText == null)
@@ -112,36 +72,15 @@ namespace LogGrokCore.Controls.TextRender
             }
             
             var strings = newText.Split(Environment.NewLine);
-            // var textProperties = new System.Windows.Media.TextFormatting.TextRunProperties(
-            //     typeface: _typeFace.Value,
-            //     fontRenderingEmSize: FontSize,
-            //     foregroundBrush: Foreground,
-            //     backgroundBrush: Background,
-            //     cultureInfo: CultureInfo.CurrentCulture);
-
-            if (_textLines != null && _textLines.IsValueCreated)
-            {
-                var textLines = _textLines.Value;
-                _textLines = null;
-                ArrayPool<GlyphLine>.Shared.Return(textLines);
-                foreach (var textLine in textLines.AsSpan(0, _lineCount))
-                {
-                    //textLine.Dispose();
-                }
-            }
-
             _lineCount = strings.Length;
             _textLines = new Lazy<GlyphLine[]>(() =>
             {
                 var textLinesArray = ArrayPool<GlyphLine>.Shared.Rent(_lineCount);
                 for (var i = 0; i < strings.Length; i++)
                 {
-                    
                     textLinesArray[i] = 
                         new GlyphLine(strings[i], _glyphTypeface.Value, FontSize);
-                    //CreateTextLine(strings[i], textProperties);
                 }
-
                 return textLinesArray;
             });
         }
@@ -151,15 +90,6 @@ namespace LogGrokCore.Controls.TextRender
             get => (string) GetValue(TextProperty);
             set => SetValue(TextProperty, value);
         }
-        
-
-        // private TextLine CreateTextLine(string text, System.Windows.Media.TextFormatting.TextRunProperties textProperties)
-        // {
-        //     var textSource = new System.Windows.Media.TextFormatting.TextSource(text, textProperties);
-        //     return _formatter.FormatLine(textSource, 0, 0,
-        //         new System.Windows.Media.TextFormatting.TextParagraphProperties(textProperties), null);
-        // }
-
         protected override void OnRender(DrawingContext drawingContext)
         {
             var verticalPosition = 0.0;
@@ -169,12 +99,10 @@ namespace LogGrokCore.Controls.TextRender
                 foreach (var textLine in textLines.AsSpan(0,_lineCount))
                 {
                     textLine.Render( new Point(0, verticalPosition), Foreground, drawingContext);
-                   // textLine.Draw(drawingContext, new Point(0, verticalPosition), InvertAxes.None);
                     verticalPosition += textLine.Size.Height;
                 }
             }
         }
-
         protected override Size MeasureOverride(Size constraint)
         {
             var textLines = _textLines?.Value;
@@ -191,15 +119,16 @@ namespace LogGrokCore.Controls.TextRender
             return new Size(width, height);
         }
 
-        private Typeface CreateTypeface()
+        private GlyphTypeface CreateGlyphTypeface()
         {
-            return new Typeface(FontFamily,FontStyle, FontWeight, FontStretch);
-        }
-
-        private GlyphTypeface CreateGlyphTypeface(Typeface typeface)
-        {
-            if(!typeface.TryGetGlyphTypeface(out var glyphTypeface))
+            var key = (FontFamily, FontStyle, FontWeight, FontStretch);
+            if (_typefaceCache.TryGetValue(key, out var glyphTypeface))
+                return glyphTypeface;
+            
+            var typeface = new Typeface(FontFamily, FontStyle, FontWeight, FontStretch);
+            if(!typeface.TryGetGlyphTypeface(out glyphTypeface))
                 throw  new NotSupportedException();
+            _typefaceCache[key] = glyphTypeface;
             return glyphTypeface;
         }
     }

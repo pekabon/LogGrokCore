@@ -37,6 +37,7 @@
                 SelectionMode="Extended"
                 Grid.Row="1" ItemsSource="{Binding MarkedLines}"
                 ItemContainerStyle="{StaticResource MarkedLinesItemContainerStyle}"
+                FontFamily="{StaticResource JetBrainsMono}"
                 VirtualizingStackPanel.IsVirtualizing="True"
                 VirtualizingStackPanel.VirtualizationMode="Recycling"
                 IsSynchronizedWithCurrentItem="True"

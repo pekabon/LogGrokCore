@@ -40,6 +40,7 @@
                                IsTextSearchEnabled="False"
                                ItemContainerStyle="{StaticResource ItemContainerStyle}"
                                ItemsSource="{Binding Lines}"
+                               FontFamily="{StaticResource JetBrainsMono}"
                                View="{Binding CustomView}"
                                VirtualizingStackPanel.IsVirtualizing="True"
                                VirtualizingStackPanel.VirtualizationMode="Recycling"
