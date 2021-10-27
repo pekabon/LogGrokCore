@@ -48,9 +48,9 @@ namespace LogGrokCore.MarkedLines
                         $"{document.Title}:".Yield().Concat(
                         MarkedLines.Where(m => m.Document == document)
                             .OrderBy(m => m.Index)
-                            .Select(m => m.ToString()));
+                            .Select(m => m.ToString().Trim('\0').TrimEnd()));
 
-                    TextCopy.ClipboardService.SetText(string.Join("\r\n", linesToCopy).Trim('\0'));
+                    TextCopy.ClipboardService.SetText(string.Join("\r\n", linesToCopy));
                 });
 
             ItemActivatedCommand = new DelegateCommand(
