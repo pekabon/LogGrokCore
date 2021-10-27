@@ -45,9 +45,10 @@ namespace LogGrokCore.MarkedLines
                 {
                     var document = (DocumentViewModel) o;
                     var linesToCopy =
+                        $"{document.Title}:".Yield().Concat(
                         MarkedLines.Where(m => m.Document == document)
                             .OrderBy(m => m.Index)
-                            .Select(m => m.ToString());
+                            .Select(m => m.ToString()));
 
                     TextCopy.ClipboardService.SetText(string.Join("\r\n", linesToCopy).Trim('\0'));
                 });
