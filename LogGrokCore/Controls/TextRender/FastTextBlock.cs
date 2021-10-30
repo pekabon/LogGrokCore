@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -15,7 +16,7 @@ namespace LogGrokCore.Controls.TextRender
     {
         private Lazy<PooledList<GlyphLine>>? _textLines;
         private readonly Lazy<GlyphTypeface> _glyphTypeface;
-        
+
         private static readonly Dictionary<(FontFamily, FontStyle, FontWeight, FontStretch), GlyphTypeface>
             TypefaceCache = new();
 
@@ -26,7 +27,7 @@ namespace LogGrokCore.Controls.TextRender
             new FrameworkPropertyMetadata(null,
                 FrameworkPropertyMetadataOptions.Inherits | FrameworkPropertyMetadataOptions.AffectsRender)
         );
-        
+
         public static Regex? GetHighlightRegex(DependencyObject? d)
         {
             if (d == null) throw new NullReferenceException(nameof(d));
@@ -61,32 +62,33 @@ namespace LogGrokCore.Controls.TextRender
                 fastTextBlock.UpdateTextLine(e.NewValue as string);
             }
         }
-        
+
         public static readonly DependencyProperty SelectionBrushProperty =
-            TextBoxBase.SelectionBrushProperty.AddOwner(typeof(FastTextBlock), 
+            TextBoxBase.SelectionBrushProperty.AddOwner(typeof(FastTextBlock),
                 new PropertyMetadata(GetDefaultSelectionTextBrush()));
 
-        
+
         public static readonly DependencyProperty SelectedTextProperty = DependencyProperty.Register(
-            "SelectedText", typeof(string), typeof(FastTextBlock), 
+            "SelectedText", typeof(string), typeof(FastTextBlock),
             new PropertyMetadata(string.Empty));
-      
+
         public string SelectedText
         {
-            get => (string) GetValue(SelectedTextProperty);
+            get => (string)GetValue(SelectedTextProperty);
             set => SetValue(SelectedTextProperty, value);
         }
 
         public Brush? SelectionBrush
         {
-            get => (Brush) GetValue(SelectionBrushProperty);
+            get => (Brush)GetValue(SelectionBrushProperty);
             set => SetValue(SelectionBrushProperty, value);
         }
+
         public FastTextBlock()
         {
             _glyphTypeface = new Lazy<GlyphTypeface>(CreateGlyphTypeface);
-            
         }
+
         static FastTextBlock()
         {
             CommandManager.RegisterClassCommandBinding(typeof(FastTextBlock),
@@ -94,7 +96,7 @@ namespace LogGrokCore.Controls.TextRender
                     RoutedCommands.CopyToClipboard,
                     (sender, args) =>
                     {
-                        var text = ((FastTextBlock) sender).SelectedText;
+                        var text = ((FastTextBlock)sender).SelectedText;
                         TextCopy.ClipboardService.SetText(text);
                         args.Handled = true;
                     },
@@ -103,12 +105,12 @@ namespace LogGrokCore.Controls.TextRender
                         if (sender is not FastTextBlock selectableTextBlock) return;
                         var haveSelectedText = !string.IsNullOrEmpty(selectableTextBlock.SelectedText);
                         args.CanExecute = haveSelectedText;
-                        args.Handled = haveSelectedText; 
+                        args.Handled = haveSelectedText;
                     }));
         }
 
         private Point? _startSelectionPoint;
-     
+
         private void UpdateSelection(Point startSelectionPoint, Point endSelectionPoint)
         {
             if (_textLines == null ||
@@ -116,9 +118,9 @@ namespace LogGrokCore.Controls.TextRender
             {
                 return;
             }
-            
+
             var textLines = _textLines.Value;
-            
+
             var textPosition1 = GetTextPosition(startSelectionPoint, textLines);
             var textPosition2 = GetTextPosition(endSelectionPoint, textLines);
             var (upperPosition, lowerPosition) =
@@ -126,7 +128,7 @@ namespace LogGrokCore.Controls.TextRender
                     ? (textPosition1, textPosition2)
                     : (textPosition2, textPosition1);
 
-            var selectionChanged  = false;
+            var selectionChanged = false;
             for (var currentLine = 0; currentLine < textLines.Count; currentLine++)
             {
                 var glyphLine = textLines[currentLine];
@@ -148,11 +150,12 @@ namespace LogGrokCore.Controls.TextRender
                 if (leftPosition == rightPosition)
                     selectionChanged |= glyphLine.ResetSelection();
                 else
-                    selectionChanged |= glyphLine.SetSelection(Math.Min(leftPosition, rightPosition), Math.Abs(rightPosition - leftPosition));
+                    selectionChanged |= glyphLine.SetSelection(Math.Min(leftPosition, rightPosition),
+                        Math.Abs(rightPosition - leftPosition));
             }
 
             if (!selectionChanged) return;
-            
+
             InvalidateVisual();
         }
 
@@ -169,41 +172,49 @@ namespace LogGrokCore.Controls.TextRender
                 {
                     return i;
                 }
+
                 currentVerticalOffset += height;
             }
+
             return lines.Count - 1;
         }
-        
+
         private static (int lineNumber, int textPosition) GetTextPosition(Point point, IList<GlyphLine> lines)
         {
             var y = GetLineByVerticalPosition(point.Y, lines);
             var x = lines[y].GetNearestTextPosition(point.X);
             return (y, x);
         }
-        
+
         protected override void OnMouseDown(MouseButtonEventArgs e)
         {
-           if (e.ChangedButton == MouseButton.Left)
-           {
-               _startSelectionPoint = e.GetPosition(this);
-           }
-           
-           base.OnMouseDown(e);
-        }
-        
-        protected override void OnMouseUp(MouseButtonEventArgs e)
-        {
-            if (IsMouseCaptured)
+            Focus();
+            if (e.ChangedButton == MouseButton.Left)
             {
-                ReleaseMouseCapture(); 
-                UpdateCursor();
-                if (_startSelectionPoint != null)
+                if (e.ClickCount == 1)
                 {
-                    var endPosition = e.GetPosition(this);
-                    UpdateSelection(_startSelectionPoint.Value, endPosition);
+                    _startSelectionPoint = e.GetPosition(this);    
                 }
 
+                if (e.ClickCount == 2)
+                {
+                    _startSelectionPoint = null;
+                }
+            }
+            
+            base.OnMouseDown(e);
+        }
+
+        protected override void OnMouseUp(MouseButtonEventArgs e)
+        {
+            var startSelectionPoint = _startSelectionPoint;
+            if (startSelectionPoint.HasValue)
+            {
                 _startSelectionPoint = null;
+                ReleaseMouseCapture();
+                UpdateCursor();
+                var endPosition = e.GetPosition(this);
+                UpdateSelection(startSelectionPoint.Value, endPosition);
                 var textLines = _textLines?.Value;
                 if (textLines != null)
                     SelectedText = string.Join("\r\n",
@@ -228,14 +239,19 @@ namespace LogGrokCore.Controls.TextRender
                 {
                     CaptureMouse();
                 }
-                
+
+                if (!IsFocused)
+                {
+                    Focus();
+                }
+
                 var endSelectionPoint = e.GetPosition(this);
                 UpdateSelection(_startSelectionPoint.Value, endSelectionPoint);
             }
 
             UpdateCursor();
             base.OnMouseMove(e);
-        }        
+        }
 
         protected override void OnMouseLeave(MouseEventArgs e)
         {
@@ -243,7 +259,7 @@ namespace LogGrokCore.Controls.TextRender
             {
                 _startSelectionPoint = null;
             }
-            
+
             UpdateCursor();
             base.OnMouseLeave(e);
         }
@@ -258,13 +274,13 @@ namespace LogGrokCore.Controls.TextRender
         {
             if ((IsFocused && IsMouseOver) || IsMouseCaptured)
                 Mouse.OverrideCursor = Cursors.IBeam;
-            else
-            if (Mouse.OverrideCursor != null)
+            else if (Mouse.OverrideCursor != null)
                 Mouse.OverrideCursor = null;
         }
 
         protected override void OnLostFocus(RoutedEventArgs e)
         {
+            Debug.WriteLine("OnLostFocus");
             if (_textLines?.IsValueCreated ?? false)
             {
                 var textLines = _textLines.Value;
@@ -272,6 +288,7 @@ namespace LogGrokCore.Controls.TextRender
                 {
                     line.ResetSelection();
                 }
+
                 InvalidateVisual();
             }
 
@@ -280,7 +297,6 @@ namespace LogGrokCore.Controls.TextRender
 
         private void UpdateTextLine(string? newText)
         {
-
             if (_textLines is { IsValueCreated: true })
             {
                 foreach (var textLine in _textLines.Value)
@@ -336,7 +352,7 @@ namespace LogGrokCore.Controls.TextRender
                         null,
                         selectionGeometries);
             }
-            
+
             var pixelsPerDip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
             foreach (var textLine in textLines)
             {
@@ -346,21 +362,20 @@ namespace LogGrokCore.Controls.TextRender
                     Foreground, drawingContext);
                 verticalPosition += textLine.AdvanceHeight;
             }
-            
         }
 
         private Geometry GeometryFromRect(Rect rect) => new RectangleGeometry(
             Rect.Inflate(rect, new Size(2, 2)), 3, 3);
-        
+
         private Geometry? GetSelectionGeometries()
         {
             var textLines = _textLines?.Value;
             if (textLines == null) return null;
-            
-            GeometryGroup? accumulatedGeometry = null;// = new GeometryGroup {FillRule = FillRule.Nonzero};
-            
+
+            GeometryGroup? accumulatedGeometry = null; // = new GeometryGroup {FillRule = FillRule.Nonzero};
+
             var verticalOffset = 0.0;
-            
+
             foreach (var textLine in textLines)
             {
                 var selection = textLine.Selection;
@@ -368,10 +383,10 @@ namespace LogGrokCore.Controls.TextRender
                 {
                     var (start, length) = selection.Value;
                     accumulatedGeometry ??= new GeometryGroup { FillRule = FillRule.Nonzero };
-                    
+
                     var rect = textLine.GetTextBounds(new Point(0, verticalOffset), start, length);
                     var geometry = GeometryFromRect(rect);
-                        
+
                     accumulatedGeometry.Children.Add(geometry);
                 }
 
@@ -380,20 +395,20 @@ namespace LogGrokCore.Controls.TextRender
 
             return accumulatedGeometry;
         }
-        
+
         protected override Size MeasureOverride(Size constraint)
         {
             var textLines = _textLines?.Value;
             if (textLines == null) return new Size(0, 0);
             var height = 0.0;
             var width = 0.0;
-            
+
             foreach (var textLine in textLines)
             {
                 height += textLine.AdvanceHeight;
                 width = Math.Max(width, textLine.Size.Width);
             }
-            
+
             return new Size(width, height);
         }
 
@@ -402,20 +417,20 @@ namespace LogGrokCore.Controls.TextRender
             var key = (FontFamily, FontStyle, FontWeight, FontStretch);
             if (TypefaceCache.TryGetValue(key, out var glyphTypeface))
                 return glyphTypeface;
-            
+
             var typeface = new Typeface(FontFamily, FontStyle, FontWeight, FontStretch);
-            if(!typeface.TryGetGlyphTypeface(out glyphTypeface))
-                throw  new NotSupportedException();
+            if (!typeface.TryGetGlyphTypeface(out glyphTypeface))
+                throw new NotSupportedException();
             TypefaceCache[key] = glyphTypeface;
             return glyphTypeface;
         }
-        
+
         private Geometry? GetHighlightGeometries(string? text, Regex? regex)
         {
             _cachedGetDrawingGeometries ??=
                 Cached.Of<(string? text, Regex? regex), Geometry?>(
                     value => GetDrawingGeometriesUncached(
-                                            _textLines?.Value, value.regex));
+                        _textLines?.Value, value.regex));
             return _cachedGetDrawingGeometries((text, regex));
         }
 
@@ -426,32 +441,33 @@ namespace LogGrokCore.Controls.TextRender
                 return null;
             }
 
-            var accumulatedGeometry = new GeometryGroup {FillRule = FillRule.Nonzero};
+            var accumulatedGeometry = new GeometryGroup { FillRule = FillRule.Nonzero };
 
             var y = 0.0;
             foreach (var textLine in textLines)
             {
                 var line = textLine.Text.ToString();
                 var matches = regex.Matches(line).ToList();
-                foreach(var match in matches.Where(m => m.Length > 0))
+                foreach (var match in matches.Where(m => m.Length > 0))
                 {
                     var rect = textLine.GetTextBounds(new Point(0, y), match.Index, match.Length);
                     var geometry = GeometryFromRect(rect);
                     accumulatedGeometry.Children.Add(geometry);
                 }
+
                 y += textLine.Size.Height;
             }
 
             return accumulatedGeometry;
         }
-        
+
         private static Brush GetDefaultSelectionTextBrush()
         {
             SolidColorBrush solidColorBrush = new(SystemColors.HighlightColor);
             solidColorBrush.Freeze();
             return solidColorBrush;
         }
-        
+
         private Func<(string? text, Regex? regex), Geometry?>? _cachedGetDrawingGeometries;
     }
 }

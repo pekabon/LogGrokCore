@@ -57,14 +57,7 @@
             Text="{Binding Text, Mode=OneWay}"/>
     </DataTemplate>
     
-    <DataTemplate x:Key="SelectableTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
-        <textRender:FastTextBlock
-            Text="{Binding Text, Mode=OneWay}"
-            Tag="{Binding
-                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"/>
-    </DataTemplate>
-    
-    <DataTemplate x:Key="NormalWithTrimmedTextTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
+    <DataTemplate x:Key="TrimmedTextTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
         <StackPanel>
             <textRender:FastTextBlock Text="{Binding Text, Mode=OneWay}" 
                                       Tag="{Binding
@@ -74,63 +67,16 @@
         </StackPanel>
     </DataTemplate>
     
-    <DataTemplate x:Key="SelectableWithTrimmedTextTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
-        <StackPanel>
-            <textRender:FastTextBlock 
-                                      Text="{Binding Text, Mode=OneWay}"
-                                      
-                                      Tag="{Binding
-                                    RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"/>
-            <ContentPresenter ContentTemplate="{StaticResource ShowLinesTemplate}"/>
-        </StackPanel>
-    </DataTemplate>
-    
     <Style TargetType="{x:Type ContentControl}" x:Key="LogGridViewCellStyle">
         <Style.Triggers>
             <DataTrigger Binding="{Binding Content.IsCollapsible,
-                                    RelativeSource={RelativeSource Self}}">
-            </DataTrigger>
-            <MultiDataTrigger>
-                <MultiDataTrigger.Conditions>
-                    <Condition Binding="{Binding IsCurrentItem,
-                                    RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:BaseLogListViewItem}}}"
-                               Value="False"/>
-                    <Condition Binding="{Binding Content.IsCollapsible,
-                                    RelativeSource={RelativeSource Self}}" Value="False"/>
-                </MultiDataTrigger.Conditions>
+                                    RelativeSource={RelativeSource Self}}" Value="False">
                 <Setter Property="ContentTemplate" Value="{StaticResource NormalTemplate}"/>
-            </MultiDataTrigger>
-            <MultiDataTrigger>
-                <MultiDataTrigger.Conditions>
-                    <Condition Binding="{Binding IsCurrentItem,
-                                    RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:BaseLogListViewItem}}}"
-                               Value="True"/>
-                    
-                    <Condition Binding="{Binding Content.IsCollapsible,
-                                    RelativeSource={RelativeSource Self}}" Value="False"/>
-                </MultiDataTrigger.Conditions>
-                <Setter Property="ContentTemplate" Value="{StaticResource SelectableTemplate}"/>
-            </MultiDataTrigger>
-            <MultiDataTrigger>
-                <MultiDataTrigger.Conditions>
-                    <Condition Binding="{Binding IsCurrentItem,
-                                    RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:BaseLogListViewItem}}}"
-                               Value="False"/>
-                    <Condition Binding="{Binding Content.IsCollapsible,
-                                    RelativeSource={RelativeSource Self}}" Value="True"/>
-                </MultiDataTrigger.Conditions>
-                <Setter Property="ContentTemplate" Value="{StaticResource NormalWithTrimmedTextTemplate}"/>
-            </MultiDataTrigger>
-            <MultiDataTrigger>
-                <MultiDataTrigger.Conditions>
-                    <Condition Binding="{Binding IsCurrentItem,
-                                    RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:BaseLogListViewItem}}}"
-                               Value="True"/>
-                    <Condition Binding="{Binding Content.IsCollapsible,
-                                    RelativeSource={RelativeSource Self}}" Value="True"/>
-                </MultiDataTrigger.Conditions>
-                <Setter Property="ContentTemplate" Value="{StaticResource SelectableWithTrimmedTextTemplate}"/>
-            </MultiDataTrigger>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Content.IsCollapsible,
+                                    RelativeSource={RelativeSource Self}}" Value="True">
+                <Setter Property="ContentTemplate" Value="{StaticResource TrimmedTextTemplate}"/>
+            </DataTrigger>
         </Style.Triggers>
     </Style>
     <Style TargetType="{x:Type gridView:LogGridViewCell}" BasedOn="{StaticResource LogGridViewCellStyle}"/>
