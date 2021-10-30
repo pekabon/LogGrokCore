@@ -3,7 +3,6 @@
                     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                     xmlns:markedLines="clr-namespace:LogGrokCore.MarkedLines"
-                    xmlns:selectableTextBlock="clr-namespace:LogGrokCore.Controls.SelectableTextBlock"
                     xmlns:gridView="clr-namespace:LogGrokCore.Controls.GridView"
                     xmlns:colors="clr-namespace:LogGrokCore.Colors"
                     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
@@ -93,8 +92,12 @@
                                             <Expander IsExpanded="True" BorderThickness="0">
                                                 <Expander.Header>
                                                     <StackPanel Orientation="Horizontal">
-                                                        <selectableTextBlock:SelectableTextBlock
-                                                            Text="{Binding Name.Title}" FontWeight="Bold"
+                                                        <TextBox IsReadOnly="True"
+                                                            Text="{Binding Name.Title, Mode=OneWay}" 
+                                                            Background="Transparent"
+                                                            BorderBrush="Transparent"
+                                                            FocusVisualStyle="{x:Null}"
+                                                            FontWeight="Bold"
                                                             VerticalAlignment="Center" />
                                                         <Button
                                                             Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type listControls:MarkedLinesListView}},

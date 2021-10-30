@@ -159,7 +159,6 @@ namespace LogGrokCore.Data.Index
             var startValues = string.Join(",", cursors.Select(c => c.Current.LineNumber).OrderBy(i => i)
                 .Select(j => j.ToString()));
 
-            Debug.WriteLine($"Start values: {startValues}"); 
             return CollectionUtils.MergeSorted(cursors, IsNext);
         }
     

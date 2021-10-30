@@ -65,7 +65,7 @@
                             Converter={localControls:FormatText},
                             ConverterParameter='Search \'{0}\'',
                             RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContextMenu}}}"
-                  CommandParameter="{Binding PlacementTarget.SelectedText,
+                            CommandParameter="{Binding PlacementTarget.SelectedText,
                             RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContextMenu}}}"
 
                   Visibility="{Binding RelativeSource={RelativeSource Self},

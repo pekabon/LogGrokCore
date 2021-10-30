@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Media;
 using LogGrokCore.Data;
 
@@ -13,18 +15,18 @@ namespace LogGrokCore.Controls.TextRender
     {
         private Lazy<PooledList<GlyphLine>>? _textLines;
         private readonly Lazy<GlyphTypeface> _glyphTypeface;
-
-        private static readonly Dictionary<(FontFamily, FontStyle, FontWeight, FontStretch), GlyphTypeface> 
-            TypefaceCache = new();
         
-        public static DependencyProperty HighlightRegex  = DependencyProperty.RegisterAttached(
+        private static readonly Dictionary<(FontFamily, FontStyle, FontWeight, FontStretch), GlyphTypeface>
+            TypefaceCache = new();
+
+        public static DependencyProperty HighlightRegex = DependencyProperty.RegisterAttached(
             nameof(HighlightRegex),
             typeof(Regex),
             typeof(FastTextBlock),
             new FrameworkPropertyMetadata(null,
                 FrameworkPropertyMetadataOptions.Inherits | FrameworkPropertyMetadataOptions.AffectsRender)
         );
-
+        
         public static Regex? GetHighlightRegex(DependencyObject? d)
         {
             if (d == null) throw new NullReferenceException(nameof(d));
@@ -36,20 +38,21 @@ namespace LogGrokCore.Controls.TextRender
             if (d == null) throw new NullReferenceException(nameof(d));
             d.SetValue(HighlightRegex, value);
         }
-        
-        public FastTextBlock()
-        {
-            _glyphTypeface = new Lazy<GlyphTypeface>(CreateGlyphTypeface);
-        }
 
         private static readonly DependencyProperty TextProperty = DependencyProperty.Register(
             nameof(Text),
             typeof(string),
-             typeof(FastTextBlock),
-            new FrameworkPropertyMetadata(null, 
+            typeof(FastTextBlock),
+            new FrameworkPropertyMetadata(null,
                 FrameworkPropertyMetadataOptions.AffectsRender | FrameworkPropertyMetadataOptions.AffectsMeasure,
                 OnTextChanged)
         );
+
+        public string Text
+        {
+            get => (string)GetValue(TextProperty);
+            set => SetValue(TextProperty, value);
+        }
 
         private static void OnTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
@@ -58,16 +61,233 @@ namespace LogGrokCore.Controls.TextRender
                 fastTextBlock.UpdateTextLine(e.NewValue as string);
             }
         }
+        
+        public static readonly DependencyProperty SelectionBrushProperty =
+            TextBoxBase.SelectionBrushProperty.AddOwner(typeof(FastTextBlock), 
+                new PropertyMetadata(GetDefaultSelectionTextBrush()));
+
+        
+        public static readonly DependencyProperty SelectedTextProperty = DependencyProperty.Register(
+            "SelectedText", typeof(string), typeof(FastTextBlock), 
+            new PropertyMetadata(string.Empty));
+      
+        public string SelectedText
+        {
+            get => (string) GetValue(SelectedTextProperty);
+            set => SetValue(SelectedTextProperty, value);
+        }
+
+        public Brush? SelectionBrush
+        {
+            get => (Brush) GetValue(SelectionBrushProperty);
+            set => SetValue(SelectionBrushProperty, value);
+        }
+        public FastTextBlock()
+        {
+            _glyphTypeface = new Lazy<GlyphTypeface>(CreateGlyphTypeface);
+            
+        }
+        static FastTextBlock()
+        {
+            CommandManager.RegisterClassCommandBinding(typeof(FastTextBlock),
+                new CommandBinding(
+                    RoutedCommands.CopyToClipboard,
+                    (sender, args) =>
+                    {
+                        var text = ((FastTextBlock) sender).SelectedText;
+                        TextCopy.ClipboardService.SetText(text);
+                        args.Handled = true;
+                    },
+                    (sender, args) =>
+                    {
+                        if (sender is not FastTextBlock selectableTextBlock) return;
+                        var haveSelectedText = !string.IsNullOrEmpty(selectableTextBlock.SelectedText);
+                        args.CanExecute = haveSelectedText;
+                        args.Handled = haveSelectedText; 
+                    }));
+        }
+
+        private Point? _startSelectionPoint;
+     
+        private void UpdateSelection(Point startSelectionPoint, Point endSelectionPoint)
+        {
+            if (_textLines == null ||
+                _textLines.Value.Count == 0)
+            {
+                return;
+            }
+            
+            var textLines = _textLines.Value;
+            
+            var textPosition1 = GetTextPosition(startSelectionPoint, textLines);
+            var textPosition2 = GetTextPosition(endSelectionPoint, textLines);
+            var (upperPosition, lowerPosition) =
+                textPosition1.lineNumber < textPosition2.lineNumber
+                    ? (textPosition1, textPosition2)
+                    : (textPosition2, textPosition1);
+
+            var selectionChanged  = false;
+            for (var currentLine = 0; currentLine < textLines.Count; currentLine++)
+            {
+                var glyphLine = textLines[currentLine];
+
+                if (currentLine < upperPosition.lineNumber || currentLine > lowerPosition.lineNumber)
+                {
+                    selectionChanged |= glyphLine.ResetSelection();
+                    continue;
+                }
+
+                var leftPosition = currentLine == upperPosition.lineNumber
+                    ? upperPosition.textPosition
+                    : 0;
+
+                var rightPosition = currentLine == lowerPosition.lineNumber
+                    ? lowerPosition.textPosition
+                    : glyphLine.Text.Length;
+
+                if (leftPosition == rightPosition)
+                    selectionChanged |= glyphLine.ResetSelection();
+                else
+                    selectionChanged |= glyphLine.SetSelection(Math.Min(leftPosition, rightPosition), Math.Abs(rightPosition - leftPosition));
+            }
+
+            if (!selectionChanged) return;
+            
+            InvalidateVisual();
+        }
+
+        private static int GetLineByVerticalPosition(double verticalPosition, IList<GlyphLine> lines)
+        {
+            if (verticalPosition < 0)
+                return 0;
+            var currentVerticalOffset = 0.0;
+            for (var i = 0; i < lines.Count; i++)
+            {
+                var height = lines[i].AdvanceHeight;
+                if (verticalPosition >= currentVerticalOffset
+                    && verticalPosition < currentVerticalOffset + height)
+                {
+                    return i;
+                }
+                currentVerticalOffset += height;
+            }
+            return lines.Count - 1;
+        }
+        
+        private static (int lineNumber, int textPosition) GetTextPosition(Point point, IList<GlyphLine> lines)
+        {
+            var y = GetLineByVerticalPosition(point.Y, lines);
+            var x = lines[y].GetNearestTextPosition(point.X);
+            return (y, x);
+        }
+        
+        protected override void OnMouseDown(MouseButtonEventArgs e)
+        {
+           if (e.ChangedButton == MouseButton.Left)
+           {
+               _startSelectionPoint = e.GetPosition(this);
+           }
+           
+           base.OnMouseDown(e);
+        }
+        
+        protected override void OnMouseUp(MouseButtonEventArgs e)
+        {
+            if (IsMouseCaptured)
+            {
+                ReleaseMouseCapture(); 
+                UpdateCursor();
+                if (_startSelectionPoint != null)
+                {
+                    var endPosition = e.GetPosition(this);
+                    UpdateSelection(_startSelectionPoint.Value, endPosition);
+                }
+
+                _startSelectionPoint = null;
+                var textLines = _textLines?.Value;
+                if (textLines != null)
+                    SelectedText = string.Join("\r\n",
+                        textLines
+                            .Where(line => line.Selection != null)
+                            .Select(line =>
+                            {
+                                var str = line.Text.ToString();
+                                var (start, length) = line.Selection ?? (0, 0);
+                                return str.Substring(start, length);
+                            }));
+            }
+
+            base.OnMouseUp(e);
+        }
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            if (_startSelectionPoint.HasValue && _textLines != null && _textLines.Value.Count != 0)
+            {
+                if (!IsMouseCaptured)
+                {
+                    CaptureMouse();
+                }
+                
+                var endSelectionPoint = e.GetPosition(this);
+                UpdateSelection(_startSelectionPoint.Value, endSelectionPoint);
+            }
+
+            UpdateCursor();
+            base.OnMouseMove(e);
+        }        
+
+        protected override void OnMouseLeave(MouseEventArgs e)
+        {
+            if (!IsMouseCaptured)
+            {
+                _startSelectionPoint = null;
+            }
+            
+            UpdateCursor();
+            base.OnMouseLeave(e);
+        }
+
+        protected override void OnMouseEnter(MouseEventArgs e)
+        {
+            UpdateCursor();
+            base.OnMouseEnter(e);
+        }
+
+        private void UpdateCursor()
+        {
+            if ((IsFocused && IsMouseOver) || IsMouseCaptured)
+                Mouse.OverrideCursor = Cursors.IBeam;
+            else
+            if (Mouse.OverrideCursor != null)
+                Mouse.OverrideCursor = null;
+        }
+
+        protected override void OnLostFocus(RoutedEventArgs e)
+        {
+            if (_textLines?.IsValueCreated ?? false)
+            {
+                var textLines = _textLines.Value;
+                foreach (var line in textLines)
+                {
+                    line.ResetSelection();
+                }
+                InvalidateVisual();
+            }
+
+            base.OnLostFocus(e);
+        }
 
         private void UpdateTextLine(string? newText)
         {
-            
+
             if (_textLines is { IsValueCreated: true })
             {
                 foreach (var textLine in _textLines.Value)
                 {
                     textLine.Dispose();
                 }
+
                 _textLines.Value.Dispose();
             }
 
@@ -86,38 +306,81 @@ namespace LogGrokCore.Controls.TextRender
                 {
                     list.Add(new GlyphLine(stringRange, glyphTypeFace, FontSize, pixelsPerDip));
                 }
+
                 return list;
             });
         }
 
-        public string Text
-        {
-            get => (string) GetValue(TextProperty);
-            set => SetValue(TextProperty, value);
-        }
         protected override void OnRender(DrawingContext drawingContext)
         {
             var verticalPosition = 0.0;
             var textLines = _textLines?.Value;
 
             if (textLines == null) return;
-            
-            var drawingGeometries = 
-                GetHighlightGeometries(Text, 
+
+            var highlightGeometries =
+                GetHighlightGeometries(Text,
                     GetHighlightRegex(this));
-                
-            if(drawingGeometries != null)
-                drawingContext.DrawGeometry(Brushes.Moccasin, 
-                    new Pen(Brushes.Moccasin, 0), 
-                    drawingGeometries);
+
+            if (highlightGeometries != null)
+                drawingContext.DrawGeometry(Brushes.Moccasin,
+                    new Pen(Brushes.Moccasin, 0),
+                    highlightGeometries);
+
+            var selectionGeometries = GetSelectionGeometries();
+            if (selectionGeometries != null)
+            {
+                var selectionBrush = SelectionBrush;
+                if (selectionBrush != null)
+                    drawingContext.DrawGeometry(selectionBrush,
+                        null,
+                        selectionGeometries);
+            }
             
-            var pixelsPerDip = VisualTreeHelper.GetDpi(this).PixelsPerDip;    
+            var pixelsPerDip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
             foreach (var textLine in textLines)
             {
-                textLine.Render( new Point(0, Math.Round(verticalPosition * pixelsPerDip, MidpointRounding.ToEven) / pixelsPerDip), Foreground, drawingContext);
+                textLine.Render(
+                    new Point(0,
+                        Math.Round(verticalPosition * pixelsPerDip, MidpointRounding.ToEven) / pixelsPerDip),
+                    Foreground, drawingContext);
                 verticalPosition += textLine.AdvanceHeight;
             }
+            
         }
+
+        private Geometry GeometryFromRect(Rect rect) => new RectangleGeometry(
+            Rect.Inflate(rect, new Size(2, 2)), 3, 3);
+        
+        private Geometry? GetSelectionGeometries()
+        {
+            var textLines = _textLines?.Value;
+            if (textLines == null) return null;
+            
+            GeometryGroup? accumulatedGeometry = null;// = new GeometryGroup {FillRule = FillRule.Nonzero};
+            
+            var verticalOffset = 0.0;
+            
+            foreach (var textLine in textLines)
+            {
+                var selection = textLine.Selection;
+                if (selection.HasValue)
+                {
+                    var (start, length) = selection.Value;
+                    accumulatedGeometry ??= new GeometryGroup { FillRule = FillRule.Nonzero };
+                    
+                    var rect = textLine.GetTextBounds(new Point(0, verticalOffset), start, length);
+                    var geometry = GeometryFromRect(rect);
+                        
+                    accumulatedGeometry.Children.Add(geometry);
+                }
+
+                verticalOffset += textLine.AdvanceHeight;
+            }
+
+            return accumulatedGeometry;
+        }
+        
         protected override Size MeasureOverride(Size constraint)
         {
             var textLines = _textLines?.Value;
@@ -156,12 +419,6 @@ namespace LogGrokCore.Controls.TextRender
             return _cachedGetDrawingGeometries((text, regex));
         }
 
-        private Rect Inflate(Rect rect, double inflateValue)
-        {
-            return new Rect(rect.X - inflateValue, rect.Y - inflateValue, rect.Width + inflateValue * 2,
-                rect.Height + inflateValue * 2);
-        }
-        
         private Geometry? GetDrawingGeometriesUncached(PooledList<GlyphLine>? textLines, Regex? regex)
         {
             if (textLines == null || regex == null || textLines.Count == 0)
@@ -179,13 +436,20 @@ namespace LogGrokCore.Controls.TextRender
                 foreach(var match in matches.Where(m => m.Length > 0))
                 {
                     var rect = textLine.GetTextBounds(new Point(0, y), match.Index, match.Length);
-                    var geometry = new RectangleGeometry(Inflate(rect, 2), 5, 5);
+                    var geometry = GeometryFromRect(rect);
                     accumulatedGeometry.Children.Add(geometry);
                 }
                 y += textLine.Size.Height;
             }
 
             return accumulatedGeometry;
+        }
+        
+        private static Brush GetDefaultSelectionTextBrush()
+        {
+            SolidColorBrush solidColorBrush = new(SystemColors.HighlightColor);
+            solidColorBrush.Freeze();
+            return solidColorBrush;
         }
         
         private Func<(string? text, Regex? regex), Geometry?>? _cachedGetDrawingGeometries;

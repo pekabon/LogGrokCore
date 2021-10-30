@@ -14,8 +14,8 @@
                      localControls:DragnDropBehavior.AllowDrop="True"
                      localControls:DragnDropBehavior.DropCommand="{Binding DropCommand}"
                      SaveWindowPosition="True"
-                     MinWidth="300"
-                     MinHeight="200"
+                     MinWidth="1024"
+                     MinHeight="768"
                      mc:Ignorable="d"
                      Title="Loggrok 2" Height="450" Width="800">
     <mahapps:MetroWindow.Resources>

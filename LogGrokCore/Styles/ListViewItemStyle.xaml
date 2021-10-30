@@ -53,7 +53,7 @@
                          Converter={StaticResource ObjectToTypeConverter}}"
                          Value="{x:Type markedLines:MarkedLineViewModel}">
                 <Setter Property="Template" Value="{StaticResource LogLineControlTemplate}" />
-            </DataTrigger>
+            </DataTrigger> 
             <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource Self},
                             Converter={StaticResource ObjectToTypeConverter}}"
                          Value="{x:Type logGrokCore:LogHeaderViewModel}">

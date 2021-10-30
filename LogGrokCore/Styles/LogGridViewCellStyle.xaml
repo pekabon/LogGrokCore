@@ -1,8 +1,5 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:system="clr-namespace:System;assembly=System.Runtime"
-                    xmlns:controls="clr-namespace:LogGrokCore.Controls"
-                    xmlns:selectableTextBlock="clr-namespace:LogGrokCore.Controls.SelectableTextBlock"
                     xmlns:gridView="clr-namespace:LogGrokCore.Controls.GridView"
                     xmlns:listControls="clr-namespace:LogGrokCore.Controls.ListControls"
                     xmlns:logGrokCore="clr-namespace:LogGrokCore"
@@ -11,7 +8,13 @@
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="LogViewContextMenu.xaml"/>
     </ResourceDictionary.MergedDictionaries>    
-    
+    <SolidColorBrush x:Key="Selection" Color="SteelBlue" Opacity="0.5"></SolidColorBrush>
+    <Style TargetType="textRender:FastTextBlock">
+        <Style.Setters>
+            <Setter Property="SelectionBrush" Value="{StaticResource Selection}"/>
+            <Setter Property="ContextMenu" Value="{StaticResource LogViewContextMenu}"/>
+        </Style.Setters>
+    </Style>
     <DataTemplate x:Key="ShowLinesTemplate" DataType="logGrokCore:LinePartViewModel">
         <ContentControl Content="{Binding}">
             <ContentControl.Style>
@@ -48,37 +51,45 @@
     </DataTemplate>
     
     <DataTemplate x:Key="NormalTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
-        <textRender:FastTextBlock Text="{Binding Text, Mode=OneWay}"/>
+        <textRender:FastTextBlock 
+            Tag="{Binding
+                                    RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"
+            Text="{Binding Text, Mode=OneWay}"/>
     </DataTemplate>
     
     <DataTemplate x:Key="SelectableTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
-        <selectableTextBlock:SelectableTextBlock
+        <textRender:FastTextBlock
             Text="{Binding Text, Mode=OneWay}"
             Tag="{Binding
-                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"
-            ContextMenu="{StaticResource LogViewContextMenu}"/>
+                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"/>
     </DataTemplate>
     
     <DataTemplate x:Key="NormalWithTrimmedTextTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
         <StackPanel>
-            <textRender:FastTextBlock Text="{Binding Text, Mode=OneWay}"/>
+            <textRender:FastTextBlock Text="{Binding Text, Mode=OneWay}" 
+                                      Tag="{Binding
+                                        RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"
+            />
             <ContentPresenter ContentTemplate="{StaticResource ShowLinesTemplate}"/>
         </StackPanel>
     </DataTemplate>
     
     <DataTemplate x:Key="SelectableWithTrimmedTextTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
         <StackPanel>
-            <selectableTextBlock:SelectableTextBlock
-                Text="{Binding Text, Mode=OneWay}"
-                Tag="{Binding
-                                    RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"
-                ContextMenu="{StaticResource LogViewContextMenu}"/>
+            <textRender:FastTextBlock 
+                                      Text="{Binding Text, Mode=OneWay}"
+                                      
+                                      Tag="{Binding
+                                    RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"/>
             <ContentPresenter ContentTemplate="{StaticResource ShowLinesTemplate}"/>
         </StackPanel>
     </DataTemplate>
     
     <Style TargetType="{x:Type ContentControl}" x:Key="LogGridViewCellStyle">
         <Style.Triggers>
+            <DataTrigger Binding="{Binding Content.IsCollapsible,
+                                    RelativeSource={RelativeSource Self}}">
+            </DataTrigger>
             <MultiDataTrigger>
                 <MultiDataTrigger.Conditions>
                     <Condition Binding="{Binding IsCurrentItem,

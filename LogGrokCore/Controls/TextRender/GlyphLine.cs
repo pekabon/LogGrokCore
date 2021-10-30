@@ -13,10 +13,30 @@ namespace LogGrokCore.Controls.TextRender
         public double AdvanceHeight { get; }
 
         private readonly PooledList<ushort> _glyphIndices = new();
-        private readonly PooledList<double> _advanceWidths = new();
+        private readonly PooledList<double> _advanceWidthsForGlyph = new();
         private readonly PooledList<double> _advanceWidthForChar = new();
 
         public StringRange Text { get; }
+        
+        public int GetNearestTextPosition(double relativeHorizontalPosition)
+        {
+            if (relativeHorizontalPosition <= 0)
+            {
+                return 0;
+            }
+
+            var currentOffset = 0.0;
+            for (var i = 0; i < _advanceWidthForChar.Count; i++)
+            {
+                var currentCharWidth = _advanceWidthForChar[i];
+                currentOffset += currentCharWidth;
+                if (!(relativeHorizontalPosition <= currentOffset)) continue;
+                if (relativeHorizontalPosition + currentCharWidth / 2.0 < currentOffset)
+                    return i;
+                return i + 1;
+            }
+            return _advanceWidthForChar.Count;
+        }
 
         public Rect GetTextBounds(Point startPoint, int firstTextSourceCharacterIndex, int textLength)
         {
@@ -38,7 +58,7 @@ namespace LogGrokCore.Controls.TextRender
             }
             
             _glyphIndices = new PooledList<ushort>(text.Length);
-            _advanceWidths = new PooledList<double>(text.Length);
+            _advanceWidthsForGlyph = new PooledList<double>(text.Length);
             
             double totalWidth = 0;
 
@@ -58,7 +78,7 @@ namespace LogGrokCore.Controls.TextRender
                         _glyphIndices.Add(glyphIndex);
                         width = typeface.AdvanceWidths[glyphIndex] * fontSize;
                         
-                        _advanceWidths.Add(width);
+                        _advanceWidthsForGlyph.Add(width);
                         advanceWidthForChar += width;
                         totalWidth += width;
                         indexOfGlyph++;
@@ -73,7 +93,7 @@ namespace LogGrokCore.Controls.TextRender
                 _glyphIndices.Add(glyphIndex);
                 width = typeface.AdvanceWidths[glyphIndex] * fontSize;
                 AdvanceHeight = Math.Max(AdvanceHeight, typeface.AdvanceHeights[glyphIndex] * fontSize);
-                _advanceWidths.Add(width);
+                _advanceWidthsForGlyph.Add(width);
                 _advanceWidthForChar.Add(width);
                 totalWidth += width;
             }
@@ -86,15 +106,14 @@ namespace LogGrokCore.Controls.TextRender
                 renderingEmSize: fontSize,
                 glyphIndices: _glyphIndices,
                 baselineOrigin: new Point(0, Math.Round(typeface.Baseline * fontSize)),
-                advanceWidths: _advanceWidths,
+                advanceWidths: _advanceWidthsForGlyph,
                 glyphOffsets: null,
                 characters: null,
                 deviceFontName: null,
                 clusterMap: null,
                 caretStops: null,
                 language: null, pixelsPerDip:pixelsPerDip);
-            
-            //GlyphRunSurgery.SetDisplayTextFormattingMode(_run);
+
             Size = new Size(totalWidth, height);
         }
 
@@ -108,9 +127,25 @@ namespace LogGrokCore.Controls.TextRender
 
         public void Dispose()
         {
-            _advanceWidths.Dispose();
+            _advanceWidthsForGlyph.Dispose();
             _advanceWidthForChar.Dispose();
             _glyphIndices.Dispose();
+        }
+
+        public (int start, int length)? Selection { get; private set; }
+
+        public bool SetSelection(int start, int length)
+        {
+            if (Selection == (start, length)) return false;
+            Selection = (start, length);
+            return true;
+        }
+
+        public bool ResetSelection()
+        {
+            var changed = Selection != null;
+            Selection = null;
+            return changed;
         }
     }
 }

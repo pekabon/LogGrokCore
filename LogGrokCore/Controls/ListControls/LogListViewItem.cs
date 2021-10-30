@@ -11,14 +11,19 @@ namespace LogGrokCore.Controls.ListControls
 
         protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
         {
-            if (IsSelected)
-                base.OnMouseLeftButtonDown(e);
+            SetFocus();
         }
         
         protected override void OnMouseRightButtonDown(MouseButtonEventArgs e)
         {
-            if (IsSelected)
-                base.OnMouseRightButtonDown(e);
+            SetFocus();
+        }
+
+        private void SetFocus()
+        {
+            var focusedElement = FocusManager.GetFocusedElement(this);
+            if (!ReferenceEquals(focusedElement, this))
+                Focus();
         }
     }
 }
