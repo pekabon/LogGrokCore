@@ -13,7 +13,7 @@ Settings:
         RegexString: \tDBG\t
   LogFormats:
 # KL logs
-    - Regex: ^(?'Time'\d{2}\:\d{2}\:\d{2}\.\d{3})\t(?'Thread'0x[0-9a-fA-F]+)\t(?'Severity'\w+)\t((?'Component'[\w\.]+)\t)?(?'Message'.*)
+    - Regex: ^(?'Time'\d{2}\:\d{2}\:\d{2}\.\d{3})\t(?'Thread'0x[0-9a-fA-F]+)\t(?'Severity'\w+)\t(?'Component'[\w\.]+\t)?(?'Message'.*)
       FieldsOrder:
         - Time
         - Thread
