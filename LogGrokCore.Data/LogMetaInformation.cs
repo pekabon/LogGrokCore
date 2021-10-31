@@ -24,7 +24,7 @@ namespace LogGrokCore.Data
 
         public LogMetaInformation(LogFormat logFormat)
             : this(logFormat.Regex, 
-                logFormat.FieldsOrder,
+                logFormat.FieldNames,
                 logFormat.IndexedFieldNumbers)
         {
         }

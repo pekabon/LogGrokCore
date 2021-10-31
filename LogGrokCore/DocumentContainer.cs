@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using DryIoc;
 using LogGrokCore.Controls;
 using LogGrokCore.Controls.GridView;
@@ -50,7 +51,7 @@ namespace LogGrokCore
             // log model
             _container.RegisterDelegate(_ => new LogFile(fileName));
             _container.RegisterDelegate(c => LogMetaInformationProvider.GetLogMetaInformation(fileName,
-                applicationSettings.LogFormats),
+                applicationSettings.LogFormats.Where(l => l.IsCorrect())),
                 Reuse.Singleton);
             _container.Register<LineIndex>();
             _container.RegisterMapping<ILineIndex, LineIndex>();
