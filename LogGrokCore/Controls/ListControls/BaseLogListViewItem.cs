@@ -109,14 +109,14 @@ namespace LogGrokCore.Controls.ListControls
         private new static readonly DependencyProperty ForegroundProperty = 
             TextElement.ForegroundProperty.AddOwner(typeof(BaseLogListViewItem), 
                 new FrameworkPropertyMetadata(SystemColors.ControlTextBrush, 
-                    FrameworkPropertyMetadataOptions.Inherits,
+                    FrameworkPropertyMetadataOptions.None,
                     (_, _) => { },
                     CoerceForegroundProperty));
         
         private new static readonly DependencyProperty BackgroundProperty = 
             Panel.BackgroundProperty.AddOwner(typeof(BaseLogListViewItem), 
                 new FrameworkPropertyMetadata(Panel.BackgroundProperty.DefaultMetadata.DefaultValue, 
-                    FrameworkPropertyMetadataOptions.Inherits,
+                    FrameworkPropertyMetadataOptions.None,
                     (_, _) => { },
                     CoerceBackgroundProperty));
 
