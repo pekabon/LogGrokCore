@@ -196,13 +196,46 @@ namespace LogGrokCore.Controls.TextRender
                     _startSelectionPoint = e.GetPosition(this);    
                 }
 
-                if (e.ClickCount == 2)
+                if (e.ClickCount == 2 && _textLines is { Value: {} textLines})
                 {
                     _startSelectionPoint = null;
+                    var point = e.GetPosition(this);
+                    SelectWordUnderPoint(point, textLines);
                 }
             }
             
             base.OnMouseDown(e);
+        }
+
+        private void SelectWordUnderPoint(Point point, PooledList<GlyphLine> textLines)
+        {
+            var (lineNumber, position) = GetTextPosition(point, textLines);
+            var line = textLines[lineNumber];
+            var (start, length) = GetWordSelectionRange(line.Text, position);
+            line.SetSelection(start, length);
+            InvalidateVisual();
+            SelectedText = line.Text.Span.Slice(start, length).ToString();
+        }
+
+        private (int start, int length) GetWordSelectionRange(StringRange lineText, int position)
+        {
+            var span = lineText.Span;
+            var left = position;
+
+            bool IsWordPart(char ch) => ch == '_' || char.IsLetterOrDigit(ch); 
+
+            while (left > 0 && IsWordPart(span[left-1]))
+            {
+                left--;
+            }
+            
+            var right = position;
+            while (right < span.Length - 1 && IsWordPart(span[right+1]))
+            {
+                right++;
+            }
+
+            return (left, right - left + 1);
         }
 
         protected override void OnMouseUp(MouseButtonEventArgs e)
