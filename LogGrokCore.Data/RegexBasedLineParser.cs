@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using LogGrokCore.Data.Monikers;
@@ -45,10 +44,12 @@ namespace LogGrokCore.Data
             var lastComponentLength = 0;
 
             var caps = MatchSurgery.GetCaptures(match);
+            var matchCounts = MatchSurgery.GetMatchCounts(match);
             foreach (var fieldToStore in _fieldsToStore)
             {
                 var cap = caps[fieldToStore + 1];
-                if (cap != null)
+                var matchCount = matchCounts[fieldToStore + 1];
+                if (cap != null && matchCount > 0)
                 {
                     var componentStartIndex = cap[0];
                     var componentLength =  cap[1];
