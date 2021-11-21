@@ -52,6 +52,7 @@ namespace LogGrokCore.Controls.ListControls
                     args.CanExecute = GetSelectedIndices().Any();
                     args.Handled = true;
                 }));
+            ScheduleResetColumnsWidth();
         }
 
         public void UpdateReadonlySelectedItems(IEnumerable<int> selectedIndices)
@@ -155,7 +156,7 @@ namespace LogGrokCore.Controls.ListControls
             
             if (!_headerAdjusted && itemsCount > _previousItemCount && panel != null)
             {
-                ScheduleResetColumnsWidth(panel);
+                ScheduleResetColumnsWidth();
                 _previousItemCount = itemsCount;
 
             }
@@ -169,16 +170,17 @@ namespace LogGrokCore.Controls.ListControls
             var panel = GetPanel();
             if (_previousItemCount == 0 && Items.Count > 0 && panel != null)
             {
-                ScheduleResetColumnsWidth(panel);
+                ScheduleResetColumnsWidth();
                 _previousItemCount = Items.Count;            
             }
         }
 
         private bool? _haveExternalColumnSettings;
         
-        private void ScheduleResetColumnsWidth(VirtualizingStackPanel.VirtualizingStackPanel panel)
+        private void ScheduleResetColumnsWidth()
         {
-            double CalculateRemainingSpace(System.Windows.Controls.GridView view)
+            double CalculateRemainingSpace(System.Windows.Controls.GridView view,
+                VirtualizingStackPanel.VirtualizingStackPanel panel)
             {
                 if (double.IsNaN(ActualWidth))
                     Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
@@ -189,15 +191,16 @@ namespace LogGrokCore.Controls.ListControls
                                                   - SystemParameters.ScrollWidth * 2;
             }
               
-            void UpdateLastColumnWidth(System.Windows.Controls.GridView view)
+            void UpdateLastColumnWidth(System.Windows.Controls.GridView view,
+                VirtualizingStackPanel.VirtualizingStackPanel panel)
             {
                 var lastColumn = view.Columns.Last();
-                var remainingSpace = CalculateRemainingSpace(view);
+                var remainingSpace = CalculateRemainingSpace(view, panel);
                 if (lastColumn.ActualWidth < remainingSpace)
                     lastColumn.Width = remainingSpace;                
             }
                       
-            void ResetWidth(System.Windows.Controls.GridView view)
+            void ResetWidth(System.Windows.Controls.GridView view, VirtualizingStackPanel.VirtualizingStackPanel panel)
             {
                 Trace.TraceInformation($"Reset width: {Items.Count}");
                 foreach (var column in view.Columns.Take(view.Columns.Count - 1))
@@ -205,51 +208,52 @@ namespace LogGrokCore.Controls.ListControls
                     column.Width = 1;
                     column.ClearValue(GridViewColumn.WidthProperty);
                 }
-                _ = Dispatcher.BeginInvoke(() => UpdateLastColumnWidth(view), DispatcherPriority.ApplicationIdle);
+                _ = Dispatcher.BeginInvoke(() => UpdateLastColumnWidth(view, panel), DispatcherPriority.ApplicationIdle);
             }
 
             _ = Dispatcher.BeginInvoke(() =>
             {
-                if (View is System.Windows.Controls.GridView gridView && Items.Count > 0)
+                if (View is not System.Windows.Controls.GridView gridView || GetPanel() is not { } panel ||
+                    Items.Count <= 0)
                 {
-                    if (_haveExternalColumnSettings == null)
-                    {
-                        var columnSettings = ColumnSettings;
-                        _haveExternalColumnSettings = columnSettings?.ColumnWidths != null;
+                    ScheduleResetColumnsWidth();
+                    return;
+                }
 
-                        if (columnSettings != null)
+                if (_haveExternalColumnSettings == null)
+                {
+                    var columnSettings = ColumnSettings;
+                    _haveExternalColumnSettings = columnSettings?.ColumnWidths != null;
+
+                    if (columnSettings != null)
+                    {
+                        columnSettings.ColumnWidths ??= gridView.Columns.Select(c => c.Width).ToArray();
+                        foreach (var column in gridView.Columns)
                         {
-                            columnSettings.ColumnWidths ??= gridView.Columns.Select(c => c.Width).ToArray();
-                            foreach (var column in gridView.Columns)
+                            if (column is INotifyPropertyChanged notifyPropertyChanged)
                             {
-                                if (column is INotifyPropertyChanged notifyPropertyChanged)
+                                notifyPropertyChanged.PropertyChanged += (c, args) =>
                                 {
-                                    notifyPropertyChanged.PropertyChanged += (c, args) =>
+                                    if (args.PropertyName == "ActualWidth")
                                     {
-                                        if (args.PropertyName == "ActualWidth")
-                                        {
-                                            columnSettings.ColumnWidths = gridView.Columns.Select(c => c.ActualWidth).ToArray();
-                                        }
-                                    };
-                                }
+                                        columnSettings.ColumnWidths =
+                                            gridView.Columns.Select(c => c.ActualWidth).ToArray();
+                                    }
+                                };
                             }
                         }
                     }
-
-                    if (_haveExternalColumnSettings != null && _haveExternalColumnSettings.Value)
-                    {
-                        return;
-                    }
-
-                    ResetWidth(gridView);
-                    if (GetPanel()?.IsViewportIsCompletelyFilled ?? false)
-                    {
-                        _headerAdjusted = true;
-                    }
                 }
-                else
+
+                if (_haveExternalColumnSettings != null && _haveExternalColumnSettings.Value)
                 {
-                    ScheduleResetColumnsWidth(panel);
+                    return;
+                }
+
+                ResetWidth(gridView, panel);
+                if (GetPanel()?.IsViewportIsCompletelyFilled ?? false)
+                {
+                    _headerAdjusted = true;
                 }
             }, DispatcherPriority.ApplicationIdle);
         }
