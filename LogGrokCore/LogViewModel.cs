@@ -87,52 +87,6 @@ namespace LogGrokCore
         {
             get;
         }
-        
-        private void CopySelectedItemsToClipboard()
-        {
-            if (SelectedItems == null) return;
-            var orderedLines =
-                SelectedItems.OfType<LogHeaderViewModel>().Select(h => h.ToString())
-                    .Concat(SelectedItems.OfType<LineViewModel>().OrderBy(ln => ln.Index).Select(ln => ln.ToString()));
-            
-            var  text = new StringBuilder();
-            foreach (var line in orderedLines)
-            {
-                _ = text.Append(line);
-                _ = text.Append("\r\n");
-            }
-            _ = text.Replace("\0", string.Empty);
-
-            TextCopy.ClipboardService.SetText(text.ToString());
-        }
-
-        private async void UpdateFilteredCollection()
-        {
-            var currentItemIndex = CurrentItemIndex;
-            var item = Lines[currentItemIndex];
-            var originalLineIndex = (item as LineViewModel)?.Index;
-
-            var exclusionsCopy = _filterSettings.Exclusions.ToDictionary(kv 
-                => kv.Key, kv => kv.Value); 
-            var (headerCollection, linesCollection, getIndexByValue) 
-                = await Task.Factory.StartNew(() => _lineViewModelCollectionProvider.GetLogLinesCollection(
-                    _logModelFacade.Indexer,
-                    _filterSettings.Exclusions));
-
-            var newExclusionsCopy = _filterSettings.Exclusions.ToList();
-            if (!exclusionsCopy.SequenceEqual(newExclusionsCopy))
-            {
-                return;
-            }
-            
-            _getIndexByValue = getIndexByValue;
-            Lines.Reset(headerCollection, linesCollection);
-
-            if (originalLineIndex is { } index)
-            {
-                NavigateTo(index);
-            }
-        }
 
         public int CurrentItemIndex
         {
@@ -189,6 +143,11 @@ namespace LogGrokCore
         
         public GrowingLogLinesCollection Lines { get; }
 
+        public void NavigateTo(in int logLineNumber)
+        {
+            NavigateToLineRequest.Raise(_getIndexByValue(logLineNumber) + _headerCollection.Count);
+        }
+        
         private IEnumerable<string> GetComponentsInSelectedLines(int componentIndex)
         {
             var lineViewModels = SelectedItems?.OfType<LineViewModel>() ?? Enumerable.Empty<LineViewModel>();
@@ -221,10 +180,51 @@ namespace LogGrokCore
 
             Progress = 100;
         }
-
-        public void NavigateTo(in int logLineNumber)
+        
+        private void CopySelectedItemsToClipboard()
         {
-            NavigateToLineRequest.Raise(_getIndexByValue(logLineNumber) + _headerCollection.Count);
+            if (SelectedItems == null) return;
+            var orderedLines =
+                SelectedItems.OfType<LogHeaderViewModel>().Select(h => h.ToString())
+                    .Concat(SelectedItems.OfType<LineViewModel>().OrderBy(ln => ln.Index).Select(ln => ln.ToString()));
+            
+            var  text = new StringBuilder();
+            foreach (var line in orderedLines)
+            {
+                _ = text.Append(line);
+                _ = text.Append("\r\n");
+            }
+            _ = text.Replace("\0", string.Empty);
+
+            TextCopy.ClipboardService.SetText(text.ToString());
+        }
+
+        private async void UpdateFilteredCollection()
+        {
+            var currentItemIndex = CurrentItemIndex;
+            var item = Lines[currentItemIndex];
+            var originalLineIndex = (item as LineViewModel)?.Index;
+
+            var exclusionsCopy = _filterSettings.Exclusions.ToDictionary(kv 
+                => kv.Key, kv => kv.Value); 
+            var (headerCollection, linesCollection, getIndexByValue) 
+                = await Task.Factory.StartNew(() => _lineViewModelCollectionProvider.GetLogLinesCollection(
+                    _logModelFacade.Indexer,
+                    _filterSettings.Exclusions));
+
+            var newExclusionsCopy = _filterSettings.Exclusions.ToList();
+            if (!exclusionsCopy.SequenceEqual(newExclusionsCopy))
+            {
+                return;
+            }
+            
+            _getIndexByValue = getIndexByValue;
+            Lines.Reset(headerCollection, linesCollection);
+
+            if (originalLineIndex is { } index)
+            {
+                NavigateTo(index);
+            }
         }
     }
 }

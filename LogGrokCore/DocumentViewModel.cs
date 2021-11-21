@@ -24,8 +24,7 @@ namespace LogGrokCore
             LogViewModel logViewModel, 
             SearchViewModel searchViewModel,
             Selection markedLines,
-            ColorSettings colorSettings,
-            ColumnSettings columnSettings)
+            ColorSettings colorSettings)
         {
             var logFileFilePath = logModelFacade.LogFile.FilePath;
             
@@ -36,7 +35,6 @@ namespace LogGrokCore
             LogViewModel = logViewModel;
             SearchViewModel = searchViewModel;
             ColorSettings = colorSettings;
-            ColumnSettings = columnSettings;
             
             SearchViewModel.CurrentLineChanged += lineNumber => NavigateTo(lineNumber);
             SearchViewModel.CurrentSearchChanged += regex => LogViewModel.HighlightRegex = regex;
@@ -91,10 +89,6 @@ namespace LogGrokCore
         public SearchViewModel SearchViewModel { get; }
 
         public ColorSettings ColorSettings { get; }
-        
-
-        public ColumnSettings ColumnSettings { get; }
-
         public bool IsCurrentDocument
         {
             get => _isCurrentDocument;

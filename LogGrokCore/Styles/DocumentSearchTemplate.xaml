@@ -49,7 +49,8 @@
                                "{Binding NavigateToLineRequest}"
                                controls:NavigateToLineBehavior.ChangeCurrentItem="False"
                                ContextMenu="{StaticResource LogViewContextMenu}"
-                               listControls:BaseLogListViewItem.OnItemActivatedCommand="{Binding ItemActivatedCommand}">
+                               listControls:BaseLogListViewItem.OnItemActivatedCommand="{Binding ItemActivatedCommand}"
+                               ColumnSettings="{Binding ColumnSettings}">
                 <listControls:ListView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <virtualizingStackPanel:VirtualizingStackPanel

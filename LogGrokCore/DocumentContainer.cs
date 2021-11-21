@@ -4,6 +4,7 @@ using System.Linq;
 using DryIoc;
 using LogGrokCore.Controls;
 using LogGrokCore.Controls.GridView;
+using LogGrokCore.Controls.ListControls;
 using LogGrokCore.Data;
 using LogGrokCore.Data.Index;
 using LogGrokCore.Data.Virtualization;
@@ -50,7 +51,7 @@ namespace LogGrokCore
             
             // log model
             _container.RegisterDelegate(_ => new LogFile(fileName));
-            _container.RegisterDelegate(c => LogMetaInformationProvider.GetLogMetaInformation(fileName,
+            _container.RegisterDelegate(_ => LogMetaInformationProvider.GetLogMetaInformation(fileName,
                 applicationSettings.LogFormats.Where(l => l.IsCorrect())),
                 Reuse.Singleton);
             _container.Register<LineIndex>();
@@ -80,7 +81,7 @@ namespace LogGrokCore
             _container.Register<LineViewModelCollectionProvider>(Reuse.Singleton, 
                 made: Parameters.Of
                     .Type<ILineParser>(serviceKey: ParserType.Full)
-                    .Type<LogHeaderCollection>(request => request.Container.Resolve<LogHeaderCollection>()));
+                    .Type(request => request.Container.Resolve<LogHeaderCollection>()));
             
             _container.Register<FilterSettings>(Reuse.Singleton);
             
@@ -102,8 +103,9 @@ namespace LogGrokCore
                     var filterSettings = r.Resolve<FilterSettings>();
                     var viewFactory = r.Resolve<GridViewFactory>(GridViewType.NotFilteringGridViewType);
                     var markedLines = r.Resolve<Selection>();
+                    var columnSettings = r.Resolve<ColumnSettings>();
                     return pattern => new SearchDocumentViewModel(logModelFacade, filterSettings, viewFactory, pattern,
-                        markedLines);
+                        markedLines, columnSettings);
                 });
             
             // view

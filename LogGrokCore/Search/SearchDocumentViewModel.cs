@@ -8,7 +8,6 @@ using System.Windows.Input;
 using LogGrokCore.Controls;
 using LogGrokCore.Controls.GridView;
 using LogGrokCore.Controls.ListControls;
-using LogGrokCore.Controls.ListControls.VirtualizingStackPanel;
 using LogGrokCore.Data;
 using LogGrokCore.Data.Index;
 using LogGrokCore.Data.Search;
@@ -42,7 +41,8 @@ namespace LogGrokCore.Search
             FilterSettings filterSettings,
             GridViewFactory viewFactory,
             SearchPattern searchPattern,
-            Selection markedLines)
+            Selection markedLines,
+            ColumnSettings columnSettings)
         {
             
             _viewFactory = viewFactory;
@@ -53,6 +53,8 @@ namespace LogGrokCore.Search
             _filterSettings.ExclusionsChanged += UpdateLines;
 
             _markedLines = markedLines;
+
+            ColumnSettings = columnSettings;
 
             SearchPattern = searchPattern;
             ItemActivatedCommand = new DelegateCommand(
@@ -65,6 +67,8 @@ namespace LogGrokCore.Search
                 });
         }
 
+        public ColumnSettings ColumnSettings { get; }
+        
         public string Title => $"{SearchPattern.Pattern} ({Lines?.Count})";
 
         public NavigateToLineRequest NavigateToLineRequest { get; } = new();
@@ -96,7 +100,7 @@ namespace LogGrokCore.Search
         public GrowingLogLinesCollection Lines { get; } = 
             new(new List<ItemViewModel>(), new List<ItemViewModel>());
         
-        public ViewBase CustomView => _viewFactory.CreateView(null);
+        public ViewBase CustomView => _viewFactory.CreateView(ColumnSettings.ColumnWidths);
 
         public SearchPattern SearchPattern
         {
@@ -121,7 +125,16 @@ namespace LogGrokCore.Search
             get;
             private set;
         }
-
+        
+        public void Dispose()
+        {
+            lock (_cancellationTokenSourceLock)
+            {
+                _currentSearchCancellationTokenSource?.Cancel();
+                _currentSearchCancellationTokenSource = null;
+            }
+        }
+        
         private void StartSearch()
         {
             lock (_cancellationTokenSourceLock)
@@ -243,15 +256,6 @@ namespace LogGrokCore.Search
                 CurrentItemIndex = null;
             else
                 NavigateToLineRequest.Raise(_currentSearchLineIndex.GetIndexByOriginalIndex(index));
-        }
-
-        public void Dispose()
-        {
-            lock (_cancellationTokenSourceLock)
-            {
-                _currentSearchCancellationTokenSource?.Cancel();
-                _currentSearchCancellationTokenSource = null;
-            }
         }
     }
 }
