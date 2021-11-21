@@ -68,6 +68,9 @@ namespace LogGrokCore
             
             // Presentation
             _container.RegisterInstance(applicationSettings.ColorSettings);
+            _container.RegisterDelegate(c => 
+                applicationSettings.GetColumnSettings(c.Resolve<LogMetaInformation>().LineRegex), 
+                reuse: Reuse.Singleton);
 
             _container.Register<LogViewModel>(
                 made: Parameters.Of

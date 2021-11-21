@@ -96,7 +96,7 @@ namespace LogGrokCore.Search
         public GrowingLogLinesCollection Lines { get; } = 
             new(new List<ItemViewModel>(), new List<ItemViewModel>());
         
-        public ViewBase CustomView => _viewFactory.CreateView();
+        public ViewBase CustomView => _viewFactory.CreateView(null);
 
         public SearchPattern SearchPattern
         {

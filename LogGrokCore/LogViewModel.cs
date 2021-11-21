@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using LogGrokCore.Controls;
 using LogGrokCore.Controls.GridView;
+using LogGrokCore.Controls.ListControls;
 using LogGrokCore.Data;
 using LogGrokCore.Data.Virtualization;
 using LogGrokCore.Filter;
@@ -35,7 +36,8 @@ namespace LogGrokCore
             GridViewFactory viewFactory,
             LogHeaderCollection headerCollection,
             FilterSettings filterSettings,
-            Selection markedLines)
+            Selection markedLines,
+            ColumnSettings columnSettings)
         {
             _logModelFacade = logModelFacade;
             _filterSettings = filterSettings;
@@ -76,10 +78,16 @@ namespace LogGrokCore
                 () => SelectedItems?.Cast<object>().Any() ?? false); 
             
             _viewFactory = viewFactory;
+            ColumnSettings = columnSettings;
             UpdateDocumentWhileLoading();
             UpdateProgress();
         }
 
+        public ColumnSettings ColumnSettings
+        {
+            get;
+        }
+        
         private void CopySelectedItemsToClipboard()
         {
             if (SelectedItems == null) return;
@@ -175,7 +183,7 @@ namespace LogGrokCore
             set => SetAndRaiseIfChanged(ref _isLoading, value);
         }
 
-        public ViewBase CustomView => _viewFactory.CreateView();
+        public ViewBase CustomView => _viewFactory.CreateView(ColumnSettings.ColumnWidths);
 
         public NavigateToLineRequest NavigateToLineRequest { get; } = new();
         

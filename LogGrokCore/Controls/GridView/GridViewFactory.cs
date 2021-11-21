@@ -29,8 +29,13 @@ namespace LogGrokCore.Controls.GridView
             };
         }
 
-        public ViewBase CreateView()
+        public ViewBase CreateView(double[]? widths)
         {
+            if (widths != null && widths.Length != _meta.FieldNames.Length + 2)
+            {
+                throw new InvalidOperationException("Invalid columnWidthSettings");
+            }
+
             var indexFieldName = "Index";
             var view = new System.Windows.Controls.GridView();
 
@@ -40,9 +45,11 @@ namespace LogGrokCore.Controls.GridView
                 {
                     VisualTree = new FrameworkElementFactory(typeof(PinGridViewhHeader))
                 },
-                CellTemplate =  CreatePinCellTemplate()
+                CellTemplate =  CreatePinCellTemplate(),
+                Width = widths == null? 0 : widths[0]
             });
-            
+
+            var columnIndex = 1;
             foreach (var fieldHeader in indexFieldName.Yield().Concat(_meta.FieldNames))
             {
                 DataTemplate CreateHeaderTemplate()
@@ -87,7 +94,8 @@ namespace LogGrokCore.Controls.GridView
                 view.Columns.Add(new LogGridViewColumn
                 {  
                     HeaderTemplate = CreateHeaderTemplate(),
-                    CellTemplate = CreateCellTemplate()
+                    CellTemplate = CreateCellTemplate(),
+                    Width = widths == null ? 0 : widths[columnIndex++]
                 });
             }
 

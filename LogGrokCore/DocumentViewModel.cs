@@ -6,6 +6,7 @@ using System.Linq;
 using System.Windows.Input;
 using LogGrokCore.Colors;
 using LogGrokCore.Controls;
+using LogGrokCore.Controls.ListControls;
 using LogGrokCore.Data;
 using LogGrokCore.Search;
 
@@ -15,8 +16,7 @@ namespace LogGrokCore
     {
         private readonly Selection _markedLines;
         private bool _isCurrentDocument;
-        private LineProvider _lineProvider;
-        private ObservableCollection<(int number, string text)> _markedLineViewModels = new();
+        private readonly LineProvider _lineProvider;
 
         public DocumentViewModel(
             LineProvider lineProvider,
@@ -24,7 +24,8 @@ namespace LogGrokCore
             LogViewModel logViewModel, 
             SearchViewModel searchViewModel,
             Selection markedLines,
-            ColorSettings colorSettings)
+            ColorSettings colorSettings,
+            ColumnSettings columnSettings)
         {
             var logFileFilePath = logModelFacade.LogFile.FilePath;
             
@@ -35,6 +36,7 @@ namespace LogGrokCore
             LogViewModel = logViewModel;
             SearchViewModel = searchViewModel;
             ColorSettings = colorSettings;
+            ColumnSettings = columnSettings;
             
             SearchViewModel.CurrentLineChanged += lineNumber => NavigateTo(lineNumber);
             SearchViewModel.CurrentSearchChanged += regex => LogViewModel.HighlightRegex = regex;
@@ -90,6 +92,9 @@ namespace LogGrokCore
 
         public ColorSettings ColorSettings { get; }
         
+
+        public ColumnSettings ColumnSettings { get; }
+
         public bool IsCurrentDocument
         {
             get => _isCurrentDocument;

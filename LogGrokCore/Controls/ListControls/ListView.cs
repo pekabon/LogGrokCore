@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,11 +13,25 @@ using System.Windows.Threading;
 
 namespace LogGrokCore.Controls.ListControls
 {
+    public class ColumnSettings
+    {
+        public double[]? ColumnWidths { get; set; }
+    }
+    
     public class ListView : BaseListView
     {
         public static readonly DependencyProperty ReadonlySelectedItemsProperty =
             DependencyProperty.Register(nameof(ReadonlySelectedItems), typeof(IEnumerable), typeof(ListView));
 
+        public static readonly DependencyProperty ColumnSettingsProperty = DependencyProperty.Register(
+            "ColumnSettings", typeof(ColumnSettings), typeof(ListView), new PropertyMetadata(default(ColumnSettings)));
+
+        public ColumnSettings ColumnSettings
+        {
+            get => (ColumnSettings)GetValue(ColumnSettingsProperty);
+            set => SetValue(ColumnSettingsProperty, value);
+        }
+        
         public ListViewItem GetContainerForItem() => new LogListViewItem(this);
 
         public ListView()
@@ -158,6 +173,8 @@ namespace LogGrokCore.Controls.ListControls
                 _previousItemCount = Items.Count;            
             }
         }
+
+        private bool? _haveExternalColumnSettings;
         
         private void ScheduleResetColumnsWidth(VirtualizingStackPanel.VirtualizingStackPanel panel)
         {
@@ -195,6 +212,35 @@ namespace LogGrokCore.Controls.ListControls
             {
                 if (View is System.Windows.Controls.GridView gridView && Items.Count > 0)
                 {
+                    if (_haveExternalColumnSettings == null)
+                    {
+                        var columnSettings = ColumnSettings;
+                        _haveExternalColumnSettings = columnSettings?.ColumnWidths != null;
+
+                        if (columnSettings != null)
+                        {
+                            columnSettings.ColumnWidths ??= gridView.Columns.Select(c => c.Width).ToArray();
+                            foreach (var column in gridView.Columns)
+                            {
+                                if (column is INotifyPropertyChanged notifyPropertyChanged)
+                                {
+                                    notifyPropertyChanged.PropertyChanged += (c, args) =>
+                                    {
+                                        if (args.PropertyName == "ActualWidth")
+                                        {
+                                            columnSettings.ColumnWidths = gridView.Columns.Select(c => c.ActualWidth).ToArray();
+                                        }
+                                    };
+                                }
+                            }
+                        }
+                    }
+
+                    if (_haveExternalColumnSettings != null && _haveExternalColumnSettings.Value)
+                    {
+                        return;
+                    }
+
                     ResetWidth(gridView);
                     if (GetPanel()?.IsViewportIsCompletelyFilled ?? false)
                     {
