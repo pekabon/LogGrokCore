@@ -88,6 +88,8 @@ namespace LogGrokCore
             _container.Register<DocumentViewModel>();
             _container.Register<SearchViewModel>();
             _container.Register<Selection>(Reuse.Singleton);
+            _container.RegisterDelegate(c => 
+                new TransformationPerformer(c.Resolve<LogMetaInformation>().Transformations));
             
             _container.RegisterDelegate<Func<string, FilterViewModel>>(
                 r => fieldName => new FilterViewModel(
@@ -104,8 +106,9 @@ namespace LogGrokCore
                     var viewFactory = r.Resolve<GridViewFactory>(GridViewType.NotFilteringGridViewType);
                     var markedLines = r.Resolve<Selection>();
                     var columnSettings = r.Resolve<ColumnSettings>();
+                    var transofrmationPerformer = r.Resolve<TransformationPerformer>();
                     return pattern => new SearchDocumentViewModel(logModelFacade, filterSettings, viewFactory, pattern,
-                        markedLines, columnSettings);
+                        markedLines, columnSettings, transofrmationPerformer);
                 });
             
             // view

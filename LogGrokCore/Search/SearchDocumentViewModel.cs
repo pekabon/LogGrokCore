@@ -36,13 +36,15 @@ namespace LogGrokCore.Search
         private readonly LogModelFacade _logModelFacade;
         private SearchLineIndex? _currentSearchLineIndex;
         private readonly Selection _markedLines;
+        private TransformationPerformer _transformationPerformer;
 
         public SearchDocumentViewModel(LogModelFacade logModelFacade,
             FilterSettings filterSettings,
             GridViewFactory viewFactory,
             SearchPattern searchPattern,
             Selection markedLines,
-            ColumnSettings columnSettings)
+            ColumnSettings columnSettings,
+            TransformationPerformer transformationPerformer)
         {
             
             _viewFactory = viewFactory;
@@ -53,6 +55,7 @@ namespace LogGrokCore.Search
             _filterSettings.ExclusionsChanged += UpdateLines;
 
             _markedLines = markedLines;
+            _transformationPerformer = transformationPerformer;
 
             ColumnSettings = columnSettings;
 
@@ -192,7 +195,7 @@ namespace LogGrokCore.Search
             return new VirtualList<(int originalLogLineNumber, string str), ItemViewModel>(
                     filteredLineWithOriginalLineNumber, indexAndString =>
                         new LineViewModel(indexAndString.originalLogLineNumber, indexAndString.str, lineParser, 
-                            _markedLines));
+                            _markedLines, _transformationPerformer));
         } 
         
         private async void UpdateDocumentWhileLoading(Data.Search.Search.Progress progress,

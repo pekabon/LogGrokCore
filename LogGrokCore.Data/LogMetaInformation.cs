@@ -4,19 +4,13 @@ namespace LogGrokCore.Data
 {
     public class LogMetaInformation
     {
-        public static LogMetaInformation CreateKlLogMetaInformation()
-        {
-            return new(
-                @"^(?'Time'\d{2}\:\d{2}\:\d{2}\.\d{3})\t(?'Thread'0x[0-9a-fA-F]+)\t(?'Severity'\w+)\t(?'Component'[\w\.]+)?\t?(?'Message'.*)",
-                new[] {"Time", "Thread", "Severity", "Component", "Text"},
-                new[] {1, 2, 3}
-            );
-        }
-        
         public static LogMetaInformation CreateTextFileMetaInformation()
         {
-            return new LogMetaInformation(@"^(?'Text'.*)", new[]{"Text"}, Array.Empty<int>());
+            return new LogMetaInformation(@"^(?'Text'.*)", new[]{"Text"}, 
+                Array.Empty<int>(), Array.Empty<string>());
         }
+
+        public string[] Transformations { get; }
 
         public string[] FieldNames { get; }
 
@@ -25,16 +19,18 @@ namespace LogGrokCore.Data
         public LogMetaInformation(LogFormat logFormat)
             : this(logFormat.Regex, 
                 logFormat.FieldNames,
-                logFormat.IndexedFieldNumbers)
+                logFormat.IndexedFieldNumbers,
+                logFormat.Transformations)
         {
         }
 
-        public LogMetaInformation(string lineRegex, string [] fieldNames, int[] indexedFieldNumbers)
+        public LogMetaInformation(string lineRegex, string [] fieldNames, int[] indexedFieldNumbers, string[] transformations)
         {
             LineRegex = lineRegex;
             FieldNames = fieldNames;
             ComponentCount = FieldNames.Length;
             IndexedFieldNumbers = indexedFieldNumbers;
+            Transformations = transformations;
         }
 
         public int GetFieldIndexByName(string fieldName) => Array.IndexOf(FieldNames, fieldName);

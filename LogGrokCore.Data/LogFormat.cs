@@ -13,11 +13,17 @@ namespace LogGrokCore.Data
 
         public string[] IndexedFields { get; set; } = Array.Empty<string>();
 
+        public string[] Transformations { get; set; } = Array.Empty<string>();
+
         public bool IsCorrect()
         {
             try
             {
                 _ = new Regex(Regex);
+                foreach (var transformation in Transformations)
+                {
+                    _ = new Regex(transformation);
+                }
             }
             catch (Exception e)
             {

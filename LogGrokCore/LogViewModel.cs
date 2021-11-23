@@ -11,7 +11,6 @@ using LogGrokCore.Controls;
 using LogGrokCore.Controls.GridView;
 using LogGrokCore.Controls.ListControls;
 using LogGrokCore.Data;
-using LogGrokCore.Data.Virtualization;
 using LogGrokCore.Filter;
 
 namespace LogGrokCore
@@ -25,24 +24,20 @@ namespace LogGrokCore
         private IEnumerable? _selectedItems;
         private readonly LineViewModelCollectionProvider _lineViewModelCollectionProvider;
         private Regex? _highlightRegex;
-        private Func<int, int> _getIndexByValue = x => x;
+        private Func<int, int> _getIndexByValue;
         private readonly FilterSettings _filterSettings;
         private int _currentItemIndex;
-        private readonly LogHeaderCollection _headerCollection;
+        private readonly IReadOnlyList<ItemViewModel> _headerCollection;
 
         public LogViewModel(
             LogModelFacade logModelFacade,
             LineViewModelCollectionProvider lineViewModelCollectionProvider,
             GridViewFactory viewFactory,
-            LogHeaderCollection headerCollection,
             FilterSettings filterSettings,
-            Selection markedLines,
             ColumnSettings columnSettings)
         {
             _logModelFacade = logModelFacade;
             _filterSettings = filterSettings;
-
-            _headerCollection = headerCollection;
             
             var lineProvider = _logModelFacade.LineProvider;
             var lineParser = _logModelFacade.LineParser;
@@ -50,10 +45,11 @@ namespace LogGrokCore
             _lineViewModelCollectionProvider = lineViewModelCollectionProvider;
             filterSettings.ExclusionsChanged += UpdateFilteredCollection;
 
-            Lines = new GrowingLogLinesCollection(headerCollection, 
-                new VirtualList<(int index, string str), ItemViewModel>(lineProvider,
-                        (indexAndString) => 
-                            new LineViewModel(indexAndString.index, indexAndString.str, lineParser, markedLines)));
+            IReadOnlyList<ItemViewModel> lineCollection;
+            (_headerCollection, lineCollection, _getIndexByValue) 
+                = lineViewModelCollectionProvider.GetLogLinesCollection(lineProvider);
+            
+            Lines = new GrowingLogLinesCollection(_headerCollection, lineCollection);
             
             ExcludeCommand = DelegateCommand.Create(
                     (int componentIndex) => {
