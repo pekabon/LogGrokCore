@@ -1,6 +1,8 @@
 Settings:
   ColorSettings:
     Rules:
+      - ForegroundColor: Black
+        RegexString: No error
       - ForegroundColor: Red
         RegexString: \tERR\t
       - ForegroundColor: Red
@@ -21,7 +23,8 @@ Settings:
       Transformations:
         - lic\t\[ContentImp\.cpp.*\].*"TicketBody".*"(?'Base64DecodeFormatJson'[\w]+==)"
         - ucp.*\t.*Rest response received body:\s+(?<FormatJson>\{.*\})
-# LogGrok logs
+        - ksnclnt\.ds\tRequest for discovery service finished with resultCode.*response=(?<FormatJson>\{.*\})
+    # LogGrok logs
 # 00:07:08.703	10144	0x1	INF	DocumentContainer	Start loading C:\Traces\producttraces (65)\KAV.21.3.7.290_01.26_15.43_4824.SRV.log
     - Regex: ^(?'Time'\d{2}\:\d{2}\:\d{2}\.\d{3})\t(?'Thread'0x[0-9a-fA-F]+)\t(?'Severity'\w+)\t(?'Component'[\w\.]+\t)?(?'Message'.*)
       IndexedFields:
