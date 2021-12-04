@@ -2,10 +2,10 @@ namespace LogGrokCore
 {
     public class LogHeaderViewModel : ItemViewModel
     {
-        public string Text { get; }
+        public LinePartViewModel Text { get; }
 
-        public  LogHeaderViewModel(string text) => Text = text;
+        public  LogHeaderViewModel(string text) => Text = new LinePartViewModel(text);
 
-        public override string ToString() => Text;
+        public override string ToString() => Text.FullText ?? string.Empty;
     }
 }
