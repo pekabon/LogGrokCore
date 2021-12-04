@@ -21,10 +21,7 @@ namespace LogGrokCore.Controls
 
         private static void OnSetFocusRequestChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is not UIElement uiElement)
-                return;
-            
-            if (e.NewValue is SetFocusRequest setFocusRequest)
+            if (d is UIElement uiElement && e.NewValue is SetFocusRequest setFocusRequest)
             {
                 setFocusRequest.SetFocus += () => InvokeSetFocus(uiElement);
             }
