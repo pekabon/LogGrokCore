@@ -1,18 +1,29 @@
 Settings:
   ColorSettings:
+  # Find list of supported values for Color here https://docs.microsoft.com/ru-ru/dotnet/api/system.drawing.color?view=net-6.0
+  # or use "#AARRGGBB" notation
     Rules:
-      - ForegroundColor: Black
-        RegexString: No error
-      - ForegroundColor: Red
-        RegexString: \tERR\t
-      - ForegroundColor: Red
-        RegexString: \Werror\W
-      - ForegroundColor: DarkRed
-        RegexString: \tIMP\t
-      - ForegroundColor: Chocolate
-        RegexString: \tWRN\t
-      - ForegroundColor: Gray
-        RegexString: \tDBG\t
+      - RegexString: No error #use default color
+  
+      - RegexString: "error: 0x0"
+      
+      - RegexString: \tERR\t
+        ForegroundColor: Red
+        
+      - RegexString: \Werror\W
+        ForegroundColor: Red
+        
+      - RegexString: \tIMP\t
+        ForegroundColor: DarkRed
+        
+      - RegexString: \tWRN\t
+        ForegroundColor: Chocolate
+        
+      - RegexString: \tDBG\t
+        ForegroundColor: Gray
+        
+      - RegexString: (?i)fatal
+        BackgroundColor: "#FFCD5C5C"
   LogFormats:
 # KL logs
     - Regex: ^(?'Time'\d{2}\:\d{2}\:\d{2}\.\d{3})\t(?'Thread'0x[0-9a-fA-F]+)\t(?'Severity'\w+)\t(?:(?'Component'[\w\.]+)?\t)?(?'Message'.*)
