@@ -15,8 +15,8 @@ namespace LogGrokCore.Search
     {
         private readonly Func<SearchPattern, SearchDocumentViewModel> _searchDocumentViewModelFactory;
         private string _textToSearch = string.Empty;
-        private  bool _isCaseSensitive;
-        private bool _useRegex = true;
+        private  bool _isCaseSensitive = SearchPattern.Empty.IsCaseSensitive;
+        private bool _useRegex = SearchPattern.Empty.UseRegex;
 
         private DispatcherTimer? _searchPatternThrottleTimer;
         private DispatcherTimer? _autocompletionThrottleTimer;
@@ -24,10 +24,10 @@ namespace LogGrokCore.Search
         private readonly TimeSpan _searchPatternCommitThrottleInterval = TimeSpan.FromMilliseconds(500);
         private readonly TimeSpan _autoCompletionThrottleInterval = TimeSpan.FromSeconds(2);
 
-        private SearchPattern _searchPattern = new(string.Empty, false, false);
+        private SearchPattern _searchPattern = SearchPattern.Empty;
+            
         private SearchDocumentViewModel? _currentDocument;
         private readonly SearchAutocompleteCache _searchAutocompleteCache;
-        private bool _isSearchActive;
 
         public SearchViewModel(Func<SearchPattern, SearchDocumentViewModel> searchDocumentViewModelFactory,
             SearchAutocompleteCache searchAutocompleteCache)
@@ -64,8 +64,6 @@ namespace LogGrokCore.Search
                 if (_currentDocument == null)
                 {
                     TextToSearch = string.Empty;
-                    IsCaseSensitive = false;
-                    UseRegex = false;
                 }
                 else
                 {
@@ -139,7 +137,6 @@ namespace LogGrokCore.Search
                     Throttle(ref _autocompletionThrottleTimer, () => _searchAutocompleteCache.Add(TextToSearch),
                         _autoCompletionThrottleInterval);
                 },
-                
                 timeSpan);
         }
 
