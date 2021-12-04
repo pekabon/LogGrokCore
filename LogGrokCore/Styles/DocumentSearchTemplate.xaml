@@ -120,6 +120,7 @@
                                                                                              Mode=OneWay}"
                      mahapps:TextBoxHelper.SelectAllOnFocus="True"
                      mahapps:TextBoxHelper.Watermark="Search..."
+                     controls:SetFocusBehavior.SetFocusRequest="{Binding SetFocusRequest}"
                      behaviors:AutoCompleteBehavior.AutoCompleteItemsSource="{Binding AutoCompleteList, Mode=OneWay}"
                      behaviors:AutoCompleteBehavior.AutoCompleteStringComparison="InvariantCultureIgnoreCase">
                 <TextBox.InputBindings>

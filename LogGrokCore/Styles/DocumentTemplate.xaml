@@ -16,7 +16,10 @@
     <DataTemplate x:Key="DocumentTemplate" DataType="local:DocumentViewModel">
         <controls:RootDocumentControl
             SearchTextCommand="{Binding SearchViewModel.SearchTextCommand}">
-        <Grid colors:ColorSettings.ColorSettings="{Binding ColorSettings}">
+            <controls:RootDocumentControl.InputBindings>
+                <KeyBinding Gesture="Ctrl+F" Command="{Binding SearchViewModel.Activate}" />
+            </controls:RootDocumentControl.InputBindings>
+            <Grid colors:ColorSettings.ColorSettings="{Binding ColorSettings}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto"/>

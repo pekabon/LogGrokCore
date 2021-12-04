@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Windows.Input;
 using System.Windows.Threading;
+using LogGrokCore.Controls;
 
 namespace LogGrokCore.Search
 {
@@ -26,6 +27,7 @@ namespace LogGrokCore.Search
         private SearchPattern _searchPattern = new(string.Empty, false, false);
         private SearchDocumentViewModel? _currentDocument;
         private readonly SearchAutocompleteCache _searchAutocompleteCache;
+        private bool _isSearchActive;
 
         public SearchViewModel(Func<SearchPattern, SearchDocumentViewModel> searchDocumentViewModelFactory,
             SearchAutocompleteCache searchAutocompleteCache)
@@ -42,52 +44,44 @@ namespace LogGrokCore.Search
             CloseDocumentCommand = DelegateCommand.Create<SearchDocumentViewModel>(CloseDocument);
             AddNewSearchCommand = new DelegateCommand(() => AddNewSearch(_searchPattern.Clone()));
             SearchTextCommand = new DelegateCommand(SearchText, text => !string.IsNullOrEmpty(text as string));
-            Documents = new ObservableCollection<SearchDocumentViewModel>();
+            Activate = new DelegateCommand(() => SetFocusRequest.Invoke());
 
+            Documents = new ObservableCollection<SearchDocumentViewModel>();
             _searchAutocompleteCache = searchAutocompleteCache;
         }
-
-        public DelegateCommand SearchTextCommand { get; set; }
-
-        private void ClearSearch()
-        {
-            TextToSearch = string.Empty;
-            CommitSearchPatternImmediately(TextToSearch, IsCaseSensitive, UseRegex);
-        }
-
-        private void CloseDocument(SearchDocumentViewModel searchDocumentViewModel)
-        {
-            searchDocumentViewModel.Dispose();
-            if (Documents.Count != 0) return;
-            TextToSearch = string.Empty;
-            CurrentDocument = null;
-        }
-
-        private void AddNewSearch(SearchPattern searchPattern)
-        {
-            var newDocument = _searchDocumentViewModelFactory(searchPattern);
-            Documents.Add(newDocument);
-            CurrentDocument = newDocument;
-        }
-        
-        private void SearchText(object obj)
-        {
-            if (obj is not string text) return;
-            var searchPattern = new SearchPattern(text, false, false);
-            AddNewSearch(searchPattern);
-        }
-
         public event Action<int>? CurrentLineChanged;
 
         public event Action<Regex>? CurrentSearchChanged;
 
+        public SearchDocumentViewModel? CurrentDocument
+        {
+            get => _currentDocument;
+            set
+            {
+                if (_currentDocument == value) return;
+                SetAndRaiseIfChanged(ref _currentDocument,  value);
+                
+                if (_currentDocument == null)
+                {
+                    TextToSearch = string.Empty;
+                    IsCaseSensitive = false;
+                    UseRegex = false;
+                }
+                else
+                {
+                    var searchPattern = _currentDocument.SearchPattern;
+                    TextToSearch = searchPattern.Pattern;
+                    IsCaseSensitive = searchPattern.IsCaseSensitive;
+                    UseRegex = searchPattern.UseRegex;
+                }
+            }
+        }
+        public SetFocusRequest SetFocusRequest { get; } = new(); 
+
         public string TextToSearch
         {
             get => _textToSearch;
-            set
-            {
-                CommitSearchPattern(ref _textToSearch, value, _searchPatternCommitThrottleInterval);
-            }
+            set => CommitSearchPattern(ref _textToSearch, value, _searchPatternCommitThrottleInterval);
         }
 
         public bool IsCaseSensitive
@@ -106,46 +100,33 @@ namespace LogGrokCore.Search
             }
         }
 
-        public bool IsFilterEnabled
-        {
-            get => !_searchPattern.IsEmpty;
-        }
+        public bool IsFilterEnabled => !_searchPattern.IsEmpty;
 
-        public bool IsFilterDisabled
-        {
-            get => _searchPattern.IsEmpty;
-        }
-      
-        public ICommand ClearSearchCommand { get; private set; }
+        public bool IsFilterDisabled => _searchPattern.IsEmpty;
+        
+        public ObservableCollection<SearchDocumentViewModel> Documents { get; }
 
-        public ICommand CloseDocumentCommand { get; private set; }
+        public string Error => string.Empty;
 
-        public ICommand AddNewSearchCommand { get; private set; }
+        public IEnumerable<string> AutoCompleteList => _searchAutocompleteCache.Items;
 
-        public SearchDocumentViewModel? CurrentDocument
-        {
-            get => _currentDocument;
-            set
+        public string this[string columnName] =>
+            columnName switch
             {
-                if (_currentDocument == value) return;
-                SetAndRaiseIfChanged(ref _currentDocument,  value);
+                nameof(TextToSearch) =>
+                    new SearchPattern(TextToSearch, IsCaseSensitive, UseRegex).RegexParseError,
+                _ => string.Empty
+            };
 
-                
-                if (_currentDocument == null)
-                {
-                    TextToSearch = string.Empty;
-                    IsCaseSensitive = false;
-                    UseRegex = false;
-                }
-                else
-                {
-                    var searchPattern = _currentDocument.SearchPattern;
-                    TextToSearch = searchPattern.Pattern;
-                    IsCaseSensitive = searchPattern.IsCaseSensitive;
-                    UseRegex = searchPattern.UseRegex;
-                }
-            }
-        }
+        public ICommand Activate { get; }
+        
+        public ICommand SearchTextCommand { get; set; }
+
+        public ICommand ClearSearchCommand { get; }
+
+        public ICommand CloseDocumentCommand { get; }
+
+        public ICommand AddNewSearchCommand { get; }
 
         private void CommitSearchPattern<T>(ref T field, T newValue, TimeSpan timeSpan, [CallerMemberName] string? propertyName = null)
         {
@@ -215,18 +196,32 @@ namespace LogGrokCore.Search
             }
         }
 
-        public ObservableCollection<SearchDocumentViewModel> Documents { get; }
+        private void ClearSearch()
+        {
+            TextToSearch = string.Empty;
+            CommitSearchPatternImmediately(TextToSearch, IsCaseSensitive, UseRegex);
+        }
 
-        public string Error => string.Empty;
+        private void CloseDocument(SearchDocumentViewModel searchDocumentViewModel)
+        {
+            searchDocumentViewModel.Dispose();
+            if (Documents.Count != 0) return;
+            TextToSearch = string.Empty;
+            CurrentDocument = null;
+        }
 
-        public IEnumerable<string> AutoCompleteList => _searchAutocompleteCache.Items;
-
-        public string this[string columnName] =>
-            columnName switch
-            {
-                nameof(TextToSearch) =>
-                    new SearchPattern(TextToSearch, IsCaseSensitive, UseRegex).RegexParseError,
-                _ => string.Empty
-            };
+        private void AddNewSearch(SearchPattern searchPattern)
+        {
+            var newDocument = _searchDocumentViewModelFactory(searchPattern);
+            Documents.Add(newDocument);
+            CurrentDocument = newDocument;
+        }
+        
+        private void SearchText(object obj)
+        {
+            if (obj is not string text) return;
+            var searchPattern = new SearchPattern(text, false, false);
+            AddNewSearch(searchPattern);
+        }
     }
 }
