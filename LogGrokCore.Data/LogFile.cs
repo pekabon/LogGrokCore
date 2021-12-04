@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Text.Unicode;
 using UtfUnknown;
 
 namespace LogGrokCore.Data
@@ -79,7 +80,7 @@ namespace LogGrokCore.Data
             }
 
             var detectResult = CharsetDetector.DetectFromBytes(buffer);
-            var detectedEncoding = detectResult.Detected.Encoding;
+            var detectedEncoding = detectResult.Detected?.Encoding ?? Encoding.UTF8;
             
             return detectedEncoding != Encoding.ASCII ? detectedEncoding : Encoding.UTF8;
         }
