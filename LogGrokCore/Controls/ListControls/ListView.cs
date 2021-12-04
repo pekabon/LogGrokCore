@@ -20,6 +20,13 @@ namespace LogGrokCore.Controls.ListControls
     
     public class ListView : BaseListView
     {
+        private int _previousItemCount;
+        private bool _headerAdjusted;
+
+        private VirtualizingStackPanel.VirtualizingStackPanel? _panel;
+
+        private bool? _haveExternalColumnSettings;
+        
         public static readonly DependencyProperty ReadonlySelectedItemsProperty =
             DependencyProperty.Register(nameof(ReadonlySelectedItems), typeof(IEnumerable), typeof(ListView));
 
@@ -106,9 +113,18 @@ namespace LogGrokCore.Controls.ListControls
             
             base.OnMouseDown(e);
         }
+        protected override void OnItemsChanged(NotifyCollectionChangedEventArgs e)
+        {
+            base.OnItemsChanged(e);
 
-        private int _previousItemCount;
-        private bool _headerAdjusted;
+            var panel = GetPanel();
+            if (_previousItemCount == 0 && Items.Count > 0 && panel != null)
+            {
+                ScheduleResetColumnsWidth();
+                _previousItemCount = Items.Count;            
+            }
+        }
+
         protected override void OnItemsSourceChanged(IEnumerable? oldValue, IEnumerable? newValue)
         {
             base.OnItemsSourceChanged(oldValue, newValue);
@@ -133,6 +149,13 @@ namespace LogGrokCore.Controls.ListControls
             }
 
             ScheduleRemeasure(0);
+        }
+        
+        protected override IEnumerable<int> GetSelectedIndices() => GetPanel()?.SelectedIndices ?? Enumerable.Empty<int>();
+
+        protected override void OnTextInput(TextCompositionEventArgs e)
+        {
+            // Disable Text search
         }
 
         // ad hoc 
@@ -162,21 +185,7 @@ namespace LogGrokCore.Controls.ListControls
             }
             _panel?.InvalidateMeasure();
         }
-
-        protected override void OnItemsChanged(NotifyCollectionChangedEventArgs e)
-        {
-            base.OnItemsChanged(e);
-
-            var panel = GetPanel();
-            if (_previousItemCount == 0 && Items.Count > 0 && panel != null)
-            {
-                ScheduleResetColumnsWidth();
-                _previousItemCount = Items.Count;            
-            }
-        }
-
-        private bool? _haveExternalColumnSettings;
-        
+       
         private void ScheduleResetColumnsWidth()
         {
             double CalculateRemainingSpace(System.Windows.Controls.GridView view,
@@ -258,9 +267,6 @@ namespace LogGrokCore.Controls.ListControls
             }, DispatcherPriority.ApplicationIdle);
         }
 
-        protected override IEnumerable<int> GetSelectedIndices() => GetPanel()?.SelectedIndices ?? Enumerable.Empty<int>();
-
-        private VirtualizingStackPanel.VirtualizingStackPanel? _panel;
         private VirtualizingStackPanel.VirtualizingStackPanel? GetPanel()
         {
             _panel ??= this.GetVisualChildren<VirtualizingStackPanel.VirtualizingStackPanel>().FirstOrDefault();
