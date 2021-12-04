@@ -36,7 +36,7 @@ namespace LogGrokCore.Data
         {
             var buffer = new byte[8192];
             var length = OpenForSequentialRead().Read(buffer, 0, buffer.Length);
-            var span = buffer.AsSpan();
+            var span = buffer.AsSpan(length);
 
             // try to find BOM
             foreach (var unicodeEncoding in _unicodeEncodings)
