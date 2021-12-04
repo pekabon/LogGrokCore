@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -174,46 +175,46 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
 
         private void ExpandSelectionUp()
         {
-            if (CurrentPosition <= 0 ) return;
-
             if (_selection.Bounds is not {min: var min, max: var max})
             {
                 return;
             }
 
-            if (CurrentPosition == min)
+            switch (CurrentPosition)
             {
-                CurrentPosition--;
-                _selection.Add(CurrentPosition);
+                case <=0: return;
+                case {} pos when pos == min: 
+                    CurrentPosition--;
+                    _selection.Add(CurrentPosition);
+                    break;
+                case {} pos when pos == max:
+                    _selection.Remove(CurrentPosition);
+                    CurrentPosition = _selection.Bounds.Value.max;
+                    break;
             }
-
-            if (CurrentPosition == max)
-            {
-                _selection.Remove(CurrentPosition);
-                CurrentPosition = max;
-            }
-
+    
             BringIndexIntoView(CurrentPosition);
             UpdateSelection();
         }
 
         private void ExpandSelectionDown()
         {
-            if (CurrentPosition >= Items.Count - 1 || 
-                _selection.Bounds is not {min: var min, max: var max}) return;
+            if (_selection.Bounds is not {min: var min, max: var max}) return;
 
-            if (CurrentPosition == max)
+            switch (CurrentPosition)
             {
-                CurrentPosition++;
-                _selection.Add(CurrentPosition);
+                case {} pos when pos >= Items.Count - 1:
+                    return;
+                case {} pos when pos == max:
+                    CurrentPosition++;
+                    _selection.Add(CurrentPosition);
+                    break;
+                case {} pos when pos ==min:
+                    _selection.Remove(CurrentPosition);
+                    CurrentPosition = _selection.Bounds.Value.min;
+                    break;
             }
 
-            if (CurrentPosition == min)
-            {
-                _selection.Remove(CurrentPosition);
-                CurrentPosition = min;
-            }
-            
             BringIndexIntoViewWhileNavigatingDown(CurrentPosition);
             UpdateSelection();
         }
