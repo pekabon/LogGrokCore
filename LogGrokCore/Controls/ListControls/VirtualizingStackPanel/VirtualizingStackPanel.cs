@@ -388,7 +388,7 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
             var itemToScrollValue = itemToScroll.Value;
 
             var delta = (itemToScrollValue.UpperBound - builtDistance) / itemToScrollValue.Height;
-            SetVerticalOffset(itemToScrollValue.Index + delta);
+            SetVerticalOffset(itemToScrollValue.Index - delta);
         }
 
         private ListViewItem? GenerateElement(int currentIndex)
