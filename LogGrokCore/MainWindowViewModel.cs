@@ -8,6 +8,7 @@ using System.Reflection.Metadata;
 using System.Windows;
 using System.Windows.Input;
 using LogGrokCore.AvalonDock;
+using LogGrokCore.Data;
 using LogGrokCore.MarkedLines;
 using LogGrokCore.Search;
 using Microsoft.Win32;
@@ -30,12 +31,14 @@ namespace LogGrokCore
             obj=> OpenFiles((IEnumerable<string>)obj), 
             o => o is IEnumerable<string>);
 
-        public MainWindowViewModel(ApplicationSettings applicationSettings, SearchAutocompleteCache searchAutocompleteCache)
+        public MainWindowViewModel(ApplicationSettings applicationSettings, 
+            SearchAutocompleteCache searchAutocompleteCache, 
+            Func<ObservableCollection<DocumentViewModel>, MarkedLinesViewModel> markedLinesViewModelFactory)
         {
             _applicationSettings = applicationSettings;
             _searchAutocompleteCache = searchAutocompleteCache;
             Documents = new ObservableCollection<DocumentViewModel>();
-            MarkedLinesViewModel = new MarkedLinesViewModel(Documents);
+            MarkedLinesViewModel = markedLinesViewModelFactory(Documents);
             OpenSettings = new DelegateCommand(() =>
             { 
                 OpenExternalFile(ApplicationSettings.SettingsFileName);

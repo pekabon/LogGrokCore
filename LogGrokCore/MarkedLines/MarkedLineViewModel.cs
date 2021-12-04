@@ -1,5 +1,4 @@
 ﻿using LogGrokCore.Colors;
-using LogGrokCore.Controls;
 
 namespace LogGrokCore.MarkedLines
 {

@@ -65,7 +65,6 @@ namespace LogGrokCore.Data
                 Trace.TraceError(e.ToString());
                 return input;
             }
-
         }
 
         static string FormatJsonText(string jsonString)
@@ -100,7 +99,5 @@ namespace LogGrokCore.Data
             Base64.DecodeFromUtf8InPlace(buffer, out var bytesWritten);
             return Encoding.UTF8.GetString(buffer, 0, bytesWritten);
         }
-
-
     }
 }

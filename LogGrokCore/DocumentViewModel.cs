@@ -6,7 +6,6 @@ using System.Linq;
 using System.Windows.Input;
 using LogGrokCore.Colors;
 using LogGrokCore.Controls;
-using LogGrokCore.Controls.ListControls;
 using LogGrokCore.Data;
 using LogGrokCore.Search;
 
@@ -17,6 +16,7 @@ namespace LogGrokCore
         private readonly Selection _markedLines;
         private bool _isCurrentDocument;
         private readonly LineProvider _lineProvider;
+        private readonly TransformationPerformer _transformationPerformer;
 
         public DocumentViewModel(
             LineProvider lineProvider,
@@ -24,7 +24,8 @@ namespace LogGrokCore
             LogViewModel logViewModel, 
             SearchViewModel searchViewModel,
             Selection markedLines,
-            ColorSettings colorSettings)
+            ColorSettings colorSettings,
+            TransformationPerformer transformationPerformer)
         {
             var logFileFilePath = logModelFacade.LogFile.FilePath;
             
@@ -40,6 +41,7 @@ namespace LogGrokCore
             SearchViewModel.CurrentSearchChanged += regex => LogViewModel.HighlightRegex = regex;
 
             _markedLines = markedLines;
+            _transformationPerformer = transformationPerformer;
             _lineProvider = lineProvider;
             _markedLines.Changed += () => MarkedLinesChanged?.Invoke();
             
@@ -73,7 +75,7 @@ namespace LogGrokCore
                 {
                     var lines = new (int, string)[1];
                     _lineProvider.Fetch(lineNumber, lines.AsSpan());
-                    collection.Add((lineNumber, lines[0].Item2));
+                    collection.Add((lineNumber, _transformationPerformer.Transform(lines[0].Item2)));
                 }
 
                 return collection;

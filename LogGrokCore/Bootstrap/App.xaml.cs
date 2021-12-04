@@ -6,7 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Windows;
 using DryIoc;
+using LogGrokCore.Data;
 using LogGrokCore.Diagnostics;
+using LogGrokCore.MarkedLines;
 using LogGrokCore.Search;
 using Splat.DryIoc;
 
@@ -72,7 +74,8 @@ namespace LogGrokCore.Bootstrap
         {
             container.RegisterDelegate(ApplicationSettings.Load);
             container.Register<MainWindowViewModel>(Reuse.Singleton);
-            container.Register<SearchAutocompleteCache>(Reuse.Singleton);
+            container.Register<SearchAutocompleteCache>(Reuse.Singleton); 
+            container.Register<MarkedLinesViewModel>();
             container.Register<MainWindow>();
         }
 
