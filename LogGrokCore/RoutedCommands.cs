@@ -6,9 +6,9 @@ namespace LogGrokCore
     public static class RoutedCommands
     {
         public static readonly RoutedCommand Cancel = new RoutedUICommand(
-            "Cancel", "Cancel", typeof(UIElement), 
+            "Cancel", "Cancel", typeof(UIElement),
             new InputGestureCollection { new KeyGesture(Key.Escape) });
-        
+
         public static readonly RoutedCommand SearchText = new RoutedUICommand(
             "Search selection", "Search selection", typeof(UIElement));
 
@@ -16,9 +16,10 @@ namespace LogGrokCore
             "Clear filters", "Clear filters", typeof(UIElement));
 
         public static readonly RoutedUICommand CopyToClipboard;
-        
+
         public static readonly RoutedCommand ToggleMarks = new RoutedUICommand(
-            "Mark", "Mark lines", typeof(UIElement));
+            "Mark", "Mark lines", typeof(UIElement),
+            new InputGestureCollection { new KeyGesture(Key.Space) });
 
         static RoutedCommands()
         {
@@ -26,7 +27,7 @@ namespace LogGrokCore
                 ApplicationCommands.Copy.Text,
                 nameof(CopyToClipboard),
                 typeof(UIElement), new InputGestureCollection(ApplicationCommands.Copy.InputGestures));
-            
+
             ApplicationCommands.Copy.InputGestures.Clear();
         }
     }
