@@ -80,7 +80,7 @@ namespace LogGrokCore.Data
             }
 
             var detectResult = CharsetDetector.DetectFromBytes(buffer);
-            var detectedEncoding = detectResult.Detected?.Encoding ?? Encoding.UTF8;
+            var detectedEncoding = detectResult?.Detected?.Encoding ?? Encoding.UTF8;
             
             return detectedEncoding != Encoding.ASCII ? detectedEncoding : Encoding.UTF8;
         }
