@@ -52,10 +52,13 @@ namespace LogGrokCore.Bootstrap
                     var message = await reader.ReadToEndAsync();
                     Trace.TraceInformation($"Another instance started with parameters: {message}");
                     onNextInstanceStarted(message.Split(MessageSeparator));
-                    server.Disconnect();                
+                    server.Disconnect();
                 }
             }
             catch (TaskCanceledException)
+            {
+            }
+            catch (OperationCanceledException)
             {
             }
         }
