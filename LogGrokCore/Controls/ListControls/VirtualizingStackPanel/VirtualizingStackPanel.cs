@@ -25,15 +25,9 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
         {
             IGrowingCollection? currentItems = null;
 
-            ItemCollection GetItems()
-            {
-                var itemsOwner = ItemsControl.GetItemsOwner(this);
-                return itemsOwner.Items;
-            }
-
             void UpdateGrowingCollectionSubscription()
             {
-                if (ItemsControl.GetItemsOwner(this).ItemsSource is not IGrowingCollection newItems ||
+                if (ItemsControl.GetItemsOwner(this)?.ItemsSource is not IGrowingCollection newItems ||
                     currentItems == newItems) return;
                 
                 currentItems = newItems;
