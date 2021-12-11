@@ -27,7 +27,7 @@
                 <ResourceDictionary Source="Styles/ListViewItemStyle.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <th:MetroTheme x:Key="MetroTheme" />
-            <localControls:StringShortenerConvereter x:Key="StringShortenerConvereter" />
+            <localControls:StringShortenerConvereter x:Key="StringShortenerConverter" />
             <localBehaviors:MenuItemCollection x:Key="AdditionalDocumentMenuItems">
                 <MenuItem Header="Copy Full Path" Command="{Binding Model.Content.CopyPathToClipboardCommand}" />
                 <MenuItem Header="Open Containing Folder" Command="{Binding Model.Content.OpenContainingFolderCommand}" />
@@ -94,7 +94,7 @@
                         <DataTrigger Binding="{Binding Model.Content.IsCurrentDocument}" Value="False">
                             <Setter Property="Title"
                                     Value="{Binding Model.Content.Title, 
-                            Converter={StaticResource StringShortenerConvereter}, ConverterParameter=25}" />
+                            Converter={StaticResource StringShortenerConverter}, ConverterParameter=25}" />
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
