@@ -141,6 +141,7 @@ namespace LogGrokCore
             return new System.Text.UTF8Encoding()
                 .GetString(memoryStream.ToArray());
         }
+        
         private static int SkipLines(ReadOnlySpan<char> source, uint linesToSkip)
         {
             if (linesToSkip == 0) return 0;
