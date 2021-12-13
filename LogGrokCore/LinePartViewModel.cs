@@ -9,7 +9,7 @@
             void SetTrimmedProperties()
             {
                 var (text, trimmedLinesCount) = TextOperations.TrimLines(source, MaxLines);
-                Text = TextOperations.Normalize(text, true);
+                Text = TextOperations.Normalize(text, ApplicationSettings.Instance().ViewSettings);
                 TrimmedLinesCount = trimmedLinesCount;
                 FullText = source;
                 IsTrimmedLinesHidden = true;
@@ -25,7 +25,7 @@
 
             void SetHideJsonProperties()
             {
-                Text = TextOperations.Normalize(source, true);
+                Text = TextOperations.Normalize(source, ApplicationSettings.Instance().ViewSettings);
                 IsJsonViewHidden = true;
             }
 

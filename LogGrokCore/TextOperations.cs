@@ -7,20 +7,18 @@ namespace LogGrokCore
 {
     public static class TextOperations
     {
-        private const int MaxLineLength = 4096;
-        private const int MaxLineBreakLength = 9728;
         private const string Ellipsis = "...";
-       
-        public static string Normalize(string source, bool lineBreak = false)
+
+        public static string Normalize(string source, ViewSettings settings)
         {
-            return (source.Length < MaxLineLength ? source : FormatLongString(source.TrimEnd('\0'), lineBreak)).TrimEnd();
+            return (source.Length < settings.SizeBigLine ? source : FormatLongString(source.TrimEnd('\0'), settings)).TrimEnd();
         }
-        private static string FormatLongString(string source, bool lineBreak)
+        private static string FormatLongString(string source, ViewSettings settings)
         {
             var lines = 
                 source.Split(Environment.NewLine);
 
-            if (lines.Length == 1 && lines[0].Length <= MaxLineLength)
+            if (lines.Length == 1 && lines[0].Length <= settings.SizeBigLine)
                 return source;
 
             var sb = new StringBuilder();
@@ -28,19 +26,19 @@ namespace LogGrokCore
             for (var idx = 0; idx < lines.Length; idx++)
             {
                 var line = lines[idx];
-                if (line.Length <= MaxLineLength)
+                if (line.Length <= settings.SizeBigLine)
                 {
                     sb.Append(line);
                 }
                 else
                 {
-                    if(lineBreak)
+                    if(settings.BigLine == ViewSettings.ViewBigLine.Break)
                     {
-                        sb.Append(BreakLongString(line));
+                        sb.Append(BreakLongString(line, settings));
                     }
                     else
                     {
-                        sb.Append(line, 0, MaxLineLength);
+                        sb.Append(line, 0, settings.SizeBigLine);
                         sb.Append(Ellipsis);
                     }
                 }
@@ -52,17 +50,17 @@ namespace LogGrokCore
             return sb.ToString();
         }
 
-        private static string BreakLongString(string source)
+        private static string BreakLongString(string source, ViewSettings settings)
         {
             var sb = new StringBuilder();
-            for (int i = 0; i <= source.Length / MaxLineBreakLength; ++i)
+            for (int i = 0; i <= source.Length / settings.SizeBigLine; ++i)
             {
                 if (i != 0 )
                     sb.Append("\n");
-                if(i * MaxLineBreakLength + MaxLineBreakLength < source.Length)
-                    sb.Append(source.Substring(i * MaxLineBreakLength, MaxLineBreakLength));
+                if(i * settings.SizeBigLine + settings.SizeBigLine < source.Length)
+                    sb.Append(source.Substring(i * settings.SizeBigLine, settings.SizeBigLine));
                 else
-                    sb.Append(source.Substring(i * MaxLineBreakLength));
+                    sb.Append(source.Substring(i * settings.SizeBigLine));
             }
             return sb.ToString();
         }
