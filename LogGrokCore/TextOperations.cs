@@ -1,19 +1,21 @@
 ﻿using System;
+using System.IO;
 using System.Text;
+using System.Text.Json;
 
 namespace LogGrokCore
 {
     public static class TextOperations
     {
         private const int MaxLineLength = 4096;
+        private const int MaxLineBreakLength = 9728;
         private const string Ellipsis = "...";
        
-        public static string Normalize(string source)
+        public static string Normalize(string source, bool lineBreak = false)
         {
-            return (source.Length < MaxLineLength ? source : FormatLongString(source.TrimEnd('\0'))).TrimEnd();
+            return (source.Length < MaxLineLength ? source : FormatLongString(source.TrimEnd('\0'), lineBreak)).TrimEnd();
         }
-
-        private static string FormatLongString(string source)
+        private static string FormatLongString(string source, bool lineBreak)
         {
             var lines = 
                 source.Split(Environment.NewLine);
@@ -32,14 +34,36 @@ namespace LogGrokCore
                 }
                 else
                 {
-                    sb.Append(line, 0, MaxLineLength);
-                    sb.Append(Ellipsis);
+                    if(lineBreak)
+                    {
+                        sb.Append(BreakLongString(line));
+                    }
+                    else
+                    {
+                        sb.Append(line, 0, MaxLineLength);
+                        sb.Append(Ellipsis);
+                    }
                 }
                 
                 if (idx != lines.Length - 1)
                     sb.Append(Environment.NewLine);
             }
 
+            return sb.ToString();
+        }
+
+        private static string BreakLongString(string source)
+        {
+            var sb = new StringBuilder();
+            for (int i = 0; i <= source.Length / MaxLineBreakLength; ++i)
+            {
+                if (i != 0 )
+                    sb.Append("\n");
+                if(i * MaxLineBreakLength + MaxLineBreakLength < source.Length)
+                    sb.Append(source.Substring(i * MaxLineBreakLength, MaxLineBreakLength));
+                else
+                    sb.Append(source.Substring(i * MaxLineBreakLength));
+            }
             return sb.ToString();
         }
 
@@ -55,6 +79,68 @@ namespace LogGrokCore
             return (new string(sourceSpan[..toTrimOffset]), CountLines(sourceSpan[toTrimOffset..]));
         }
 
+        public static string ExpandInlineJson(string text)
+        {
+            if (String.IsNullOrEmpty(text))
+            {
+                return text;
+            }
+
+            try
+            {
+                int first = text.IndexOf("{");
+                int last = text.LastIndexOf("}");
+                if (first == -1 || last == -1)
+                    return text;
+
+                var rawStr = text.Substring(first, last - first + 1);
+                return text.Substring(0, first) + FormatJsonText(rawStr) + text.Substring(last + 1);
+/*                var obj = JsonSerializer.Deserialize<object>(rawStr);
+                                string jsString = JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
+                                return text.Substring(0, first) + jsString + text.Substring(last + 1);*/
+            }
+            catch (JsonException)
+            {
+                return text;
+            }
+        }
+
+        public static bool IsExistsInlineJson(string text)
+        {
+            if (String.IsNullOrEmpty(text) || text.IndexOf("\n") + 1 != text.Length)
+            {
+                return false;
+            }
+
+            try
+            {
+                int first = text.IndexOf("{");
+                int last = text.LastIndexOf("}");
+                if (first == -1 || last == -1)
+                    return false;
+
+                var rawStr = text.Substring(first, last - first + 1);
+                var obj = JsonSerializer.Deserialize<object>(rawStr);
+                return true;
+            }
+            catch (JsonException)
+            {
+                return false;
+            }
+        }
+
+        private static string FormatJsonText(string jsonString)
+        {
+            using var doc = JsonDocument.Parse(jsonString, new JsonDocumentOptions { AllowTrailingCommas = true });
+            MemoryStream memoryStream = new MemoryStream();
+            using (var writer = new Utf8JsonWriter(memoryStream, new JsonWriterOptions { Indented = true, 
+                                                                                         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
+            {
+                doc.WriteTo(writer);
+            }
+            return new System.Text.UTF8Encoding()
+                .GetString(memoryStream.ToArray());
+        }
         private static int SkipLines(ReadOnlySpan<char> source, uint linesToSkip)
         {
             if (linesToSkip == 0) return 0;

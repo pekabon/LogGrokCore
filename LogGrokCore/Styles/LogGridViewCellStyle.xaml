@@ -49,7 +49,41 @@
         </ContentControl>
 
     </DataTemplate>
-    
+    <DataTemplate x:Key="JsonViewTemplate" DataType="logGrokCore:LinePartViewModel">
+        <ContentControl Content="{Binding}">
+            <ContentControl.Style>
+                <Style TargetType="{x:Type ContentControl}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsJsonViewHidden}" Value="True">
+                            <Setter Property="ContentTemplate">
+                                <Setter.Value>
+                                    <DataTemplate DataType="logGrokCore:LinePartViewModel">
+                                        <TextBlock Foreground="Gray" FontStyle="Italic">
+                                    <Hyperlink Command="{Binding ViewJsonCommand}"><Run Text="Expand inline json >>>"/></Hyperlink>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsJsonViewHidden}" Value="False">
+                            <Setter Property="ContentTemplate">
+                                <Setter.Value>
+                                    <DataTemplate DataType="logGrokCore:LinePartViewModel">
+                                        <TextBlock Foreground="Gray" FontStyle="Italic">
+                                    <Hyperlink Command="{Binding HideJsonCommand}"><Run Text="&lt;&lt;&lt; Collapse inline json"/></Hyperlink>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ContentControl.Style>
+
+        </ContentControl>
+
+    </DataTemplate>
+
     <DataTemplate x:Key="NormalTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
         <textRender:FastTextBlock 
             Tag="{Binding
@@ -66,17 +100,36 @@
             <ContentPresenter ContentTemplate="{StaticResource ShowLinesTemplate}"/>
         </StackPanel>
     </DataTemplate>
+
+    <DataTemplate x:Key="JsonTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
+        <StackPanel>
+            <textRender:FastTextBlock Text="{Binding Text, Mode=OneWay}" 
+                                      Tag="{Binding
+                                        RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"
+            />
+            <ContentPresenter ContentTemplate="{StaticResource JsonViewTemplate}"/>
+        </StackPanel>
+    </DataTemplate>
     
     <Style TargetType="{x:Type ContentControl}" x:Key="LogGridViewCellStyle">
         <Style.Triggers>
-            <DataTrigger Binding="{Binding Content.IsCollapsible,
-                                    RelativeSource={RelativeSource Self}}" Value="False">
+            <DataTrigger Binding="{Binding Content.IsExistJson, RelativeSource={RelativeSource Self}}" Value="True">
+                <Setter Property="ContentTemplate" Value="{StaticResource JsonTemplate}"/>
+            </DataTrigger>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding Content.IsCollapsible, RelativeSource={RelativeSource Self}}" Value="False" />
+                    <Condition Binding="{Binding Content.IsExistJson, RelativeSource={RelativeSource Self}}" Value="False" />
+                </MultiDataTrigger.Conditions>
                 <Setter Property="ContentTemplate" Value="{StaticResource NormalTemplate}"/>
-            </DataTrigger>
-            <DataTrigger Binding="{Binding Content.IsCollapsible,
-                                    RelativeSource={RelativeSource Self}}" Value="True">
+            </MultiDataTrigger>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding Content.IsCollapsible, RelativeSource={RelativeSource Self}}" Value="True" />
+                    <Condition Binding="{Binding Content.IsExistJson, RelativeSource={RelativeSource Self}}" Value="False" />
+                </MultiDataTrigger.Conditions>
                 <Setter Property="ContentTemplate" Value="{StaticResource TrimmedTextTemplate}"/>
-            </DataTrigger>
+            </MultiDataTrigger>
         </Style.Triggers>
     </Style>
     <Style TargetType="{x:Type gridView:LogGridViewCell}" BasedOn="{StaticResource LogGridViewCellStyle}"/>
