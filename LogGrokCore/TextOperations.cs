@@ -79,6 +79,21 @@ namespace LogGrokCore
             return (new string(sourceSpan[..toTrimOffset]), CountLines(sourceSpan[toTrimOffset..]));
         }
 
+        public static bool IsExistsInlineJson(string text)
+        {
+            if (String.IsNullOrEmpty(text) || text.IndexOf("\n") + 1 != text.Length)
+            {
+                return false;
+            }
+
+            int first = text.IndexOf("{");
+            int last = text.LastIndexOf("}");
+            if (first == -1 || last == -1)
+                return false;
+
+            return IsInlineJson(text.Substring(first, last - first + 1));
+        }
+
         public static string ExpandInlineJson(string text)
         {
             if (String.IsNullOrEmpty(text))
@@ -95,9 +110,6 @@ namespace LogGrokCore
 
                 var rawStr = text.Substring(first, last - first + 1);
                 return text.Substring(0, first) + FormatJsonText(rawStr) + text.Substring(last + 1);
-/*                var obj = JsonSerializer.Deserialize<object>(rawStr);
-                                string jsString = JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
-                                return text.Substring(0, first) + jsString + text.Substring(last + 1);*/
             }
             catch (JsonException)
             {
@@ -105,22 +117,11 @@ namespace LogGrokCore
             }
         }
 
-        public static bool IsExistsInlineJson(string text)
+        private static bool IsInlineJson(string jsonString)
         {
-            if (String.IsNullOrEmpty(text) || text.IndexOf("\n") + 1 != text.Length)
-            {
-                return false;
-            }
-
             try
             {
-                int first = text.IndexOf("{");
-                int last = text.LastIndexOf("}");
-                if (first == -1 || last == -1)
-                    return false;
-
-                var rawStr = text.Substring(first, last - first + 1);
-                var obj = JsonSerializer.Deserialize<object>(rawStr);
+                using var doc = JsonDocument.Parse(jsonString, new JsonDocumentOptions { AllowTrailingCommas = true });
                 return true;
             }
             catch (JsonException)
@@ -128,7 +129,6 @@ namespace LogGrokCore
                 return false;
             }
         }
-
         private static string FormatJsonText(string jsonString)
         {
             using var doc = JsonDocument.Parse(jsonString, new JsonDocumentOptions { AllowTrailingCommas = true });
