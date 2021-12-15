@@ -1,4 +1,4 @@
-name: Build and Upload
+name: Upload Binaries
 
 on:
   workflow_dispatch:
