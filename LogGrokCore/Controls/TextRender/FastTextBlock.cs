@@ -425,9 +425,9 @@ namespace LogGrokCore.Controls.TextRender
             return accumulatedGeometry;
         }
 
-
         private double _cachedWidth;
         private string? _cachedText;
+        
         protected override Size MeasureOverride(Size constraint)
         {
            var text = Text;
@@ -436,6 +436,8 @@ namespace LogGrokCore.Controls.TextRender
             if (_textLines == null || _cachedText != text || _cachedWidth < constraint.Width)
             {
                 _textLines = CreateTextLines(text, constraint.Width);
+                _cachedWidth = constraint.Width;
+                _cachedText = text;
             }
             
             var height = 0.0;
