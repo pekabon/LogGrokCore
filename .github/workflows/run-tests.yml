@@ -1,4 +1,4 @@
-name: Run unit tests
+name: Run unit tests and upload
 
 on:
   push:
@@ -45,3 +45,11 @@ jobs:
     # Execute all unit tests in the solution
     - name: Execute unit tests
       run: dotnet test --no-restore --verbosity normal
+      
+    # Upload
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: binaries for ${{ matrix.configuration }}
+        path: ${{ github.workspace }}/bin/${{matrix.configuration}}/**/*
+        retention-days: 5
