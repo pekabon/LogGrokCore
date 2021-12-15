@@ -49,6 +49,7 @@ jobs:
 # Upload
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
+      if: ${{ matrix.configuration == Release }}
       with:
         name: binaries for ${{ matrix.configuration }}
         path: ${{ github.workspace }}/bin/${{matrix.configuration}}/**/*
