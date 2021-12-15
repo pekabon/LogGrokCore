@@ -47,7 +47,8 @@ namespace LogGrokCore.Controls.TextRender
             return new Rect(start + startPoint.X, startPoint.Y, width, height);
         }
 
-        public GlyphLine(StringRange text, GlyphTypeface typeface, double fontSize, float pixelsPerDip)
+        public GlyphLine(StringRange text, GlyphTypeface typeface, double fontSize, float pixelsPerDip,
+            double constraintWidth)
         {
             Text = text;
             var span = text.Span;
@@ -63,7 +64,7 @@ namespace LogGrokCore.Controls.TextRender
             double totalWidth = 0;
 
             var indexOfGlyph = 0;
-            for (var n = 0; n < text.Length; n++, indexOfGlyph++) {
+            for (var n = 0; n < text.Length && totalWidth <= constraintWidth; n++, indexOfGlyph++) {
 
                 ushort glyphIndex;
                 double width;
