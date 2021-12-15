@@ -1,0 +1,52 @@
+name: Build and Upload
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  build_and_test:
+
+    strategy:
+      matrix:
+        configuration: [Release]
+
+    runs-on: windows-latest  # For a list of available runner types, refer to
+                             # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    # Install the .NET Core workload
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+        include-prerelease: true
+
+    # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
+    - name: Setup MSBuild.exe
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - name: Restore the application
+      run: dotnet restore
+      env:
+        Configuration: ${{ matrix.configuration }}
+        
+    - name: Build
+      run: dotnet build --configuration ${{matrix.configuration}} --no-restore --verbosity quiet
+
+    # Execute all unit tests in the solution
+    - name: Execute unit tests
+      run: dotnet test --no-restore --verbosity normal
+
+# Upload
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v2
+      if: ${{ matrix.configuration == 'Release' }}
+      with:
+        name: binaries for ${{ matrix.configuration }}
+        path: ${{ github.workspace }}/bin/${{matrix.configuration}}/**/*
