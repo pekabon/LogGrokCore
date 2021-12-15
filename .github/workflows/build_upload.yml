@@ -40,5 +40,5 @@ jobs:
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
       with:
-        name: LogGrokCore(${{ github.run.number }})
+        name: LogGrokCore-build-${{ github.run_number }}
         path: ${{ github.workspace }}/bin/${{matrix.configuration}}/**/*
