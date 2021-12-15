@@ -46,15 +46,10 @@ jobs:
     - name: Execute unit tests
       run: dotnet test --no-restore --verbosity normal
       
-      
-    # Archive artifacts
-    - name: Tar files
-      run: tar -cvf loggrok2.tar ${{ github.workspace }}/bin/${{matrix.configuration}}
-    
     # Upload
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
       with:
         name: binaries for ${{ matrix.configuration }}
-        path: loggrok2.tar
+        path: ${{ github.workspace }}/bin/${{matrix.configuration}}/**/loggrok*
         retention-days: 5
