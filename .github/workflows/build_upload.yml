@@ -37,7 +37,7 @@ jobs:
         Configuration: ${{ matrix.configuration }}
         
     - name: Build
-      run: dotnet build --configuration ${{matrix.configuration}} --no-restore --verbosity quiet
+      run: dotnet build --configuration ${{matrix.configuration}} --no-restore
 
     # Execute all unit tests in the solution
     - name: Execute unit tests
