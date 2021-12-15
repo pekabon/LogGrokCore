@@ -36,7 +36,7 @@ namespace LogGrokCore.Data
         private void Grow()
         {
             var data = _data;
-            ArrayPool<T?>.Shared.Resize(ref data, _data.Length * 2, true);
+            ArrayPool<T>.Shared.Resize(ref data, _data.Length * 2, true);
             if (data != null)
                 _data = data;
         }

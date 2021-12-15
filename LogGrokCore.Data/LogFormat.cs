@@ -25,7 +25,7 @@ namespace LogGrokCore.Data
                     _ = new Regex(transformation);
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 Trace.TraceError($"Invalid regex: {Regex}");
                 return false;
