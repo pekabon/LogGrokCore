@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
@@ -9,15 +10,18 @@ namespace LogGrokCore.Controls.TextRender
     public class GlyphLine : IDisposable
     {
         private readonly GlyphRun? _run;
-        public Size Size { get; }
-        public double AdvanceHeight { get; }
-
         private readonly PooledList<ushort> _glyphIndices = new();
         private readonly PooledList<double> _advanceWidthsForGlyph = new();
         private readonly PooledList<double> _advanceWidthForChar = new();
+        
+        private static readonly ConcurrentDictionary<char, (double advanceWidth, double advanceHeight, ushort glyphIndex)> _typefaceCache = new();
+
+        public Size Size { get; }
+        
+        public double AdvanceHeight { get; }
 
         public StringRange Text { get; }
-        
+       
         public int GetNearestTextPosition(double relativeHorizontalPosition)
         {
             if (relativeHorizontalPosition <= 0)
@@ -64,8 +68,17 @@ namespace LogGrokCore.Controls.TextRender
             double totalWidth = 0;
 
             var indexOfGlyph = 0;
-            for (var n = 0; n < text.Length && totalWidth <= constraintWidth; n++, indexOfGlyph++) {
 
+            (double advanceWidth, double advanceHeight, ushort glyphIndex) GetGlyphParametersForChar(char ch)
+            {
+                typeface.CharacterToGlyphMap.TryGetValue(ch, out var glyphIndex);
+                return (typeface.AdvanceWidths[glyphIndex] * fontSize,
+                    typeface.AdvanceHeights[glyphIndex] * fontSize,
+                    glyphIndex);
+            }
+            
+            for (var n = 0; n < text.Length && totalWidth <= constraintWidth; n++, indexOfGlyph++) 
+            {
                 ushort glyphIndex;
                 double width;
                 if (span[n] == '\t')
@@ -73,12 +86,10 @@ namespace LogGrokCore.Controls.TextRender
                     var advanceWidthForChar = 0.0;
 
                     var spaceCount = indexOfGlyph % 8 == 0 ? 8 : (8 - indexOfGlyph % 8); 
+                    (width, _, glyphIndex) = _typefaceCache.GetOrAdd(' ', GetGlyphParametersForChar);
                     while (spaceCount > 0)
                     {
-                        typeface.CharacterToGlyphMap.TryGetValue(' ', out glyphIndex);
                         _glyphIndices.Add(glyphIndex);
-                        width = typeface.AdvanceWidths[glyphIndex] * fontSize;
-                        
                         _advanceWidthsForGlyph.Add(width);
                         advanceWidthForChar += width;
                         totalWidth += width;
@@ -89,11 +100,11 @@ namespace LogGrokCore.Controls.TextRender
                     _advanceWidthForChar.Add(advanceWidthForChar);
                     continue;
                 }
-                
-                typeface.CharacterToGlyphMap.TryGetValue(span[n], out glyphIndex);
+
+                double advHeight;
+                (width, advHeight, glyphIndex) = _typefaceCache.GetOrAdd(span[n], GetGlyphParametersForChar);
                 _glyphIndices.Add(glyphIndex);
-                width = typeface.AdvanceWidths[glyphIndex] * fontSize;
-                AdvanceHeight = Math.Max(AdvanceHeight, typeface.AdvanceHeights[glyphIndex] * fontSize);
+                AdvanceHeight = Math.Max(AdvanceHeight, advHeight);
                 _advanceWidthsForGlyph.Add(width);
                 _advanceWidthForChar.Add(width);
                 totalWidth += width;
