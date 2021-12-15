@@ -72,7 +72,7 @@ namespace LogGrokCore.Bootstrap
 
         private void RegisterDependencies(IRegistrator container)
         {
-            container.RegisterDelegate(ApplicationSettings.Load);
+            container.RegisterDelegate(ApplicationSettings.Instance);
             container.Register<MainWindowViewModel>(Reuse.Singleton);
             container.Register<SearchAutocompleteCache>(Reuse.Singleton); 
             container.Register<MarkedLinesViewModel>();
