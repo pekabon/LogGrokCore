@@ -10,9 +10,13 @@ namespace LogGrokCore
 {
     public class ApplicationSettings
     {
+        private static ApplicationSettings? instance;
+
         public static string SettingsFileName => PathHelpers.GetLocalFilePath("appsettings.yaml");
         
         public ColorSettings ColorSettings { get; private set; } = new();
+
+        public ViewSettings ViewSettings { get; private set; } = new();
 
         public LogFormat[] LogFormats { get; set; } =
             Array.Empty<LogFormat>();
@@ -29,7 +33,14 @@ namespace LogGrokCore
             return columnSettings;
         }
 
-        public static ApplicationSettings Load()
+        public static ApplicationSettings Instance()
+        {
+            if (instance == null)
+                instance = Load();
+            return instance;
+        }
+
+        private static ApplicationSettings Load()
         {
             var builder = new ConfigurationBuilder()
                 .AddYamlFile(SettingsFileName, true, true);
