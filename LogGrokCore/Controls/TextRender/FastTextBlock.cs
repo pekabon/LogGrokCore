@@ -14,7 +14,7 @@ namespace LogGrokCore.Controls.TextRender
 {
     public class FastTextBlock : Control
     {
-        private Lazy<PooledList<GlyphLine>>? _textLines;
+        private PooledList<GlyphLine>? _textLines;
         private readonly Lazy<GlyphTypeface> _glyphTypeface;
 
         private static readonly Dictionary<(FontFamily, FontStyle, FontWeight, FontStretch), GlyphTypeface>
@@ -59,7 +59,7 @@ namespace LogGrokCore.Controls.TextRender
         {
             if (d is FastTextBlock fastTextBlock)
             {
-                fastTextBlock.UpdateTextLine(e.NewValue as string);
+                fastTextBlock.UpdateText(e.NewValue as string);
             }
         }
 
@@ -114,12 +114,12 @@ namespace LogGrokCore.Controls.TextRender
         private void UpdateSelection(Point startSelectionPoint, Point endSelectionPoint)
         {
             if (_textLines == null ||
-                _textLines.Value.Count == 0)
+                _textLines.Count == 0)
             {
                 return;
             }
 
-            var textLines = _textLines.Value;
+            var textLines = _textLines;
 
             var textPosition1 = GetTextPosition(startSelectionPoint, textLines);
             var textPosition2 = GetTextPosition(endSelectionPoint, textLines);
@@ -196,7 +196,7 @@ namespace LogGrokCore.Controls.TextRender
                     _startSelectionPoint = e.GetPosition(this);    
                 }
 
-                if (e.ClickCount == 2 && _textLines is { Value: {} textLines})
+                if (e.ClickCount == 2 && _textLines is {} textLines)
                 {
                     _startSelectionPoint = null;
                     var point = e.GetPosition(this);
@@ -217,7 +217,7 @@ namespace LogGrokCore.Controls.TextRender
             SelectedText = line.Text.Span.Slice(start, length).ToString();
         }
 
-        private (int start, int length) GetWordSelectionRange(StringRange lineText, int position)
+        private static (int start, int length) GetWordSelectionRange(StringRange lineText, int position)
         {
             var span = lineText.Span;
             var left = position;
@@ -248,10 +248,9 @@ namespace LogGrokCore.Controls.TextRender
                 UpdateCursor();
                 var endPosition = e.GetPosition(this);
                 UpdateSelection(startSelectionPoint.Value, endPosition);
-                var textLines = _textLines?.Value;
-                if (textLines != null)
+                if (_textLines != null)
                     SelectedText = string.Join("\r\n",
-                        textLines
+                        _textLines
                             .Where(line => line.Selection != null)
                             .Select(line =>
                             {
@@ -266,7 +265,7 @@ namespace LogGrokCore.Controls.TextRender
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
-            if (_startSelectionPoint.HasValue && _textLines != null && _textLines.Value.Count != 0)
+            if (_startSelectionPoint.HasValue && _textLines != null && _textLines.Count != 0)
             {
                 if (!IsMouseCaptured)
                 {
@@ -313,11 +312,9 @@ namespace LogGrokCore.Controls.TextRender
 
         protected override void OnLostFocus(RoutedEventArgs e)
         {
-            Debug.WriteLine("OnLostFocus");
-            if (_textLines?.IsValueCreated ?? false)
+            if (_textLines != null )
             {
-                var textLines = _textLines.Value;
-                foreach (var line in textLines)
+                foreach (var line in _textLines)
                 {
                     line.ResetSelection();
                 }
@@ -328,44 +325,44 @@ namespace LogGrokCore.Controls.TextRender
             base.OnLostFocus(e);
         }
 
-        private void UpdateTextLine(string? newText)
+        private void UpdateText(string? newText)
         {
-            if (_textLines is { IsValueCreated: true })
+            if (_textLines != null )
             {
-                foreach (var textLine in _textLines.Value)
+                foreach (var textLine in _textLines)
                 {
                     textLine.Dispose();
                 }
 
-                _textLines.Value.Dispose();
+                _textLines.Dispose();
             }
 
-            if (newText == null)
+            _textLines = null;
+        }
+
+        private PooledList<GlyphLine> CreateTextLines(string newText, double constraintWidth)
+        {
+            var list = new PooledList<GlyphLine>(16);
+            var glyphTypeFace = _glyphTypeface.Value;
+            var pixelsPerDip = (float)VisualTreeHelper.GetDpi(this).PixelsPerDip;
+            foreach (var stringRange in newText.Tokenize())
             {
-                _textLines = null;
-                return;
+                list.Add(new GlyphLine(stringRange, glyphTypeFace, FontSize, pixelsPerDip, constraintWidth));
             }
 
-            _textLines = new Lazy<PooledList<GlyphLine>>(() =>
-            {
-                var list = new PooledList<GlyphLine>(16);
-                var glyphTypeFace = _glyphTypeface.Value;
-                var pixelsPerDip = (float)VisualTreeHelper.GetDpi(this).PixelsPerDip;
-                foreach (var stringRange in newText.Tokenize())
-                {
-                    list.Add(new GlyphLine(stringRange, glyphTypeFace, FontSize, pixelsPerDip));
-                }
+            return list;
+        }
 
-                return list;
-            });
+        protected override Size ArrangeOverride(Size arrangeBounds)
+        {
+            return base.ArrangeOverride(arrangeBounds);
         }
 
         protected override void OnRender(DrawingContext drawingContext)
         {
-            var verticalPosition = 0.0;
-            var textLines = _textLines?.Value;
+            var verticalPosition = 0.0; ;
 
-            if (textLines == null) return;
+            if (_textLines == null) return;
 
             var highlightGeometries =
                 GetHighlightGeometries(Text,
@@ -387,7 +384,7 @@ namespace LogGrokCore.Controls.TextRender
             }
 
             var pixelsPerDip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
-            foreach (var textLine in textLines)
+            foreach (var textLine in _textLines)
             {
                 textLine.Render(
                     new Point(0,
@@ -402,14 +399,13 @@ namespace LogGrokCore.Controls.TextRender
 
         private Geometry? GetSelectionGeometries()
         {
-            var textLines = _textLines?.Value;
-            if (textLines == null) return null;
+            if (_textLines == null) return null;
 
             GeometryGroup? accumulatedGeometry = null; // = new GeometryGroup {FillRule = FillRule.Nonzero};
 
             var verticalOffset = 0.0;
 
-            foreach (var textLine in textLines)
+            foreach (var textLine in _textLines)
             {
                 var selection = textLine.Selection;
                 if (selection.HasValue)
@@ -429,14 +425,25 @@ namespace LogGrokCore.Controls.TextRender
             return accumulatedGeometry;
         }
 
+        private double _cachedWidth;
+        private string? _cachedText;
+        
         protected override Size MeasureOverride(Size constraint)
         {
-            var textLines = _textLines?.Value;
-            if (textLines == null) return new Size(0, 0);
+           var text = Text;
+            if (string.IsNullOrEmpty(text)) return new Size(0, 0);
+
+            if (_textLines == null || _cachedText != text || _cachedWidth < constraint.Width)
+            {
+                _textLines = CreateTextLines(text, constraint.Width);
+                _cachedWidth = constraint.Width;
+                _cachedText = text;
+            }
+            
             var height = 0.0;
             var width = 0.0;
 
-            foreach (var textLine in textLines)
+            foreach (var textLine in _textLines)
             {
                 height += textLine.AdvanceHeight;
                 width = Math.Max(width, textLine.Size.Width);
@@ -463,7 +470,7 @@ namespace LogGrokCore.Controls.TextRender
             _cachedGetDrawingGeometries ??=
                 Cached.Of<(string? text, Regex? regex), Geometry?>(
                     value => GetDrawingGeometriesUncached(
-                        _textLines?.Value, value.regex));
+                        _textLines, value.regex));
             return _cachedGetDrawingGeometries((text, regex));
         }
 
