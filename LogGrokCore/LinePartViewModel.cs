@@ -31,7 +31,7 @@
 
             void SetUnHideJsonProperties()
             {
-                Text = TextOperations.ExpandInlineJson(source);
+                Text = TextOperations.Normalize(TextOperations.ExpandInlineJson(source), ApplicationSettings.Instance().ViewSettings); ;
                 IsJsonViewHidden = false;
             }
 
