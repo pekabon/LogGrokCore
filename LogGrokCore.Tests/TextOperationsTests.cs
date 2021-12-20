@@ -3,7 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace LogGrokCore.Tests
 {
     [TestClass]
-    public class TestOperationsTests
+    public class TextOperationsTests
     {
         private const string ThreeLines = "Hello\r\nworld\r\n!";
         private const string OneLine = "Hello";
@@ -65,5 +65,5 @@ namespace LogGrokCore.Tests
             Assert.AreEqual("Hello\r\nworld\r\n", resultString);
             Assert.AreEqual(1, linesTrimmed);
         }
-    }
+        }
 }

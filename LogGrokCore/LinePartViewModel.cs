@@ -1,7 +1,12 @@
-﻿namespace LogGrokCore
+﻿using System.Collections.Generic;
+using System.Linq;
+using Microsoft.Toolkit.HighPerformance;
+
+namespace LogGrokCore
 {
     public class LinePartViewModel : ViewModelBase
     {
+        private readonly List<(int start, int length)> _jsonIntervals;
         private const int MaxLines = 20;
 
         public LinePartViewModel(string source)
@@ -25,13 +30,16 @@
 
             void SetHideJsonProperties()
             {
-                Text = TextOperations.Normalize(source, ApplicationSettings.Instance().ViewSettings);
+                Text = TextOperations.Normalize(source, 
+                    ApplicationSettings.Instance().ViewSettings);
                 IsJsonViewHidden = true;
             }
 
             void SetUnHideJsonProperties()
             {
-                Text = TextOperations.Normalize(TextOperations.ExpandInlineJson(source), ApplicationSettings.Instance().ViewSettings); ;
+                Text = TextOperations.Normalize(
+                    TextOperations.FormatInlineJson(source, _jsonIntervals.AsSpan()), 
+                    ApplicationSettings.Instance().ViewSettings);
                 IsJsonViewHidden = false;
             }
 
@@ -59,8 +67,11 @@
                 RaiseAllPropertiesChanged();
             });
 
-            IsExistJson = TextOperations.IsExistsInlineJson(source);
-            if (IsExistJson)
+            
+            _jsonIntervals = TextOperations.GetJsonRanges(source).ToList();
+            HaveJson = _jsonIntervals.Count > 0;
+
+            if (HaveJson)
             {
                 SetHideJsonProperties();
             }
@@ -73,7 +84,7 @@
 
         public bool IsCollapsible { get; }
 
-        public bool IsExistJson { get; }
+        public bool HaveJson { get; }
 
         public bool IsTrimmedLinesHidden { get; private set; }
 
