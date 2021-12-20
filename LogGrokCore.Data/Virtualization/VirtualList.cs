@@ -26,7 +26,7 @@ using System.Linq;
             set => throw new NotSupportedException();
         }
 
-        public T? this[int index]
+        public T this[int index]
         {
             get => GetValue(index);
             set => throw new NotSupportedException();
@@ -38,7 +38,7 @@ using System.Linq;
             _converter = converter;
         }
 
-        public IEnumerator<T?> GetEnumerator() 
+        public IEnumerator<T> GetEnumerator() 
 		{
             for(var index = 0; index < Count; index++)
             {
@@ -79,7 +79,7 @@ using System.Linq;
 
         public void CopyTo(Array array, int index) => throw new NotSupportedException();
 
-        private T? GetValue(int index) 
+        private T GetValue(int index) 
         {
             var pageIndex = index / PageSize;
             var pageStart = pageIndex * PageSize;

@@ -27,7 +27,7 @@ namespace LogGrokCore.Data
             }
             catch (Exception e)
             {
-                Trace.TraceError($"Invalid regex: {Regex}");
+                Trace.TraceError($"Invalid regex: {Regex}, exception: {e}");
                 return false;
             }
 
