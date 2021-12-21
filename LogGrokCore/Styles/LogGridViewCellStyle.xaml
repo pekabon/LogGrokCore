@@ -113,20 +113,20 @@
     
     <Style TargetType="{x:Type ContentControl}" x:Key="LogGridViewCellStyle">
         <Style.Triggers>
-            <DataTrigger Binding="{Binding Content.IsExistJson, RelativeSource={RelativeSource Self}}" Value="True">
+            <DataTrigger Binding="{Binding Content.HaveJson, RelativeSource={RelativeSource Self}}" Value="True">
                 <Setter Property="ContentTemplate" Value="{StaticResource JsonTemplate}"/>
             </DataTrigger>
             <MultiDataTrigger>
                 <MultiDataTrigger.Conditions>
                     <Condition Binding="{Binding Content.IsCollapsible, RelativeSource={RelativeSource Self}}" Value="False" />
-                    <Condition Binding="{Binding Content.IsExistJson, RelativeSource={RelativeSource Self}}" Value="False" />
+                    <Condition Binding="{Binding Content.HaveJson, RelativeSource={RelativeSource Self}}" Value="False" />
                 </MultiDataTrigger.Conditions>
                 <Setter Property="ContentTemplate" Value="{StaticResource NormalTemplate}"/>
             </MultiDataTrigger>
             <MultiDataTrigger>
                 <MultiDataTrigger.Conditions>
                     <Condition Binding="{Binding Content.IsCollapsible, RelativeSource={RelativeSource Self}}" Value="True" />
-                    <Condition Binding="{Binding Content.IsExistJson, RelativeSource={RelativeSource Self}}" Value="False" />
+                    <Condition Binding="{Binding Content.HaveJson, RelativeSource={RelativeSource Self}}" Value="False" />
                 </MultiDataTrigger.Conditions>
                 <Setter Property="ContentTemplate" Value="{StaticResource TrimmedTextTemplate}"/>
             </MultiDataTrigger>
