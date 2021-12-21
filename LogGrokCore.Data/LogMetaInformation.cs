@@ -4,36 +4,39 @@ namespace LogGrokCore.Data
 {
     public class LogMetaInformation
     {
+        private readonly LogFormat _logFormat;
+
         public static LogMetaInformation CreateTextFileMetaInformation()
         {
-            return new LogMetaInformation(@"^(?'Text'.*)", new[]{"Text"}, 
-                Array.Empty<int>(), Array.Empty<string>());
+            var plainTextLogFormat = new LogFormat()
+            {
+                Regex = @"^(?'Text'.*)",
+                IndexedFields = Array.Empty<string>(),
+                Transformations = Array.Empty<string>(),
+                XorMask = 0
+            };
+            
+            return new LogMetaInformation(plainTextLogFormat);
         }
 
-        public string[] Transformations { get; }
+        public string[] Transformations => _logFormat.Transformations;
 
-        public string[] FieldNames { get; }
+        public string[] FieldNames => _logFormat.FieldNames;
 
-        public int[] IndexedFieldNumbers { get; }
+        public int[] IndexedFieldNumbers => _logFormat.IndexedFieldNumbers;
+
+        public string LineRegex => _logFormat.Regex;
+
+        public int ComponentCount => FieldNames.Length;
+
+        public byte XorMask => _logFormat.XorMask;
 
         public LogMetaInformation(LogFormat logFormat)
-            : this(logFormat.Regex, 
-                logFormat.FieldNames,
-                logFormat.IndexedFieldNumbers,
-                logFormat.Transformations)
         {
+            _logFormat = logFormat;
         }
 
-        public LogMetaInformation(string lineRegex, string [] fieldNames, int[] indexedFieldNumbers, string[] transformations)
-        {
-            LineRegex = lineRegex;
-            FieldNames = fieldNames;
-            ComponentCount = FieldNames.Length;
-            IndexedFieldNumbers = indexedFieldNumbers;
-            Transformations = transformations;
-        }
-
-        public int GetFieldIndexByName(string fieldName) => Array.IndexOf(FieldNames, fieldName);
+        private int GetFieldIndexByName(string fieldName) => Array.IndexOf(FieldNames, fieldName);
 
         public int GetIndexedFieldIndexByName(string fieldName) =>
             GetIndexedFieldIndexByFieldIndex(GetFieldIndexByName(fieldName));
@@ -47,9 +50,5 @@ namespace LogGrokCore.Data
             if (index < 0) return false;
             return Array.IndexOf(IndexedFieldNumbers, index) >= 0;
         }
-
-        public string LineRegex { get; }
-
-        public int ComponentCount { get; }
     }
 }

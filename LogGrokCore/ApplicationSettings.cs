@@ -47,7 +47,7 @@ namespace LogGrokCore
 
             var settings = new ApplicationSettings();
             
-            IConfigurationRoot configuration = builder.Build();
+            var configuration = builder.Build();
             configuration.GetSection("Settings").Bind(settings);
             
             ChangeToken.OnChange(() => configuration.GetReloadToken(), () =>

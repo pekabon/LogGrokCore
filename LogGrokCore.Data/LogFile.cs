@@ -1,17 +1,19 @@
 using System;
 using System.IO;
 using System.Text;
-using System.Text.Unicode;
+
 using UtfUnknown;
 
 namespace LogGrokCore.Data
 {
     public class LogFile
     {
-        private readonly  Lazy<Encoding> _encoding; 
-        
-        public LogFile(string filePath)
+        private readonly Lazy<Encoding> _encoding;
+        private readonly byte _xorMask;
+
+        public LogFile(string filePath, byte xorMask)
         {
+            _xorMask = xorMask;
             FilePath = filePath;
             FileSize = OpenFileForSequentialRead(FilePath).Length;
             _encoding= new Lazy<Encoding>(DetectEncoding);
@@ -32,7 +34,7 @@ namespace LogGrokCore.Data
             Encoding.Unicode, Encoding.BigEndianUnicode, Encoding.UTF8,
             Encoding.UTF32
         };
-        
+
         private Encoding DetectEncoding()
         {
             var buffer = new byte[8192];
@@ -85,23 +87,27 @@ namespace LogGrokCore.Data
             return detectedEncoding != Encoding.ASCII ? detectedEncoding : Encoding.UTF8;
         }
         
-        private static Stream OpenFileForSequentialRead(string fileName)
+        private Stream OpenFileForSequentialRead(string fileName)
         {
             const int bufferSize = 64 * 1024;
-            return new FileStream(fileName,
+            var fileStream = new FileStream(fileName,
                 FileMode.Open,
                 FileAccess.Read,
                 FileShare.ReadWrite,
                 bufferSize,
                 FileOptions.SequentialScan);
+
+            return _xorMask == 0 ? fileStream : new MaskedStream(fileStream, _xorMask);
         }
 
-        private static Stream OpenFile(string fileName)
+        private Stream OpenFile(string fileName)
         {
-            return new FileStream(fileName,
+            var fileStream = new FileStream(fileName,
                 FileMode.Open,
                 FileAccess.Read,
                 FileShare.ReadWrite);
+            
+            return _xorMask == 0 ? fileStream : new MaskedStream(fileStream, _xorMask);
         }
     }
 }

@@ -9,7 +9,7 @@ namespace LogGrokCore
     internal static class LogMetaInformationProvider
     {
         private const int ProbeSize = 256;
-        private const double DetectTreshold = 0.05;
+        private const double DetectThreshold = 0.05;
 
         public static LogMetaInformation GetLogMetaInformation(string fileName,
             IEnumerable<LogFormat> logFormats)
@@ -20,7 +20,7 @@ namespace LogGrokCore
             var bestFitter = metas
                 .Select(meta => (meta, ratio: GetRatio(meta, fileName)))
                 .OrderByDescending(m => m.ratio)
-                .Where(m => m.ratio > DetectTreshold)
+                .Where(m => m.ratio > DetectThreshold)
                 .Select(m => m.meta)
                 .FirstOrDefault();
 
@@ -33,7 +33,8 @@ namespace LogGrokCore
 
             IEnumerable<string> ReadLines()
             {
-                using var fileStream =  new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                var logFile = new LogFile(fileName, logMetaInformation.XorMask);
+                using var fileStream =  logFile.OpenForSequentialRead();
                 using var streamReader = new StreamReader(fileStream);
                 while (!streamReader.EndOfStream)
                 {
