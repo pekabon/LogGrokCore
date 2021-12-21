@@ -150,6 +150,23 @@ namespace LogGrokCore
 
         private static bool IsValidJson(string jsonString)
         {
+            // prevent some exceptions
+            // correct json starts with
+            // { <whitespace> }
+            // or
+            // { <whitespace> "
+            var openBraceIndex = jsonString.IndexOf('{');
+            if (openBraceIndex < 0) return false;
+            var startSpan = jsonString.AsSpan(openBraceIndex+1);
+            var nextValidJsonChar = startSpan.IndexOfAny("\"}");
+            if (nextValidJsonChar < 0) return false;
+                
+            foreach (var ch in startSpan[..nextValidJsonChar])
+            {
+                if (!char.IsWhiteSpace(ch))
+                    return false;
+            }
+            
             try
             {
                 using var doc = JsonDocument.Parse(jsonString, new JsonDocumentOptions { AllowTrailingCommas = true });
