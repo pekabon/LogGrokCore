@@ -50,7 +50,11 @@ namespace LogGrokCore
             _container.Register<ParsedBufferConsumer>(Reuse.Singleton);
             
             // log model
-            _container.RegisterDelegate(_ => new LogFile(fileName));
+            _container.RegisterDelegate(c =>
+            {
+                var meta = c.Resolve<LogMetaInformation>();
+                return new LogFile(fileName, meta.XorMask);
+            });
             _container.RegisterDelegate(_ => LogMetaInformationProvider.GetLogMetaInformation(fileName,
                 applicationSettings.LogFormats.Where(l => l.IsCorrect())),
                 Reuse.Singleton);

@@ -90,10 +90,16 @@ namespace LogGrokCore
             List<(int, int)>? result = null;
             var offset = 0;
             var text = sourceText;
-            
+
+            IEnumerable<(int start, int length)> MakeResult(List<(int, int)>? resultValue)
+            {
+                return resultValue ?? Enumerable.Empty<(int start, int length)>();
+            }
+
             while (text.Length > 0)
             {
                 var openBraceIndex = text.IndexOf('{') + offset;
+                if (openBraceIndex == -1) return MakeResult(result);
                 var nextBraceIndex = -1;
                 var counter = 0;
 
@@ -103,7 +109,7 @@ namespace LogGrokCore
                 while (counter >= 0)
                 {
                     var localNextBraceIndex = text.IndexOfAny("{}");
-                    if (localNextBraceIndex == -1) return result ?? Enumerable.Empty<(int start, int length)>();
+                    if (localNextBraceIndex == -1) return MakeResult(result);
                     nextBraceIndex = localNextBraceIndex + offset;
                     if (sourceText[nextBraceIndex] == '{')
                         counter++;
@@ -123,7 +129,7 @@ namespace LogGrokCore
                 text = sourceText[offset..];
             }
 
-            return result ?? Enumerable.Empty<(int start, int length)>();
+            return MakeResult(result);
         }
 
         public static string FormatInlineJson(ReadOnlySpan<char> text, ReadOnlySpan<(int start, int length)> jsonIntervals)
@@ -144,6 +150,23 @@ namespace LogGrokCore
 
         private static bool IsValidJson(string jsonString)
         {
+            // prevent some exceptions
+            // correct json starts with
+            // { <whitespace> }
+            // or
+            // { <whitespace> "
+            var openBraceIndex = jsonString.IndexOf('{');
+            if (openBraceIndex < 0) return false;
+            var startSpan = jsonString.AsSpan(openBraceIndex+1);
+            var nextValidJsonChar = startSpan.IndexOfAny("\"}");
+            if (nextValidJsonChar < 0) return false;
+                
+            foreach (var ch in startSpan[..nextValidJsonChar])
+            {
+                if (!char.IsWhiteSpace(ch))
+                    return false;
+            }
+            
             try
             {
                 using var doc = JsonDocument.Parse(jsonString, new JsonDocumentOptions { AllowTrailingCommas = true });

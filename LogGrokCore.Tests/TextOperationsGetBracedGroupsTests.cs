@@ -46,8 +46,12 @@ public class TextOperationsGetBracedGroupsTests
     [DataRow("{{}{}")]
     [DataRow("{AAA{}")]
     [DataRow("")]
-    [DataRow("{")]
     [DataRow("}")]
+    [DataRow("{")]
+    [DataRow("{sometext")]
+    [DataRow("sometext{")]
+    [DataRow("}sometext")]
+    [DataRow("sometext}")]
     public void TestGetBracedGroups_EmptyResult(string source)
     {
         var result = TextOperations.GetBracedGroups(source.AsSpan()).ToList();

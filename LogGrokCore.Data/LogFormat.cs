@@ -15,6 +15,8 @@ namespace LogGrokCore.Data
 
         public string[] Transformations { get; set; } = Array.Empty<string>();
 
+        public byte XorMask { get; set; } = 0;
+
         public bool IsCorrect()
         {
             try
