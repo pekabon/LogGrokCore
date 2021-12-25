@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Input;
+using System.Collections.Generic;
 
 namespace LogGrokCore
 {
@@ -20,6 +21,26 @@ namespace LogGrokCore
         public static readonly RoutedCommand ToggleMarks = new RoutedUICommand(
             "Mark", "Mark lines", typeof(UIElement),
             new InputGestureCollection { new KeyGesture(Key.Space) });
+
+        public static void ToggleMarksHandler(IEnumerable<Data.ILineMark> items) 
+        {
+            var existsUnMarked = false;
+            foreach (var item in items)
+            {
+                if (!item.IsMarked)
+                {
+                    item.IsMarked = !item.IsMarked;
+                    existsUnMarked = true;
+                }
+            }
+            if (!existsUnMarked)
+            {
+                foreach (var item in items)
+                {
+                    item.IsMarked = !item.IsMarked;
+                }
+            }
+        }
 
         static RoutedCommands()
         {

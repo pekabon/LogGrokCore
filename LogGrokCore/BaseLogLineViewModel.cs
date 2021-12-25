@@ -2,7 +2,7 @@
 
 namespace LogGrokCore
 {
-    public abstract class BaseLogLineViewModel : ItemViewModel
+    public abstract class BaseLogLineViewModel : ItemViewModel, Data.ILineMark
     {
         private readonly Selection _markedLines;
 

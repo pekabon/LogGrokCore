@@ -46,12 +46,7 @@ namespace LogGrokCore.Controls.ListControls
             CommandBindings.Add(new CommandBinding(RoutedCommands.ToggleMarks,
                 (_, args) =>
                 {
-                    var items = GetSelectedIndices().Select(i => Items[i]).OfType<BaseLogLineViewModel>();
-                    foreach (var item in items)
-                    {
-                        item.IsMarked = !item.IsMarked;
-                    }
-
+                    RoutedCommands.ToggleMarksHandler(GetSelectedIndices().Select(i => Items[i]).OfType<Data.ILineMark>());
                     args.Handled = true;
                 },
                 (_, args) =>
