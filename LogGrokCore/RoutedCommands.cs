@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Collections.Generic;
+using LogGrokCore.MarkedLines;
 
 namespace LogGrokCore
 {
@@ -22,7 +23,7 @@ namespace LogGrokCore
             "Mark", "Mark lines", typeof(UIElement),
             new InputGestureCollection { new KeyGesture(Key.Space) });
 
-        public static void ToggleMarksHandler(IEnumerable<Data.ILineMark> items) 
+        public static void ToggleMarksHandler(IEnumerable<ILineMark> items) 
         {
             var existsUnMarked = false;
             foreach (var item in items)

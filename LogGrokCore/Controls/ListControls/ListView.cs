@@ -10,6 +10,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using LogGrokCore.MarkedLines;
 
 namespace LogGrokCore.Controls.ListControls
 {
@@ -33,9 +34,9 @@ namespace LogGrokCore.Controls.ListControls
         public static readonly DependencyProperty ColumnSettingsProperty = DependencyProperty.Register(
             "ColumnSettings", typeof(ColumnSettings), typeof(ListView), new PropertyMetadata(default(ColumnSettings)));
 
-        public ColumnSettings ColumnSettings
+        public ColumnSettings? ColumnSettings
         {
-            get => (ColumnSettings)GetValue(ColumnSettingsProperty);
+            get => (ColumnSettings?)GetValue(ColumnSettingsProperty);
             set => SetValue(ColumnSettingsProperty, value);
         }
         
@@ -46,7 +47,7 @@ namespace LogGrokCore.Controls.ListControls
             CommandBindings.Add(new CommandBinding(RoutedCommands.ToggleMarks,
                 (_, args) =>
                 {
-                    RoutedCommands.ToggleMarksHandler(GetSelectedIndices().Select(i => Items[i]).OfType<Data.ILineMark>());
+                    RoutedCommands.ToggleMarksHandler(GetSelectedIndices().Select(i => Items[i]).OfType<ILineMark>());
                     args.Handled = true;
                 },
                 (_, args) =>
@@ -236,12 +237,12 @@ namespace LogGrokCore.Controls.ListControls
                         {
                             if (column is INotifyPropertyChanged notifyPropertyChanged)
                             {
-                                notifyPropertyChanged.PropertyChanged += (c, args) =>
+                                notifyPropertyChanged.PropertyChanged += (_, args) =>
                                 {
                                     if (args.PropertyName == "ActualWidth")
                                     {
                                         columnSettings.ColumnWidths =
-                                            gridView.Columns.Select(c => c.ActualWidth).ToArray();
+                                            gridView.Columns.Select(gridViewColumn => gridViewColumn.ActualWidth).ToArray();
                                     }
                                 };
                             }

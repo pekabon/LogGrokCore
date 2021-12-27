@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace LogGrokCore.Data
+﻿namespace LogGrokCore.MarkedLines
 {
     public interface ILineMark
     {

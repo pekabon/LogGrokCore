@@ -1,8 +1,9 @@
 ﻿using LogGrokCore.Controls;
+using LogGrokCore.MarkedLines;
 
 namespace LogGrokCore
 {
-    public abstract class BaseLogLineViewModel : ItemViewModel, Data.ILineMark
+    public abstract class BaseLogLineViewModel : ItemViewModel, ILineMark
     {
         private readonly Selection _markedLines;
 
