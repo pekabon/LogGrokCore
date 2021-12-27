@@ -16,7 +16,6 @@ namespace LogGrokCore
                 var (text, trimmedLinesCount) = TextOperations.TrimLines(source, MaxLines);
                 Text = TextOperations.Normalize(text, ApplicationSettings.Instance().ViewSettings);
                 TrimmedLinesCount = trimmedLinesCount;
-                FullText = source;
                 IsTrimmedLinesHidden = true;
             }
 
@@ -24,7 +23,6 @@ namespace LogGrokCore
             {
                 Text = source;
                 TrimmedLinesCount = 0;
-                FullText = source;
                 IsTrimmedLinesHidden = false;
             }
 
@@ -67,7 +65,7 @@ namespace LogGrokCore
                 RaiseAllPropertiesChanged();
             });
 
-            
+            FullText = source;            
             _jsonIntervals = TextOperations.GetJsonRanges(source).ToList();
             HaveJson = _jsonIntervals.Count > 0;
 
@@ -102,6 +100,6 @@ namespace LogGrokCore
         
         public int TrimmedLinesCount { get; private set; }
 
-        public string? FullText { get; private set; }
+        public string? FullText { get; }
     }
 }
