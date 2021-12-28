@@ -132,19 +132,29 @@ namespace LogGrokCore
             return MakeResult(result);
         }
 
-        public static string FormatInlineJson(ReadOnlySpan<char> text, ReadOnlySpan<(int start, int length)> jsonIntervals)
+        public static string FormatInlineJson(ReadOnlySpan<char> text,
+            ReadOnlySpan<(int start, int length)> jsonIntervals)
+        {
+            return FormatInlineJsonCore(text, jsonIntervals, 0);
+        }
+
+        private static string FormatInlineJsonCore(ReadOnlySpan<char> text, ReadOnlySpan<(int start, int length)> jsonIntervals, 
+            int startOffset)
         {
             if (jsonIntervals.Length == 0)
                 return text.ToString();
 
-            var firstStart = jsonIntervals[0].start;
+            var firstStart = jsonIntervals[0].start - startOffset;
             var firstLength = jsonIntervals[0].length;
+            
             StringBuilder stringBuilder = new();
             stringBuilder.Append(text[..firstStart]);
             stringBuilder.Append(Environment.NewLine);
             stringBuilder.Append(FormatJsonText(text.Slice(firstStart, firstLength).ToString()));
             stringBuilder.Append(Environment.NewLine);
-            stringBuilder.Append(FormatInlineJson(text[(firstStart + firstLength)..], jsonIntervals[1..]));
+            stringBuilder.Append(FormatInlineJsonCore(
+                text[(firstStart + firstLength)..], 
+                jsonIntervals[1..], firstStart + firstLength + startOffset));
             return stringBuilder.ToString();
         }
 
