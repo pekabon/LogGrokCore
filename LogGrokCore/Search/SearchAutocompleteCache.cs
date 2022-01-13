@@ -16,7 +16,7 @@ namespace LogGrokCore.Search
     {
         private const int MaxAutocompleteItems = 1024;
         
-        private readonly string _cacheFileName =  DataFilePathProvider.GetDataFileFullPath("AutocompleteCache.json");
+        private readonly string _cacheFileName =  HomeDirectoryPathProvider.GetDataFileFullPath("AutocompleteCache.json");
         
         private readonly List<AutocompleteItem> _items = new();
         public IEnumerable<string> Items => _items.Select(v => v.Value);

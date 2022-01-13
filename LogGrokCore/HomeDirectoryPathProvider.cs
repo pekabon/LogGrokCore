@@ -1,18 +1,24 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
-using System.Reflection;
 
 namespace LogGrokCore
 {
-    public static class DataFilePathProvider
+    public static class HomeDirectoryPathProvider
     {
         public static string GetDataFileFullPath(string dataFileName)
         {
-            return Path.Combine(EnsureDirectoryExists(), dataFileName);
+            return Path.Combine(EnsureHomeDirectoryExists(), dataFileName);
         }
-        
-        private static string EnsureDirectoryExists()
+
+        public static string GetDirectoryFullPath(string directoryName)
+        {
+            var home = EnsureHomeDirectoryExists();
+            var dirPath = Path.Combine(home, directoryName);
+            Directory.CreateDirectory(dirPath);
+            return dirPath;
+        }
+
+        private static string EnsureHomeDirectoryExists()
         {
             var dirName  = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),

@@ -106,7 +106,7 @@ namespace LogGrokCore
         }
         private static string GetSettingsFileName()
         {
-            return DataFilePathProvider.GetDataFileFullPath("layout.settings");
+            return HomeDirectoryPathProvider.GetDataFileFullPath("layout.settings");
         }
     }
 }
