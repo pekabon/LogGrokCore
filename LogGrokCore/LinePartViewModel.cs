@@ -1,12 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using LogGrokCore.Data;
 using Microsoft.Toolkit.HighPerformance;
 
 namespace LogGrokCore
 {
     public class LinePartViewModel : ViewModelBase
     {
-        private readonly List<(int start, int length)> _jsonIntervals;
+        List<(int start, int length)>? _collapsibleRegions;
         private const int MaxLines = 20;
 
         public LinePartViewModel(string source)
@@ -26,21 +28,6 @@ namespace LogGrokCore
                 IsTrimmedLinesHidden = false;
             }
 
-            void SetHideJsonProperties()
-            {
-                Text = TextOperations.Normalize(source, 
-                    ApplicationSettings.Instance().ViewSettings);
-                IsJsonViewHidden = true;
-            }
-
-            void SetUnHideJsonProperties()
-            {
-                Text = TextOperations.Normalize(
-                    TextOperations.FormatInlineJson(source, _jsonIntervals.AsSpan()), 
-                    ApplicationSettings.Instance().ViewSettings);
-                IsJsonViewHidden = false;
-            }
-
             ExpandCommand = new DelegateCommand(() =>
             {
                 SetUntrimmedProperties();
@@ -53,49 +40,86 @@ namespace LogGrokCore
                 RaiseAllPropertiesChanged();
             });
 
-            HideJsonCommand = new DelegateCommand(() =>
-            {
-                SetHideJsonProperties();
-                RaiseAllPropertiesChanged();
-            });
-
-            ViewJsonCommand = new DelegateCommand(() =>
-            {
-                SetUnHideJsonProperties();
-                RaiseAllPropertiesChanged();
-            });
 
             FullText = source;            
-            _jsonIntervals = TextOperations.GetJsonRanges(source).ToList();
-            HaveJson = _jsonIntervals.Count > 0;
+            var jsonIntervals = TextOperations.GetJsonRanges(source).ToList();
 
-            if (HaveJson)
+            _collapsibleRegions = null;
+            if (jsonIntervals.Count > 0)
             {
-                SetHideJsonProperties();
+                Text = TextOperations.Normalize(
+                    TextOperations.FormatInlineJson(source, jsonIntervals.AsSpan()),
+                    ApplicationSettings.Instance().ViewSettings);
+
+                _collapsibleRegions = GetCollapsibleRegions(Text);
             }
-            else
+            else Text = FullText;
+            
+            
+            //SetTrimmedProperties();
+            IsCollapsible = TrimmedLinesCount > 0;
+        }
+
+        public List<(int start, int length)>? CollapsibleRanges => _collapsibleRegions;
+        private List<(int start, int length)> GetCollapsibleRegions(string source)
+        {
+            var lines = source.Tokenize().ToList();
+            List<(int start, int length)> result = new();
+            
+            int GetLineNumber(int position)
             {
-                SetTrimmedProperties();
-                IsCollapsible = TrimmedLinesCount > 0;
+                for (var  i =0; i<lines?.Count; i++)
+
+                {
+                    var stringRange = lines[i];
+                    if (position >= stringRange.Start && position <= stringRange.Start + stringRange.Length)
+                        return i;
+                }
+
+                throw new InvalidOperationException();
             }
+
+            void AddInterval((int start, int length) interval)
+            {
+                var (start, length) = interval;
+                var startLine = GetLineNumber(start);
+                var endLine = GetLineNumber(start + length);
+                var lengthLines = endLine - startLine;
+                if (lengthLines > 0) 
+                    result.Add((startLine, lengthLines));
+            }
+
+            var jsonIntervals = new Stack<(int start, int length)>(TextOperations.GetJsonRanges(source));
+        
+            while (jsonIntervals.TryPop(out var interval))
+            {
+                AddInterval(interval);
+                
+                var (start, length) = interval;
+                if (length > 2)
+                {
+                    var offset = start + 1;
+                    var groups =
+                        TextOperations.GetBracedGroups(source.AsSpan(offset, length - 2))
+                            .Select(g => (g.start + offset, g.length));
+                    foreach (var group in groups)
+                    {
+                        jsonIntervals.Push(group);
+                    }
+                }
+            }
+
+            return result;
         }
 
         public bool IsCollapsible { get; }
 
-        public bool HaveJson { get; }
-
         public bool IsTrimmedLinesHidden { get; private set; }
-
-        public bool IsJsonViewHidden { get; private set; }
 
         public DelegateCommand ExpandCommand { get; }
 
         public DelegateCommand CollapseCommand { get; }
-
-        public DelegateCommand ViewJsonCommand { get; }
-
-        public DelegateCommand HideJsonCommand { get; }
-
+        
         public string? Text { get; private set; }
         
         public int TrimmedLinesCount { get; private set; }
