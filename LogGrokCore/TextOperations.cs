@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using LogGrokCore.Data;
 
 namespace LogGrokCore
 {
@@ -11,16 +12,23 @@ namespace LogGrokCore
     {
         private const string Ellipsis = "...";
 
+        public static StringRange Normalize(StringRange stringRange, ViewSettings settings)
+        {
+            return stringRange.Length < settings.BigLineSize
+                ? stringRange
+                : StringRange.FromString(Normalize(stringRange.ToString(), settings));
+        }
+
         public static string Normalize(string source, ViewSettings settings)
         {
-            return (source.Length < settings.SizeBigLine ? source : FormatLongString(source.TrimEnd('\0'), settings)).TrimEnd();
+            return (source.Length < settings.BigLineSize ? source : FormatLongString(source.TrimEnd('\0'), settings)).TrimEnd();
         }
         private static string FormatLongString(string source, ViewSettings settings)
         {
             var lines = 
                 source.Split(Environment.NewLine);
 
-            if (lines.Length == 1 && lines[0].Length <= settings.SizeBigLine)
+            if (lines.Length == 1 && lines[0].Length <= settings.BigLineSize)
                 return source;
 
             var sb = new StringBuilder();
@@ -28,7 +36,7 @@ namespace LogGrokCore
             for (var idx = 0; idx < lines.Length; idx++)
             {
                 var line = lines[idx];
-                if (line.Length <= settings.SizeBigLine)
+                if (line.Length <= settings.BigLineSize)
                 {
                     sb.Append(line);
                 }
@@ -40,7 +48,7 @@ namespace LogGrokCore
                     }
                     else
                     {
-                        sb.Append(line, 0, settings.SizeBigLine);
+                        sb.Append(line, 0, settings.BigLineSize);
                         sb.Append(Ellipsis);
                     }
                 }
@@ -55,14 +63,14 @@ namespace LogGrokCore
         private static string BreakLongString(string source, ViewSettings settings)
         {
             var sb = new StringBuilder();
-            for (var i = 0; i <= source.Length / settings.SizeBigLine; ++i)
+            for (var i = 0; i <= source.Length / settings.BigLineSize; ++i)
             {
                 if (i != 0 )
                     sb.Append("\n");
-                if(i * settings.SizeBigLine + settings.SizeBigLine < source.Length)
-                    sb.Append(source.AsSpan(i * settings.SizeBigLine, settings.SizeBigLine));
+                if(i * settings.BigLineSize + settings.BigLineSize < source.Length)
+                    sb.Append(source.AsSpan(i * settings.BigLineSize, settings.BigLineSize));
                 else
-                    sb.Append(source.AsSpan(i * settings.SizeBigLine));
+                    sb.Append(source.AsSpan(i * settings.BigLineSize));
             }
             return sb.ToString();
         }
@@ -139,7 +147,7 @@ namespace LogGrokCore
         }
 
         private static string FormatInlineJsonCore(ReadOnlySpan<char> text, ReadOnlySpan<(int start, int length)> jsonIntervals, 
-            int startOffset)
+            int startOffset, bool isFirstInterval = true)
         {
             if (jsonIntervals.Length == 0)
                 return text.ToString();
@@ -149,12 +157,14 @@ namespace LogGrokCore
             
             StringBuilder stringBuilder = new();
             stringBuilder.Append(text[..firstStart]);
-            stringBuilder.Append(Environment.NewLine);
+            
+            if (!isFirstInterval)
+                stringBuilder.Append(Environment.NewLine);
+
             stringBuilder.Append(FormatJsonText(text.Slice(firstStart, firstLength).ToString()));
-            stringBuilder.Append(Environment.NewLine);
             stringBuilder.Append(FormatInlineJsonCore(
                 text[(firstStart + firstLength)..], 
-                jsonIntervals[1..], firstStart + firstLength + startOffset));
+                jsonIntervals[1..], firstStart + firstLength + startOffset, false));
             return stringBuilder.ToString();
         }
 

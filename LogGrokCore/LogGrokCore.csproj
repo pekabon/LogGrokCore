@@ -26,9 +26,6 @@
   <ItemGroup>
     <None Remove="Controls\GridView\LogGridViewCell.xaml" />
     <None Remove="Controls\GridView\LogGridViewHeader.xaml" />
-    <None Update="nlog.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -84,5 +81,11 @@
   <ItemGroup>
     <None Remove="Fonts\JetBrainsMono-Regular.ttf" />
     <Resource Include="Fonts\JetBrainsMono-Regular.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="nlog.config" />
+    <Content Include="nlog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 </Project>

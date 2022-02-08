@@ -9,128 +9,21 @@
         <ResourceDictionary Source="LogViewContextMenu.xaml"/>
     </ResourceDictionary.MergedDictionaries>    
     <SolidColorBrush x:Key="Selection" Color="SteelBlue" Opacity="0.5"></SolidColorBrush>
-    <Style TargetType="textRender:FastTextBlock">
+    <Style TargetType="textRender:TextView">
         <Style.Setters>
             <Setter Property="SelectionBrush" Value="{StaticResource Selection}"/>
             <Setter Property="ContextMenu" Value="{StaticResource LogViewContextMenu}"/>
         </Style.Setters>
     </Style>
-    <DataTemplate x:Key="ShowLinesTemplate" DataType="logGrokCore:LinePartViewModel">
-        <ContentControl Content="{Binding}">
-            <ContentControl.Style>
-                <Style TargetType="{x:Type ContentControl}">
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding IsTrimmedLinesHidden}" Value="True">
-                        <Setter Property="ContentTemplate">
-                            <Setter.Value>
-                            <DataTemplate DataType="logGrokCore:LinePartViewModel">
-                                <TextBlock Foreground="Gray" FontStyle="Italic">
-                                    <Hyperlink Command="{Binding ExpandCommand}"><Run Text="Expand and show "/><Run Text="{Binding TrimmedLinesCount, Mode=OneWay}"/><Run Text=" hidden lines >>>"/></Hyperlink>
-                                </TextBlock>
-                            </DataTemplate>
-                                </Setter.Value>
-                        </Setter>
-                    </DataTrigger>
-                    <DataTrigger Binding="{Binding IsTrimmedLinesHidden}" Value="False">
-                        <Setter Property="ContentTemplate">
-                            <Setter.Value>
-                            <DataTemplate DataType="logGrokCore:LinePartViewModel">
-                                <TextBlock Foreground="Gray" FontStyle="Italic">
-                                    <Hyperlink Command="{Binding CollapseCommand}"><Run Text="&lt;&lt;&lt; Collapse"/></Hyperlink>
-                                </TextBlock>
-                            </DataTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </DataTrigger>
-                </Style.Triggers>
-                </Style>
-            </ContentControl.Style>
-            
-        </ContentControl>
-
-    </DataTemplate>
-    <DataTemplate x:Key="JsonViewTemplate" DataType="logGrokCore:LinePartViewModel">
-        <ContentControl Content="{Binding}">
-            <ContentControl.Style>
-                <Style TargetType="{x:Type ContentControl}">
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsJsonViewHidden}" Value="True">
-                            <Setter Property="ContentTemplate">
-                                <Setter.Value>
-                                    <DataTemplate DataType="logGrokCore:LinePartViewModel">
-                                        <TextBlock Foreground="Gray" FontStyle="Italic">
-                                    <Hyperlink Command="{Binding ViewJsonCommand}"><Run Text="Expand inline json >>>"/></Hyperlink>
-                                        </TextBlock>
-                                    </DataTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding IsJsonViewHidden}" Value="False">
-                            <Setter Property="ContentTemplate">
-                                <Setter.Value>
-                                    <DataTemplate DataType="logGrokCore:LinePartViewModel">
-                                        <TextBlock Foreground="Gray" FontStyle="Italic">
-                                    <Hyperlink Command="{Binding HideJsonCommand}"><Run Text="&lt;&lt;&lt; Collapse inline json"/></Hyperlink>
-                                        </TextBlock>
-                                    </DataTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </ContentControl.Style>
-
-        </ContentControl>
-
-    </DataTemplate>
-
     <DataTemplate x:Key="NormalTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
-        <textRender:FastTextBlock 
-            Tag="{Binding
-                                    RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"
-            Text="{Binding Text, Mode=OneWay}"/>
+        <textRender:TextView 
+            Tag="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"
+            TextModel="{Binding TextModel, Mode=OneWay}" />
     </DataTemplate>
-    
-    <DataTemplate x:Key="TrimmedTextTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
-        <StackPanel>
-            <textRender:FastTextBlock Text="{Binding Text, Mode=OneWay}" 
-                                      Tag="{Binding
-                                        RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"
-            />
-            <ContentPresenter ContentTemplate="{StaticResource ShowLinesTemplate}"/>
-        </StackPanel>
-    </DataTemplate>
-
-    <DataTemplate x:Key="JsonTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
-        <StackPanel>
-            <textRender:FastTextBlock Text="{Binding Text, Mode=OneWay}" 
-                                      Tag="{Binding
-                                        RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"
-            />
-            <ContentPresenter ContentTemplate="{StaticResource JsonViewTemplate}"/>
-        </StackPanel>
-    </DataTemplate>
-    
     <Style TargetType="{x:Type ContentControl}" x:Key="LogGridViewCellStyle">
-        <Style.Triggers>
-            <DataTrigger Binding="{Binding Content.HaveJson, RelativeSource={RelativeSource Self}}" Value="True">
-                <Setter Property="ContentTemplate" Value="{StaticResource JsonTemplate}"/>
-            </DataTrigger>
-            <MultiDataTrigger>
-                <MultiDataTrigger.Conditions>
-                    <Condition Binding="{Binding Content.IsCollapsible, RelativeSource={RelativeSource Self}}" Value="False" />
-                    <Condition Binding="{Binding Content.HaveJson, RelativeSource={RelativeSource Self}}" Value="False" />
-                </MultiDataTrigger.Conditions>
-                <Setter Property="ContentTemplate" Value="{StaticResource NormalTemplate}"/>
-            </MultiDataTrigger>
-            <MultiDataTrigger>
-                <MultiDataTrigger.Conditions>
-                    <Condition Binding="{Binding Content.IsCollapsible, RelativeSource={RelativeSource Self}}" Value="True" />
-                    <Condition Binding="{Binding Content.HaveJson, RelativeSource={RelativeSource Self}}" Value="False" />
-                </MultiDataTrigger.Conditions>
-                <Setter Property="ContentTemplate" Value="{StaticResource TrimmedTextTemplate}"/>
-            </MultiDataTrigger>
-        </Style.Triggers>
+        <Style.Setters>
+            <Setter Property="ContentTemplate" Value="{StaticResource NormalTemplate}"/>
+        </Style.Setters>
     </Style>
     <Style TargetType="{x:Type gridView:LogGridViewCell}" BasedOn="{StaticResource LogGridViewCellStyle}"/>
 </ResourceDictionary>

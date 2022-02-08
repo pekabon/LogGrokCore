@@ -7,6 +7,7 @@
                     xmlns:colors="clr-namespace:LogGrokCore.Colors"
                     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
                     xmlns:listControls="clr-namespace:LogGrokCore.Controls.ListControls"
+                    xmlns:textRender="clr-namespace:LogGrokCore.Controls.TextRender"
                     mc:Ignorable="d">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
@@ -41,7 +42,12 @@
                 VirtualizingStackPanel.VirtualizationMode="Recycling"
                 IsSynchronizedWithCurrentItem="True"
                 ReadonlySelectedItems="{Binding SelectedItems, Mode=OneWayToSource}"
-                listControls:BaseLogListViewItem.OnItemActivatedCommand="{Binding ItemActivatedCommand}">
+                listControls:BaseLogListViewItem.OnItemActivatedCommand="{Binding ItemActivatedCommand}"
+                textRender:ClippingRectProviderBehavior.ClippingRectProvider=
+                    "{Binding RelativeSource={RelativeSource Self}}">
+                <textRender:TextView.SharedFoldingState>
+                    <textRender:TextViewSharedFoldingState/>
+                </textRender:TextView.SharedFoldingState>
                 <listControls:MarkedLinesListView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <VirtualizingStackPanel
@@ -63,7 +69,7 @@
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate DataType="markedLines:MarkedLineViewModel">
                                     <ContentControl ContentTemplate="{StaticResource MarkedLineCellTemplate}"
-                                                    Content="{Binding Index}" />
+                                                    Content="{Binding IndexViewModel}" />
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>

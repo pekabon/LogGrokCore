@@ -7,7 +7,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
-using ItemCollection = System.Windows.Controls.ItemCollection;
 
 namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
 {
@@ -39,7 +38,7 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
                 // ReSharper disable once UnusedVariable
                 var necessaryChildrenTouch = Children;
                 var itemContainerGenerator = (ItemContainerGenerator) ItemContainerGenerator;
-                itemContainerGenerator.ItemsChanged += (sender, args) =>
+                itemContainerGenerator.ItemsChanged += (_, _) =>
                 {
                     UpdateGrowingCollectionSubscription();
 
@@ -84,15 +83,9 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
         
         public double VisibleItemsMaxWidth { get; private set; }
         public bool IsViewportIsCompletelyFilled { get; private set; }
-        
+      
         protected override Size ArrangeOverride(Size finalSize)
         {
-            foreach (var (item, _, upperBound, lowerBound) in _visibleItems)
-            {
-                var childRect = new Rect(-_offset.X, upperBound, item.DesiredSize.Width, lowerBound - upperBound);
-                item.Arrange(childRect);
-            }
-
             var screenBound = finalSize.Height;
 
             var invisibleItemOffset = screenBound;
@@ -113,6 +106,12 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
 
             UpdateViewPort(onScreenCount);
             UpdateExtent();
+            
+            foreach (var (item, _, upperBound, lowerBound) in _visibleItems)
+            {
+                var childRect = new Rect(-_offset.X, upperBound, item.DesiredSize.Width, lowerBound - upperBound);
+                item.Arrange(childRect);
+            }
 
             return finalSize;
         }

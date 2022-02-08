@@ -9,27 +9,28 @@ namespace LogGrokCore
         private readonly string _sourceString;
 
         private readonly ParseResult _parseResult;
-        private readonly string _transformResout;
+        private readonly string _transformResult;
 
         public LineViewModel(int index, string sourceString, ILineParser parser, Selection markedLines,
             TransformationPerformer transformationPerformer)
             : base(index, markedLines)
         {
             _sourceString = sourceString;
-            _transformResout = transformationPerformer.Transform(sourceString); 
+            _transformResult = transformationPerformer.Transform(sourceString); 
             _parseResult = parser.Parse(
-                _transformResout);
+                _transformResult);
         }
 
         public LinePartViewModel this[int index] => GetValue(index);
 
         private LinePartViewModel GetValue(int index)
         {
+            var uniqueId = HashCode.Combine(base.Index, index);
             var lineMeta = _parseResult.Get().ParsedLineComponents;
-            var text = _transformResout.Substring(lineMeta.ComponentStart(index),
+            var text = _transformResult.Substring(lineMeta.ComponentStart(index),
                 lineMeta.ComponentLength(index));
 
-            return new LinePartViewModel(text);
+            return new LinePartViewModel(uniqueId, text);
         }
 
         public override bool Equals(object? o)
@@ -46,7 +47,7 @@ namespace LogGrokCore
 
         public override string ToString()
         {
-            return _transformResout.TrimEnd();
+            return _transformResult.TrimEnd();
         }
     }
 }
