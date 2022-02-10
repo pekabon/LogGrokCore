@@ -9,7 +9,7 @@
         <ResourceDictionary Source="LogViewContextMenu.xaml"/>
     </ResourceDictionary.MergedDictionaries>    
     <SolidColorBrush x:Key="Selection" Color="SteelBlue" Opacity="0.5"></SolidColorBrush>
-    <Style TargetType="textRender:FastTextBlock">
+    <Style TargetType="textRender:TextView">
         <Style.Setters>
             <Setter Property="SelectionBrush" Value="{StaticResource Selection}"/>
             <Setter Property="ContextMenu" Value="{StaticResource LogViewContextMenu}"/>
@@ -85,7 +85,7 @@
     </DataTemplate>
 
     <DataTemplate x:Key="NormalTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
-        <textRender:FastTextBlock 
+        <textRender:TextView 
             Tag="{Binding
                                     RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"
             Text="{Binding Text, Mode=OneWay}"
@@ -94,7 +94,7 @@
     
     <DataTemplate x:Key="TrimmedTextTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
         <StackPanel>
-            <textRender:FastTextBlock Text="{Binding Text, Mode=OneWay}" 
+            <textRender:TextView Text="{Binding Text, Mode=OneWay}" 
                                       Tag="{Binding
                                         RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"
             />
@@ -104,7 +104,7 @@
 
     <DataTemplate x:Key="JsonTemplate" DataType="{x:Type logGrokCore:LinePartViewModel}">
         <StackPanel>
-            <textRender:FastTextBlock Text="{Binding Text, Mode=OneWay}" 
+            <textRender:TextView Text="{Binding Text, Mode=OneWay}" 
                                       Tag="{Binding
                                         RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"
             />

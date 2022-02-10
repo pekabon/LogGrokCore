@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -52,7 +53,7 @@ public sealed class Collapsed : Expandable
     }
 }
 
-public class CollapsibleRegionsMachine
+public class CollapsibleRegionsMachine : IEnumerable<(Outline outline, int index)>
 {
     public (Outline, int) this[int index] => _regions[index];
     public int LineCount => _regions.Count;
@@ -83,7 +84,7 @@ public class CollapsibleRegionsMachine
                 _collapsibleRegions.FirstOrDefault(r => r.start == i);
             
             var rangeEnd = 
-                _collapsibleRegions.FirstOrDefault(r => r.start + r.length == i);
+                _collapsibleRegions.FirstOrDefault(r => r.start + r.length - 1 == i);
             
             var outline = (rangeStart, rangeEnd) switch
             {
@@ -98,7 +99,7 @@ public class CollapsibleRegionsMachine
 
             if (outline is Collapsed)
             {
-                i += rangeStart.length;
+                i += rangeStart.length - 1;
             }
         }
         
@@ -110,10 +111,23 @@ public class CollapsibleRegionsMachine
         for (var i = 0; i < _collapsibleRegions.Length; i++)
         {
             var (isCollapsed, start, length) = _collapsibleRegions[i];
-            if (start != index && start + length != index) continue;
+            if (start != index && start + length - 1 != index) continue;
             _collapsibleRegions[i] = (!isCollapsed, start, length);
             Update();
             return;
         } 
+    }
+
+    public IEnumerator<(Outline, int)> GetEnumerator()
+    {
+        for (var i = 0; i < LineCount; i++)
+        {
+            yield return this[i];
+        }
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 }

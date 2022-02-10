@@ -149,7 +149,6 @@ namespace LogGrokCore
             
             StringBuilder stringBuilder = new();
             stringBuilder.Append(text[..firstStart]);
-            stringBuilder.Append(Environment.NewLine);
             stringBuilder.Append(FormatJsonText(text.Slice(firstStart, firstLength).ToString()));
             stringBuilder.Append(Environment.NewLine);
             stringBuilder.Append(FormatInlineJsonCore(

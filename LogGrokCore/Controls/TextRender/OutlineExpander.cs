@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace LogGrokCore.Controls.TextRender;
@@ -19,6 +20,11 @@ public class OutlineExpander : ButtonBase
         typeof(OutlineExpander), 
         new PropertyMetadata(default(OutlineExpanderState)));
 
+    public OutlineExpander()
+    {
+        Cursor = Cursors.Hand;
+    }
+    
     public OutlineExpanderState State
     {
         get => (OutlineExpanderState)GetValue(StateProperty);
@@ -41,7 +47,7 @@ public class OutlineExpander : ButtonBase
             : new Size(constraint.Height / sz.Height * sz.Width, constraint.Height);
         return _currentSize;
     }
-    
+
     protected override void OnRender(DrawingContext drawingContext)
     {
         drawingContext.DrawRectangle(Brushes.Transparent, new Pen(Brushes.Transparent, 1), new Rect(0, 0, ActualWidth, ActualHeight));

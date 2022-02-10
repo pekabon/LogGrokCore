@@ -84,8 +84,8 @@ namespace LogGrokCore
                 var (start, length) = interval;
                 var startLine = GetLineNumber(start);
                 var endLine = GetLineNumber(start + length);
-                var lengthLines = endLine - startLine;
-                if (lengthLines > 0) 
+                var lengthLines = endLine - startLine + 1;
+                if (lengthLines > 1) 
                     result.Add((startLine, lengthLines));
             }
 

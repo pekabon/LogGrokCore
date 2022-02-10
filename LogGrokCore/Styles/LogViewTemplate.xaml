@@ -50,7 +50,7 @@
                     <ItemsPanelTemplate>
                         <virtualizingStackPanel1:VirtualizingStackPanel
                             CurrentPosition="{Binding CurrentItemIndex}" 
-                            textRender:FastTextBlock.HighlightRegex="{Binding HighlightRegex}"
+                            textRender:TextView.HighlightRegex="{Binding HighlightRegex}"
                             Tag="{Binding 
                                 RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"
                             ContextMenu="{StaticResource LogViewContextMenu}" />
