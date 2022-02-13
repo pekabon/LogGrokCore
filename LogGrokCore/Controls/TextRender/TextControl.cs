@@ -74,12 +74,13 @@ public class TextControl : Control
 
         var verticalPosition = 0.0;
         var pixelsPerDip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
+        var foreground = Foreground;
         foreach (var textLine in _textLines)
         {
             textLine.glyphLine.Render(
                 new Point(GetHorizontalOffset(textLine),
                     Math.Round(verticalPosition * pixelsPerDip, MidpointRounding.ToEven) / pixelsPerDip),
-                Foreground, drawingContext);
+                foreground, drawingContext);
             verticalPosition += textLine.glyphLine.AdvanceHeight;
         }
     }

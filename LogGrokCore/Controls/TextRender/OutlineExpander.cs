@@ -18,11 +18,17 @@ public class OutlineExpander : ButtonBase
     public static readonly DependencyProperty StateProperty = DependencyProperty.Register(
         nameof(State), typeof(OutlineExpanderState),
         typeof(OutlineExpander), 
-        new PropertyMetadata(default(OutlineExpanderState)));
+        new FrameworkPropertyMetadata(default(OutlineExpanderState), 
+            FrameworkPropertyMetadataOptions.AffectsRender | FrameworkPropertyMetadataOptions.AffectsMeasure));
 
     public OutlineExpander()
     {
         Cursor = Cursors.Hand;
+    }
+
+    static OutlineExpander()
+    {
+        DefaultStyleKeyProperty.OverrideMetadata(typeof(OutlineExpander), new FrameworkPropertyMetadata(null));
     }
     
     public OutlineExpanderState State
@@ -30,7 +36,15 @@ public class OutlineExpander : ButtonBase
         get => (OutlineExpanderState)GetValue(StateProperty);
         set => SetValue(StateProperty, value);
     }
+
+    public Expandable? Expandable { get; set; }
     
+    protected override void OnClick()
+    {
+        Expandable?.Toggle();
+        base.OnClick();
+    }
+
     protected override Size MeasureOverride(Size constraint)
     {
         var sz = State switch

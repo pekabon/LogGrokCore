@@ -11,6 +11,11 @@ using ItemCollection = System.Windows.Controls.ItemCollection;
 
 namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
 {
+    public interface IClippingRectChangesAware
+    {
+        void OnChildRectChanged((Rect, Point)? rect);
+    }
+    
     public partial class VirtualizingStackPanel : VirtualizingPanel, IScrollInfo
     {
         private List<VisibleItem> _visibleItems = new();
@@ -21,6 +26,31 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
         private Point _offset;
         private double _viewPortHeightInPixels;
 
+        public static readonly DependencyProperty ClippingRectProperty = DependencyProperty.RegisterAttached(
+            "ClippingRect", typeof((Rect, Point)?), typeof(VirtualizingStackPanel), 
+            new FrameworkPropertyMetadata(default((Rect, Point)?), FrameworkPropertyMetadataOptions.Inherits, 
+                PropertyChangedCallback));
+
+        private static void PropertyChangedCallback(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            
+            if (d is IClippingRectChangesAware subscriber && e.NewValue is (Rect, Point) or null)
+            {
+                
+               subscriber.OnChildRectChanged(e.NewValue as (Rect, Point)?);
+            }
+        }
+
+        public static void SetClippingRect(DependencyObject element, (Rect, Point)? value)
+        {
+            element.SetValue(ClippingRectProperty, value);
+        }
+
+        public static (Rect, Point)? GetClippingRect(DependencyObject element)
+        {
+            return element.GetValue(ClippingRectProperty) as (Rect, Point)?;
+        }
+        
         public VirtualizingStackPanel()
         {
             IGrowingCollection? currentItems = null;
@@ -84,13 +114,27 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
         
         public double VisibleItemsMaxWidth { get; private set; }
         public bool IsViewportIsCompletelyFilled { get; private set; }
-        
+      
         protected override Size ArrangeOverride(Size finalSize)
         {
             foreach (var (item, _, upperBound, lowerBound) in _visibleItems)
             {
                 var childRect = new Rect(-_offset.X, upperBound, item.DesiredSize.Width, lowerBound - upperBound);
+                
+                var clippingRect = Rect.Intersect(childRect, new Rect(new Point(0, 0), finalSize));
+                if (clippingRect == childRect)
+                {
+                    SetClippingRect(item, null);
+                }
+                else
+                {
+                    var clippingRectScreen = new Rect(PointToScreen(clippingRect.TopLeft),
+                        PointToScreen(clippingRect.BottomRight));
+                    SetClippingRect(item, (clippingRectScreen, PointToScreen(childRect.TopLeft)));
+                }
                 item.Arrange(childRect);
+
+
             }
 
             var screenBound = finalSize.Height;

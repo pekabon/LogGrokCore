@@ -78,13 +78,20 @@ public class CollapsibleRegionsMachine : IEnumerable<(Outline outline, int index
     private void Update()
     {
         _regions.Clear();
+        var starts = _collapsibleRegions.ToDictionary(r => r.start, r => r);
+        var ends = _collapsibleRegions.ToDictionary(r => r.start + r.length - 1, r => r);
+        
         for (var i = 0; i < _lines.Length; i++)
         {
-            var rangeStart=
-                _collapsibleRegions.FirstOrDefault(r => r.start == i);
+            if (!starts.TryGetValue(i, out var rangeStart))
+            {
+                rangeStart = default;
+            }
             
-            var rangeEnd = 
-                _collapsibleRegions.FirstOrDefault(r => r.start + r.length - 1 == i);
+            if (!ends.TryGetValue(i, out var rangeEnd))
+            {
+                rangeEnd = default;
+            }
             
             var outline = (rangeStart, rangeEnd) switch
             {
