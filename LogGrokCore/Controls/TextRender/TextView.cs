@@ -16,22 +16,38 @@ namespace LogGrokCore.Controls.TextRender;
 
 public class TextView : Control,IClippingRectChangesAware
 {
+    private class OutlineData
+    {
+        public OutlineData(int lineCount, (int start, int length)[] collapsibleRegions)
+        {
+            CollapsibleRegionsMachine = new CollapsibleRegionsMachine(lineCount, collapsibleRegions);
+            
+            foreach (var (start, length) in collapsibleRegions)
+            {
+                foreach (var index in Enumerable.Range(start, length))
+                {
+                    CollapsibleLineIndices.Add(index);
+                }
+            }
+        }
+
+        public readonly CollapsibleRegionsMachine CollapsibleRegionsMachine;
+        public readonly HashSet<int> CollapsibleLineIndices = new();
+        public readonly Dictionary<int, Rect> ChildrenRectangles = new();
+        public Dictionary<int, OutlineExpander> ChildrenByPosition = new();
+    }
+
+    private OutlineData? _outlineData;
+
     private PooledList<GlyphLine>? _textLines;
     private readonly Lazy<GlyphTypeface> _glyphTypeface;
     private const double ExpanderSize = 10;
     public const double ExpanderMargin = 20;
 
     private UIElementCollection? _children;
-    private Dictionary<int, Rect> _childrenRectangles = new();
-    private Dictionary<int, OutlineExpander>? _childrenByPosition;
 
     private static readonly Brush OutlineBrush = Brushes.Gray;
     private readonly TextControl _textControl;
-
-    private CollapsibleRegionsMachine? _collapsibleRegionsMachine;
-    private HashSet<int>? _collapsibleLineIndices;
-
-    private Dictionary<int, (OutlineExpander, Rect)> _expanders = new();
 
     private UIElementCollection Children
     {
@@ -39,24 +55,6 @@ public class TextView : Control,IClippingRectChangesAware
         {
             _children ??= new UIElementCollection(this, this) { _textControl };
             return _children;
-        }
-    }
-
-    private Dictionary<int, OutlineExpander> ChildrenByPosition
-    {
-        get
-        {
-            _childrenByPosition ??= new Dictionary<int, OutlineExpander>();
-            return _childrenByPosition;
-        }
-    }
-
-    private Dictionary<int, Rect> ChildrenRectangles
-    {
-        get
-        {
-            _childrenRectangles ??= new Dictionary<int, Rect>();
-            return _childrenRectangles;
         }
     }
 
@@ -167,28 +165,13 @@ public class TextView : Control,IClippingRectChangesAware
 
         if (e.NewValue is not List<(int start, int length)> collapsibleRanges)
         {
-            textView._collapsibleRegionsMachine = null;
+            textView._outlineData = null;
             textView.InvalidateVisual();
-
-            textView._collapsibleLineIndices = null;
             return;
         }
 
-        HashSet<int>? collapsibleLineIndices = null;
-        foreach (var (start, length) in collapsibleRanges)
-        {
-            foreach (var index in Enumerable.Range(start, length))
-            {
-                collapsibleLineIndices ??= new HashSet<int>();
-                collapsibleLineIndices.Add(index);
-            }
-        }
-
-        textView._collapsibleLineIndices = collapsibleLineIndices;
-        textView._collapsibleRegionsMachine =
-            new CollapsibleRegionsMachine(textView.Text.Tokenize().Count(), collapsibleRanges.ToArray());
-
-        textView._collapsibleRegionsMachine.Changed += () =>
+        textView._outlineData = new OutlineData(textView.Text.Tokenize().Count(), collapsibleRanges.ToArray());
+        textView._outlineData.CollapsibleRegionsMachine.Changed += () =>
         {
             textView.InvalidateMeasure();
             textView.InvalidateVisual();
@@ -214,7 +197,6 @@ public class TextView : Control,IClippingRectChangesAware
         ForegroundProperty.OverrideMetadata(typeof(TextView), new FrameworkPropertyMetadata(null,
             FrameworkPropertyMetadataOptions.AffectsRender,
             static (d, _) => (d as TextView)?._textControl.InvalidateVisual()));
-
         
         CommandManager.RegisterClassCommandBinding(typeof(TextView),
             new CommandBinding(
@@ -243,7 +225,7 @@ public class TextView : Control,IClippingRectChangesAware
         return _children[index];
     }
 
-    private OutlineExpander AddAndMeasureChild(Outline outline, int index)
+    private OutlineExpander AddAndMeasureChild(Outline outline, int index, OutlineData outlineData)
     {
         var expanderState = outline switch
         {
@@ -254,7 +236,7 @@ public class TextView : Control,IClippingRectChangesAware
         };
 
         var newChildCreated = false;
-        if (!ChildrenByPosition.TryGetValue(index, out var expander))
+        if (!outlineData.ChildrenByPosition.TryGetValue(index, out var expander))
         {
             expander = new OutlineExpander() {Foreground = OutlineBrush};
             newChildCreated = true;
@@ -267,7 +249,7 @@ public class TextView : Control,IClippingRectChangesAware
             Children.Add(expander);
         
         expander.Measure(new Size(ExpanderSize, ExpanderSize));
-        ChildrenByPosition[index] = expander;
+        outlineData.ChildrenByPosition[index] = expander;
         return expander;
     }
 
@@ -284,23 +266,22 @@ public class TextView : Control,IClippingRectChangesAware
     }
 
     (HashSet<OutlineExpander> newChildren, 
-        Dictionary<int, OutlineExpander> newChildrenByPosition)  UpdateChildren(Size measureConstraint)
+        Dictionary<int, OutlineExpander> newChildrenByPosition) UpdateChildren(Size measureConstraint, OutlineData outlineData)
     {
         if (_textLines == null)
             throw new InvalidOperationException();
+        
         double verticalPosition = 0;
         var pixelsPerDip = (float)VisualTreeHelper.GetDpi(this).PixelsPerDip;
 
-        var collapsibleRegionsMachine = GetCollapsibleRegionsMachine();
         var clippingRect = GetClippingRect();
-        _childrenRectangles.Clear();
+        outlineData.ChildrenRectangles.Clear();
         HashSet<OutlineExpander> newChildren = new(); 
         Dictionary<int, OutlineExpander> newChildrenByPosition = new();
         
-        
-        for (var i = 0; i < collapsibleRegionsMachine.LineCount; i++)
+        for (var i = 0; i < outlineData.CollapsibleRegionsMachine.LineCount; i++)
         {
-            var (outline, index) = collapsibleRegionsMachine[i];
+            var (outline, index) = outlineData.CollapsibleRegionsMachine[i];
             var textLine = _textLines[index];
             var yCenter = Math.Round((verticalPosition + textLine.Size.Height / 2) * pixelsPerDip,
                 MidpointRounding.ToEven) / pixelsPerDip;
@@ -316,7 +297,7 @@ public class TextView : Control,IClippingRectChangesAware
                         && (rect.IntersectsWith(clip) || clip.Contains(rect) || rect.Contains(clip)))
                 {
                     Debug.WriteLine($"Add and Measure: {index}, ClippingRect = {clippingRect}");
-                    var newChild = AddAndMeasureChild(outline, index);
+                    var newChild = AddAndMeasureChild(outline, index, outlineData);
                     newChildren.Add(newChild);
                     newChildrenByPosition[index] = newChild;
                     var desiredSize = newChild.DesiredSize;
@@ -325,7 +306,7 @@ public class TextView : Control,IClippingRectChangesAware
                 }
                 
                 rect = new Rect(ExpanderMargin / 2 - xSize / 2, yCenter - ySize / 2, xSize, ySize);
-                _childrenRectangles[index] = rect;
+                outlineData.ChildrenRectangles[index] = rect;
             }
 
             verticalPosition += textLine.AdvanceHeight;
@@ -346,17 +327,15 @@ public class TextView : Control,IClippingRectChangesAware
             _cachedText = text;
         }
         
-        var collapsibleRegionsMachine = GetCollapsibleRegionsMachine();
-
-
-        var visibleLineIndices = collapsibleRegionsMachine.LineCount == _textLines.Count
+        var outlineData = _outlineData;
+        var visibleLineIndices = 
+            outlineData == null || outlineData.CollapsibleRegionsMachine.LineCount == _textLines.Count
             ? Enumerable.Range(0, _textLines.Count)
-            : collapsibleRegionsMachine.Select((oi) => oi.index).ToList();
-
-       
+            : outlineData.CollapsibleRegionsMachine.Select((oi) => oi.index).ToList();
+        
         var visibleLines = visibleLineIndices.Select(idx => (
             textLine: _textLines[idx],
-            isCollapsible: _collapsibleLineIndices?.Contains(idx) ?? false));
+            isCollapsible: outlineData?.CollapsibleLineIndices.Contains(idx) ?? false));
 
         _textControl.SetTextLines(visibleLines.ToList());
         _textControl.Measure(constraint);
@@ -367,10 +346,22 @@ public class TextView : Control,IClippingRectChangesAware
     protected override Size ArrangeOverride(Size arrangeBounds)
     {
         if (_textLines == null) return arrangeBounds;
+        if (_outlineData is not {} outlineData)
+        {
+            var children = Children;
+            var outlineExpanders = children.OfType<OutlineExpander>();
+            foreach (var outlineExpander in outlineExpanders)
+            {
+                children.Remove(outlineExpander);
+            }
 
-        var (newChildren, newChildrenByPosition) = UpdateChildren(arrangeBounds);
- 
-        _childrenByPosition = newChildrenByPosition;
+            return arrangeBounds;
+        }
+
+        var (newChildren, newChildrenByPosition) = 
+            UpdateChildren(arrangeBounds, _outlineData);
+
+        outlineData.ChildrenByPosition = newChildrenByPosition;
         
         var toDelete = Children.OfType<OutlineExpander>().Except(newChildren).ToList();
         var toAdd = newChildren.Except(Children.OfType<OutlineExpander>()).ToList();
@@ -384,14 +375,11 @@ public class TextView : Control,IClippingRectChangesAware
             _children?.Add(outlineExpander);
         }
 
-        if (_childrenByPosition != null)
+        for (var i = 0; i < outlineData.ChildrenByPosition.Count; i++)
         {
-            for (var i = 0; i < _childrenByPosition.Count; i++)
-            {
-                var (index, expander) = _childrenByPosition.ElementAt(i);
-                var rect = _childrenRectangles[index];
-                expander.Arrange(rect);
-            }
+            var (index, expander) = outlineData.ChildrenByPosition.ElementAt(i);
+            var rect = outlineData.ChildrenRectangles[index];
+            expander.Arrange(rect);
         }
 
         var textControlRect =
@@ -433,7 +421,7 @@ public class TextView : Control,IClippingRectChangesAware
     {
         if (_textLines == null) return;
 
-        var childrenRectangles = _childrenRectangles;
+        var childrenRectangles = _outlineData?.ChildrenRectangles;
 
         if (childrenRectangles is not { Count: > 1 })
             return;
@@ -474,15 +462,6 @@ public class TextView : Control,IClippingRectChangesAware
         SolidColorBrush solidColorBrush = new(SystemColors.HighlightColor);
         solidColorBrush.Freeze();
         return solidColorBrush;
-    }
-
-    private CollapsibleRegionsMachine GetCollapsibleRegionsMachine()
-    {
-        if (_collapsibleRegionsMachine != null)
-            return _collapsibleRegionsMachine;
-
-        var lineCount = Text.Tokenize().Count();
-        return new CollapsibleRegionsMachine(lineCount, Array.Empty<(int, int)>());
     }
 
     public void OnChildRectChanged((Rect, Point)? rect)
