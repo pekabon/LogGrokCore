@@ -6,20 +6,27 @@ namespace LogGrokCore.Data
     public static class StringTokenizer
     {
         private static readonly char[] Crlf = new[] { '\r', '\n' };
+
         public static IEnumerable<StringRange> Tokenize(this string source)
         {
-            var str = source.AsSpan();
+            return Tokenize(StringRange.FromString(source));
+        }
+
+        public static IEnumerable<StringRange> Tokenize(this StringRange source)
+        {
             var currentIndex = 0;
+            var firstCrLfIndex = -1;
             while (currentIndex < source.Length)
             {
-                var crlfIndex = source.AsSpan(currentIndex).IndexOfAny(Crlf);
+                var crlfIndex = source.Span[currentIndex..].IndexOfAny(Crlf);
                 if (crlfIndex == -1)
                 {
                     var len = source.Length - currentIndex;
                     if (len > 0)
                     {
                         yield return new StringRange
-                            { SourceString = source, Start = currentIndex, Length = source.Length - currentIndex };
+                            { SourceString = source.SourceString, 
+                                Start = source.Start + currentIndex, Length = source.Length - currentIndex };
                         yield break;
                     }
                 }
@@ -31,7 +38,7 @@ namespace LogGrokCore.Data
                 }
 
                 yield return new StringRange()
-                    { SourceString = source, Start = currentIndex, Length = crlfIndex };
+                    { SourceString = source.SourceString, Start = source.Start + currentIndex, Length = crlfIndex};
                 currentIndex += crlfIndex + 1;
             }
         }

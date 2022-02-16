@@ -51,7 +51,7 @@ public class TextView : Control,IClippingRectChangesAware
 
     
     private double _cachedWidth;
-    private string? _cachedText;
+    private TextModel? _cachedTextModel;
     private bool _isCollapsibleStateDirty;
     
     private UIElementCollection Children
@@ -91,39 +91,41 @@ public class TextView : Control,IClippingRectChangesAware
 
     #endregion
 
-    #region Text property
+    #region TextModel property
 
-    private static readonly DependencyProperty TextProperty = DependencyProperty.Register(
-        nameof(Text),
-        typeof(string),
-        typeof(TextView),
+    public static readonly DependencyProperty TextModelProperty = DependencyProperty.Register(
+        "TextModel", typeof(TextModel), typeof(TextView), 
         new FrameworkPropertyMetadata(null,
             FrameworkPropertyMetadataOptions.AffectsRender | FrameworkPropertyMetadataOptions.AffectsMeasure,
-            OnTextChanged)
-    );
+            OnTextModelChanged));
 
-    public string Text
+    public TextModel? TextModel
     {
-        get => (string)GetValue(TextProperty);
-        set => SetValue(TextProperty, value);
+        get => (TextModel?)GetValue(TextModelProperty);
+        set => SetValue(TextModelProperty, value);
     }
 
-    public static readonly DependencyProperty CollapsibleTextProperty = DependencyProperty.Register(
-        "CollapsibleText", typeof((string text, (int start, int length)[] collapsibleRegions)),
-        typeof(TextView), new PropertyMetadata(default((string text, (int start, int length)[] collapsibleRegions))));
-
-    public (string text, (int start, int length)[] collapsibleRegions) CollapsibleText
+    private static void OnTextModelChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        get => ((string text, (int start, int length)[] collapsibleRegions))GetValue(CollapsibleTextProperty);
-        set => SetValue(CollapsibleTextProperty, value);
-    }
+        if (d is not TextView textView)
+            return;
+        
+        textView.ResetText();
 
-    private static void OnTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-        if (d is TextView fastTextBlock)
+        if (e.NewValue is not TextModel textModel || textModel.CollapsibleRanges is not {} collapsibleRanges)
         {
-            fastTextBlock.ResetText();
+            textView._outlineData = null;
+            textView.InvalidateVisual();
+            return;
         }
+
+        textView._outlineData = new OutlineData(textModel.Count, collapsibleRanges.ToArray());
+        textView._outlineData.CollapsibleRegionsMachine.Changed += () =>
+        {
+            textView._isCollapsibleStateDirty = true;
+            textView.InvalidateMeasure();
+            textView.InvalidateVisual();
+        };
     }
 
     #endregion
@@ -152,42 +154,6 @@ public class TextView : Control,IClippingRectChangesAware
     {
         get => (string)GetValue(SelectedTextProperty);
         set => SetValue(SelectedTextProperty, value);
-    }
-
-    #endregion
-
-    #region CollpasibleRanges  property
-
-    public static readonly DependencyProperty CollapsibleRangesProperty = DependencyProperty.Register(
-        nameof(CollapsibleRanges), typeof(List<(int start, int length)>), typeof(TextView),
-        new PropertyMetadata(null, OnCollapsibleRangesChanged));
-
-
-    private static void OnCollapsibleRangesChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-        if (d is not TextView textView)
-            return;
-
-        if (e.NewValue is not List<(int start, int length)> collapsibleRanges)
-        {
-            textView._outlineData = null;
-            textView.InvalidateVisual();
-            return;
-        }
-
-        textView._outlineData = new OutlineData(textView.Text.Tokenize().Count(), collapsibleRanges.ToArray());
-        textView._outlineData.CollapsibleRegionsMachine.Changed += () =>
-        {
-            textView._isCollapsibleStateDirty = true;
-            textView.InvalidateMeasure();
-            textView.InvalidateVisual();
-        };
-    }
-
-    public List<(int start, int length)>? CollapsibleRanges
-    {
-        get => GetValue(CollapsibleRangesProperty) as List<(int start, int length)>;
-        set => SetValue(CollapsibleRangesProperty, value);
     }
 
     #endregion
@@ -273,14 +239,14 @@ public class TextView : Control,IClippingRectChangesAware
     
     protected override Size MeasureOverride(Size constraint)
     {
-        var text = Text;
-        if (string.IsNullOrEmpty(text)) return new Size(0, 0);
+        var text = TextModel;
+        if (text == null) return new Size(0, 0);
 
-        if (_textLines == null || _cachedText != text || _cachedWidth < constraint.Width || _isCollapsibleStateDirty)
+        if (_textLines == null || _cachedTextModel != text || _cachedWidth < constraint.Width || _isCollapsibleStateDirty)
         {
             _textLines = CreateTextLines(text, constraint.Width);
             _cachedWidth = constraint.Width;
-            _cachedText = text;
+            _cachedTextModel = text;
             _isCollapsibleStateDirty = false;
         }
         
@@ -412,7 +378,7 @@ public class TextView : Control,IClippingRectChangesAware
         _textLines = null;
     }
 
-    private PooledList<GlyphLine> CreateTextLines(string newText, double constraintWidth)
+    private PooledList<GlyphLine> CreateTextLines(TextModel newText, double constraintWidth)
     {
         var list = new PooledList<GlyphLine>(16);
         var glyphTypeFace = _glyphTypeface.Value;
@@ -429,7 +395,7 @@ public class TextView : Control,IClippingRectChangesAware
             return stringRange;
         }
 
-        foreach (var stringRange in newText.Tokenize())
+        foreach (var stringRange in newText)
         {
             list.Add(new GlyphLine(ApplyCollapsedPostfix(stringRange), glyphTypeFace, FontSize, pixelsPerDip, constraintWidth));
             lineIndex++;

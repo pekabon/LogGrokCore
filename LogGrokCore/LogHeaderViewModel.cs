@@ -6,6 +6,6 @@ namespace LogGrokCore
 
         public  LogHeaderViewModel(string text) => Text = new LinePartViewModel(text);
 
-        public override string ToString() => Text.FullText ?? string.Empty;
+        public override string ToString() => Text.OriginalText ?? string.Empty;
     }
 }

@@ -17,6 +17,6 @@ namespace LogGrokCore.MarkedLines
             ColorSettings = document.ColorSettings;
         }
 
-        public override string ToString() => Text.FullText ?? string.Empty;
+        public override string ToString() => Text.OriginalText ?? string.Empty;
     }
 }
