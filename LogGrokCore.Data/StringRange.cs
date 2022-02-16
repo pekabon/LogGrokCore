@@ -16,4 +16,12 @@ public readonly struct StringRange
     {
         return new string(Span);
     }
+
+    public static StringRange FromString(string source)
+    {
+        return new StringRange()
+        {
+            SourceString = source, Length = source.Length, Start = 0
+        };
+    }
 }

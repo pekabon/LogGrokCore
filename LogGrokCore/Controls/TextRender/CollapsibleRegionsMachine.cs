@@ -63,6 +63,8 @@ public class CollapsibleRegionsMachine : IEnumerable<(Outline outline, int index
     private readonly int[] _lines;
     private readonly Action<int> _toggleAction;
 
+    private readonly HashSet<int> _collapsedLines = new ();
+
     public CollapsibleRegionsMachine(int lineCount, (int start, int length)[] collapsibleRegions)
     {
         _lines = Enumerable.Range(0, lineCount).ToArray();
@@ -73,11 +75,17 @@ public class CollapsibleRegionsMachine : IEnumerable<(Outline outline, int index
         Update();
     }
 
+    public bool IsCollapsed(int sourceLineNumber)
+    {
+        return _collapsedLines.Contains(sourceLineNumber);
+    }
+
     public event Action? Changed;
     
     private void Update()
     {
         _regions.Clear();
+        _collapsedLines.Clear();
         var starts = _collapsibleRegions.ToDictionary(r => r.start, r => r);
         var ends = _collapsibleRegions.ToDictionary(r => r.start + r.length - 1, r => r);
         
@@ -106,6 +114,7 @@ public class CollapsibleRegionsMachine : IEnumerable<(Outline outline, int index
 
             if (outline is Collapsed)
             {
+                _collapsedLines.Add(i);
                 i += rangeStart.length - 1;
             }
         }

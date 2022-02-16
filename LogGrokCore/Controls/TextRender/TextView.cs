@@ -30,7 +30,7 @@ public class TextView : Control,IClippingRectChangesAware
                 }
             }
         }
-
+        
         public readonly CollapsibleRegionsMachine CollapsibleRegionsMachine;
         public readonly HashSet<int> CollapsibleLineIndices = new();
         public readonly Dictionary<int, Rect> ChildrenRectangles = new();
@@ -49,6 +49,11 @@ public class TextView : Control,IClippingRectChangesAware
     private static readonly Brush OutlineBrush = Brushes.Gray;
     private readonly TextControl _textControl;
 
+    
+    private double _cachedWidth;
+    private string? _cachedText;
+    private bool _isCollapsibleStateDirty;
+    
     private UIElementCollection Children
     {
         get
@@ -173,6 +178,7 @@ public class TextView : Control,IClippingRectChangesAware
         textView._outlineData = new OutlineData(textView.Text.Tokenize().Count(), collapsibleRanges.ToArray());
         textView._outlineData.CollapsibleRegionsMachine.Changed += () =>
         {
+            textView._isCollapsibleStateDirty = true;
             textView.InvalidateMeasure();
             textView.InvalidateVisual();
         };
@@ -264,9 +270,85 @@ public class TextView : Control,IClippingRectChangesAware
         return result;
 
     }
+    
+    protected override Size MeasureOverride(Size constraint)
+    {
+        var text = Text;
+        if (string.IsNullOrEmpty(text)) return new Size(0, 0);
 
-    (HashSet<OutlineExpander> newChildren, 
-        Dictionary<int, OutlineExpander> newChildrenByPosition) UpdateChildren(Size measureConstraint, OutlineData outlineData)
+        if (_textLines == null || _cachedText != text || _cachedWidth < constraint.Width || _isCollapsibleStateDirty)
+        {
+            _textLines = CreateTextLines(text, constraint.Width);
+            _cachedWidth = constraint.Width;
+            _cachedText = text;
+            _isCollapsibleStateDirty = false;
+        }
+        
+        var outlineData = _outlineData;
+        var visibleLineIndices = 
+            outlineData == null || outlineData.CollapsibleRegionsMachine.LineCount == _textLines.Count
+            ? Enumerable.Range(0, _textLines.Count)
+            : outlineData.CollapsibleRegionsMachine.Select((oi) => oi.index).ToList();
+        
+        var visibleLines = visibleLineIndices.Select(idx => (
+            textLine: _textLines[idx],
+            isCollapsible: outlineData?.CollapsibleLineIndices.Contains(idx) ?? false));
+
+        _textControl.SetTextLines(visibleLines.ToList());
+        _textControl.Measure(constraint);
+
+        return new Size(_textControl.DesiredSize.Width, _textControl.DesiredSize.Height);
+    }
+    
+    protected override Size ArrangeOverride(Size arrangeBounds)
+    {
+        if (_textLines == null) return arrangeBounds;
+        
+        var textControlRect =
+            new Rect(0, 0, _textControl.DesiredSize.Width, _textControl.DesiredSize.Height);
+        _textControl.Arrange(textControlRect);
+        
+        if (_outlineData is not {} outlineData)
+        {
+            var children = Children;
+            for (var i = children.Count - 1; i >= 0; i--)
+            {
+                if (children[i] is OutlineExpander)
+                    children.RemoveAt(i);
+            }
+
+            return arrangeBounds;
+        }
+
+        var (newChildren, newChildrenByPosition) = 
+            UpdateChildren(_outlineData);
+
+        outlineData.ChildrenByPosition = newChildrenByPosition;
+        
+        var toDelete = Children.OfType<OutlineExpander>().Except(newChildren).ToList();
+        var toAdd = newChildren.Except(Children.OfType<OutlineExpander>()).ToList();
+        foreach (var outlineExpander in toDelete)
+        {
+            _children?.Remove(outlineExpander);
+        }
+
+        foreach (var outlineExpander in toAdd)
+        {
+            _children?.Add(outlineExpander);
+        }
+
+        for (var i = 0; i < outlineData.ChildrenByPosition.Count; i++)
+        {
+            var (index, expander) = outlineData.ChildrenByPosition.ElementAt(i);
+            var rect = outlineData.ChildrenRectangles[index];
+            expander.Arrange(rect);
+        }
+
+        return arrangeBounds;
+    }
+    
+    private (HashSet<OutlineExpander> newChildren, 
+        Dictionary<int, OutlineExpander> newChildrenByPosition) UpdateChildren(OutlineData outlineData)
     {
         if (_textLines == null)
             throw new InvalidOperationException();
@@ -314,81 +396,7 @@ public class TextView : Control,IClippingRectChangesAware
 
         return (newChildren, newChildrenByPosition);
     }
-
-    protected override Size MeasureOverride(Size constraint)
-    {
-        var text = Text;
-        if (string.IsNullOrEmpty(text)) return new Size(0, 0);
-
-        if (_textLines == null || _cachedText != text || _cachedWidth < constraint.Width)
-        {
-            _textLines = CreateTextLines(text, constraint.Width);
-            _cachedWidth = constraint.Width;
-            _cachedText = text;
-        }
-        
-        var outlineData = _outlineData;
-        var visibleLineIndices = 
-            outlineData == null || outlineData.CollapsibleRegionsMachine.LineCount == _textLines.Count
-            ? Enumerable.Range(0, _textLines.Count)
-            : outlineData.CollapsibleRegionsMachine.Select((oi) => oi.index).ToList();
-        
-        var visibleLines = visibleLineIndices.Select(idx => (
-            textLine: _textLines[idx],
-            isCollapsible: outlineData?.CollapsibleLineIndices.Contains(idx) ?? false));
-
-        _textControl.SetTextLines(visibleLines.ToList());
-        _textControl.Measure(constraint);
-
-        return new Size(_textControl.DesiredSize.Width, _textControl.DesiredSize.Height);
-    }
-
-    protected override Size ArrangeOverride(Size arrangeBounds)
-    {
-        if (_textLines == null) return arrangeBounds;
-        if (_outlineData is not {} outlineData)
-        {
-            var children = Children;
-            var outlineExpanders = children.OfType<OutlineExpander>();
-            foreach (var outlineExpander in outlineExpanders)
-            {
-                children.Remove(outlineExpander);
-            }
-
-            return arrangeBounds;
-        }
-
-        var (newChildren, newChildrenByPosition) = 
-            UpdateChildren(arrangeBounds, _outlineData);
-
-        outlineData.ChildrenByPosition = newChildrenByPosition;
-        
-        var toDelete = Children.OfType<OutlineExpander>().Except(newChildren).ToList();
-        var toAdd = newChildren.Except(Children.OfType<OutlineExpander>()).ToList();
-        foreach (var outlineExpander in toDelete)
-        {
-            _children?.Remove(outlineExpander);
-        }
-
-        foreach (var outlineExpander in toAdd)
-        {
-            _children?.Add(outlineExpander);
-        }
-
-        for (var i = 0; i < outlineData.ChildrenByPosition.Count; i++)
-        {
-            var (index, expander) = outlineData.ChildrenByPosition.ElementAt(i);
-            var rect = outlineData.ChildrenRectangles[index];
-            expander.Arrange(rect);
-        }
-
-        var textControlRect =
-            new Rect(0, 0, _textControl.DesiredSize.Width, _textControl.DesiredSize.Height);
-        _textControl.Arrange(textControlRect);
-
-        return arrangeBounds;
-    }
-
+    
     private void ResetText()
     {
         if (_textLines != null)
@@ -409,9 +417,22 @@ public class TextView : Control,IClippingRectChangesAware
         var list = new PooledList<GlyphLine>(16);
         var glyphTypeFace = _glyphTypeface.Value;
         var pixelsPerDip = (float)VisualTreeHelper.GetDpi(this).PixelsPerDip;
+        var lineIndex = 0;
+
+        StringRange ApplyCollapsedPostfix(StringRange stringRange)
+        {
+            if (_outlineData?.CollapsibleRegionsMachine.IsCollapsed(lineIndex) ?? false)
+            {
+                return StringRange.FromString(stringRange.ToString().TrimEnd().TrimEnd('{') + "{...}");    
+            }
+
+            return stringRange;
+        }
+
         foreach (var stringRange in newText.Tokenize())
         {
-            list.Add(new GlyphLine(stringRange, glyphTypeFace, FontSize, pixelsPerDip, constraintWidth));
+            list.Add(new GlyphLine(ApplyCollapsedPostfix(stringRange), glyphTypeFace, FontSize, pixelsPerDip, constraintWidth));
+            lineIndex++;
         }
 
         return list;
@@ -440,9 +461,6 @@ public class TextView : Control,IClippingRectChangesAware
             drawingContext.DrawLine(outlinePen, p1, p2);
         }
     }
-
-    private double _cachedWidth;
-    private string? _cachedText;
 
     private GlyphTypeface CreateGlyphTypeface()
     {
