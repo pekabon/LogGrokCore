@@ -16,14 +16,29 @@ public class TextModel : IReadOnlyList<StringRange>
 
     public List<(int start, int length)>? CollapsibleRanges { get; }
 
+    private Dictionary<int, (int start, int length)>? _indexedCollapsibleRanges;
+
     public StringRange GetCollapsedTextSubstitution(int index)
     {
+        if (_textLines is not { } textLines || CollapsibleRanges is not { } collapsibleRanges)
+        {
+            throw new InvalidOperationException();
+        }
+        
         if (_substitutions?.TryGetValue(index, out var result) ?? false)
         {
             return result;
         }
+
+        _indexedCollapsibleRanges ??= collapsibleRanges.ToDictionary(
+            static kv => kv.start, static kv => kv);
+
+        var collapsibleRange = _indexedCollapsibleRanges[index];
+        var collapsedText = string.Concat(_textLines.Skip(collapsibleRange.start)
+            .Take(collapsibleRange.length).Select(
+                (s, i) => i == 0 ? s.ToString().TrimEnd() : s.ToString().Trim()));
         
-        return StringRange.Empty;
+        return StringRange.FromString(collapsedText);
     }
 
     public IEnumerator<StringRange> GetEnumerator()
