@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -28,15 +29,15 @@ public class AuxLinesControl : Control
         return base.ArrangeOverride(arrangeBounds);
     }
 
-    private IEnumerable<(double, double)> EnumerateLinesInRect(Rect rect)
+    private IEnumerable<(double, double)> EnumerateLinesInRect(IEnumerable<(double, double)>? lines, Rect? rect)
     {
-        var lines = Lines;
         if (lines == null)
             yield break;
         
         foreach (var (y1, y2) in lines)
         {
-            if ((y1 <= rect.Bottom && y1 >= rect.Top) || (y2 <= rect.Bottom && y2 >= rect.Top))
+            if (rect is not { } r ||
+                (y1 <= r.Bottom && y1 >= r.Top) || (y2 <= r.Bottom && y2 >= r.Top))
                 yield return (y1, y2);
         }
     }
@@ -59,7 +60,7 @@ public class AuxLinesControl : Control
         var outlinePen = new Pen(OutlineBrush, 0.5);
         
         
-        var lines = inflated != null ? EnumerateLinesInRect(inflated.Value) : Lines;
+        var lines = inflated != null ? EnumerateLinesInRect(Lines, inflated.Value) : Lines;
         _renderedLines.Clear();
         foreach (var (y1, y2) in lines)
         {
@@ -77,22 +78,17 @@ public class AuxLinesControl : Control
         var result = new Rect(PointFromScreen(rect.TopLeft), PointFromScreen(rect.BottomRight));
         return result;
     }
-    
+
     public void Update()
     {
         var clippingRect = GetClippingRect();
-        
-        var visibleLines = clippingRect != null ? EnumerateLinesInRect(clippingRect.Value) : Lines;
-        if (visibleLines == null)
+
+        var visibleRenderedLines =
+            EnumerateLinesInRect(_renderedLines, clippingRect).ToHashSet();
+
+        if (visibleRenderedLines.SetEquals(EnumerateLinesInRect(Lines, clippingRect)))
             return;
-        
-        foreach (var line in visibleLines)
-        {
-            if (!_renderedLines.Contains(line))
-            {
-                InvalidateVisual();
-                return;
-            }
-        }
+
+        InvalidateVisual();
     }
 }

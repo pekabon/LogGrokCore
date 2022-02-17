@@ -325,16 +325,13 @@ public class TextView : Control,IClippingRectChangesAware
 
         var childrenRectangles = _outlineData?.ChildrenRectangles;
 
-        if (childrenRectangles is not { Count: > 1 })
+        if (childrenRectangles is not {} || _auxLinesControl is not {} auxLinesControl)
             return arrangeBounds;
 
         var sortedRectangles =
             childrenRectangles.OrderBy(kv => kv.Key)
                 .Select(kv => kv.Value).ToList();
 
-        if (sortedRectangles.Count <= 1 || _auxLinesControl is not {} auxLinesControl)
-            return arrangeBounds;
-        
         _auxLinesControl.Arrange(new Rect(ExpanderMargin / 2 - ExpanderSize / 2, 0, ExpanderSize, arrangeBounds.Height));
         
         var newLines = new List<(double, double)>();
