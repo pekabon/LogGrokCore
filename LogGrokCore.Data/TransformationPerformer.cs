@@ -54,8 +54,8 @@ namespace LogGrokCore.Data
                 return transformName switch
                 {
                     "Base64Decode" => Base64Decode(input),
-                    "Base64DecodeFormatJson" => FormatJsonText(Base64Decode(input)),
-                    "FormatJson" => FormatJsonText(input),
+                    // "Base64DecodeFormatJson" => FormatJsonText(Base64Decode(input)),
+                    // "FormatJson" => FormatJsonText(input),
                     _ => input
                 };
             }
