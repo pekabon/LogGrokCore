@@ -120,7 +120,6 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
             foreach (var (item, _, upperBound, lowerBound) in _visibleItems)
             {
                 var childRect = new Rect(-_offset.X, upperBound, item.DesiredSize.Width, lowerBound - upperBound);
-                
                 var clippingRect = Rect.Intersect(childRect, new Rect(new Point(0, 0), finalSize));
                 if (clippingRect == childRect)
                 {
@@ -132,9 +131,8 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
                         PointToScreen(clippingRect.BottomRight));
                     SetClippingRect(item, (clippingRectScreen, PointToScreen(childRect.TopLeft)));
                 }
+                
                 item.Arrange(childRect);
-
-
             }
 
             var screenBound = finalSize.Height;

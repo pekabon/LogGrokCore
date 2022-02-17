@@ -48,6 +48,7 @@ public class TextView : Control,IClippingRectChangesAware
 
     private static readonly Brush OutlineBrush = Brushes.Gray;
     private readonly TextControl _textControl;
+    private AuxLinesControl? _auxLinesControl;
 
     
     private double _cachedWidth;
@@ -248,6 +249,18 @@ public class TextView : Control,IClippingRectChangesAware
             _cachedWidth = constraint.Width;
             _cachedTextModel = text;
             _isCollapsibleStateDirty = false;
+
+            if (text.CollapsibleRanges == null && _auxLinesControl != null)
+            {
+                Children.Remove(_auxLinesControl);
+                _auxLinesControl = null;
+            }
+
+            if (text.CollapsibleRanges != null && _auxLinesControl == null)
+            {
+                _auxLinesControl = new AuxLinesControl();
+                Children.Add(_auxLinesControl);
+            }
         }
         
         var outlineData = _outlineData;
@@ -288,7 +301,7 @@ public class TextView : Control,IClippingRectChangesAware
 
         var (newChildren, newChildrenByPosition) = 
             UpdateChildren(_outlineData);
-
+        
         outlineData.ChildrenByPosition = newChildrenByPosition;
         
         var toDelete = Children.OfType<OutlineExpander>().Except(newChildren).ToList();
@@ -308,6 +321,33 @@ public class TextView : Control,IClippingRectChangesAware
             var (index, expander) = outlineData.ChildrenByPosition.ElementAt(i);
             var rect = outlineData.ChildrenRectangles[index];
             expander.Arrange(rect);
+        }
+
+        var childrenRectangles = _outlineData?.ChildrenRectangles;
+
+        if (childrenRectangles is not { Count: > 1 })
+            return arrangeBounds;
+
+        var sortedRectangles =
+            childrenRectangles.OrderBy(kv => kv.Key)
+                .Select(kv => kv.Value).ToList();
+
+        if (sortedRectangles.Count <= 1 || _auxLinesControl is not {} auxLinesControl)
+            return arrangeBounds;
+        
+        _auxLinesControl.Arrange(new Rect(ExpanderMargin / 2 - ExpanderSize / 2, 0, ExpanderSize, arrangeBounds.Height));
+        
+        var newLines = new List<(double, double)>();
+        for (var i = 1; i < sortedRectangles.Count; i++)
+        {
+            var prev = sortedRectangles[i - 1];
+            var current = sortedRectangles[i];
+            newLines.Add((prev.Bottom, current.Top));
+        }
+
+        if (!(_auxLinesControl.Lines?.SequenceEqual(newLines) ?? false))
+        {
+            _auxLinesControl.Lines = newLines;
         }
 
         return arrangeBounds;
@@ -409,30 +449,6 @@ public class TextView : Control,IClippingRectChangesAware
         return list;
     }
 
-    protected override void OnRender(DrawingContext drawingContext)
-    {
-        if (_textLines == null) return;
-
-        var childrenRectangles = _outlineData?.ChildrenRectangles;
-
-        if (childrenRectangles is not { Count: > 1 })
-            return;
-
-        var outlinePen = new Pen(OutlineBrush, 0.5);
-        var sortedRectangles =
-            childrenRectangles.OrderBy(kv => kv.Key)
-                .Select(kv => kv.Value).ToList();
-        
-        for (var i = 1; i < sortedRectangles.Count; i++)
-        {
-            var prev = sortedRectangles[i - 1];
-            var current = sortedRectangles[i];
-            var p1 = new Point((prev.Left + prev.Right) / 2, prev.Bottom);
-            var p2 = new Point((current.Left + current.Right) / 2, current.Top);
-            drawingContext.DrawLine(outlinePen, p1, p2);
-        }
-    }
-
     private GlyphTypeface CreateGlyphTypeface()
     {
         var key = (FontFamily, FontStyle, FontWeight, FontStretch);
@@ -455,6 +471,12 @@ public class TextView : Control,IClippingRectChangesAware
 
     public void OnChildRectChanged((Rect, Point)? rect)
     {
-        Dispatcher.BeginInvoke(new Action(InvalidateArrange));
+        //TODO remove this spike 
+        Dispatcher.BeginInvoke(new Action(
+            () =>
+            {
+                InvalidateArrange();
+                _auxLinesControl?.Update();
+            }));
     }
 }
