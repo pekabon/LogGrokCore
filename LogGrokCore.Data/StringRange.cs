@@ -17,6 +17,11 @@ public readonly struct StringRange
         return new string(Span);
     }
 
+    public bool IsEmpty => Length == 0;
+    
+    public static StringRange Empty = new() { SourceString = string.Empty, Start = 0, Length = 0 };
+
+    
     public static StringRange FromString(string source)
     {
         return new StringRange()

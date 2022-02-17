@@ -384,20 +384,25 @@ public class TextView : Control,IClippingRectChangesAware
         var glyphTypeFace = _glyphTypeface.Value;
         var pixelsPerDip = (float)VisualTreeHelper.GetDpi(this).PixelsPerDip;
         var lineIndex = 0;
-
+        var textModel = TextModel;
+        
         StringRange ApplyCollapsedPostfix(StringRange stringRange)
         {
-            if (_outlineData?.CollapsibleRegionsMachine.IsCollapsed(lineIndex) ?? false)
+            if (!(_outlineData?.CollapsibleRegionsMachine.IsCollapsed(lineIndex) ?? false)) 
+                return stringRange;
+            
+            if (textModel?.GetCollapsedTextSubstitution(lineIndex) is { IsEmpty: false } substitution)
             {
-                return StringRange.FromString(stringRange.ToString().TrimEnd().TrimEnd('{') + "{...}");    
+                return substitution;
             }
+            return StringRange.FromString(stringRange.ToString().TrimEnd().TrimEnd('{') + "{...}");
 
-            return stringRange;
         }
 
         foreach (var stringRange in newText)
         {
-            list.Add(new GlyphLine(ApplyCollapsedPostfix(stringRange), glyphTypeFace, FontSize, pixelsPerDip, constraintWidth));
+            var lineWithPostfix = ApplyCollapsedPostfix(stringRange);
+            list.Add(new GlyphLine(lineWithPostfix, glyphTypeFace, FontSize, pixelsPerDip, constraintWidth));
             lineIndex++;
         }
 

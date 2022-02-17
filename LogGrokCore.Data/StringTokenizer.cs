@@ -7,11 +7,15 @@ namespace LogGrokCore.Data
     {
         private static readonly char[] Crlf = new[] { '\r', '\n' };
 
+        public static bool IsSingleLine(this StringRange source)
+        {
+            return source.Span.TrimEnd(Crlf).IndexOfAny(Crlf) < 0;
+        }
+
         public static IEnumerable<StringRange> Tokenize(this string source)
         {
             return Tokenize(StringRange.FromString(source));
         }
-
         public static IEnumerable<StringRange> Tokenize(this StringRange source)
         {
             var currentIndex = 0;

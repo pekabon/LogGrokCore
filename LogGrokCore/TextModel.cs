@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using LogGrokCore.Data;
 using Microsoft.Toolkit.HighPerformance;
+using YamlDotNet.Core.Tokens;
 
 namespace LogGrokCore;
 
@@ -11,9 +12,20 @@ public class TextModel : IReadOnlyList<StringRange>
 {
     private readonly List<StringRange>? _textLines;
     private readonly StringRange? _sourceText;
-    
+    private Dictionary<int, StringRange>? _substitutions;
+
     public List<(int start, int length)>? CollapsibleRanges { get; }
-    
+
+    public StringRange GetCollapsedTextSubstitution(int index)
+    {
+        if (_substitutions?.TryGetValue(index, out var result) ?? false)
+        {
+            return result;
+        }
+        
+        return StringRange.Empty;
+    }
+
     public IEnumerator<StringRange> GetEnumerator()
     {
         for (var i = 0; i < Count; i++)
@@ -48,6 +60,7 @@ public class TextModel : IReadOnlyList<StringRange>
         }
     }
     
+    
     public TextModel(string source)
     {
         var jsonIntervals = TextOperations.GetJsonRanges(source).ToList();
@@ -62,16 +75,41 @@ public class TextModel : IReadOnlyList<StringRange>
                 TextOperations.FormatInlineJson(source, jsonIntervals.AsSpan()),
                 ApplicationSettings.Instance().ViewSettings);
 
-            (_textLines, CollapsibleRanges) = GetCollapsibleRanges(text);
+            var rootCollapsedLineTextSubstitutions = jsonIntervals.Select(interval 
+                =>
+            {
+                var range = new StringRange()
+                    { SourceString = source, Start = interval.start, Length = interval.length };
+                return range.IsSingleLine() ? range : StringRange.Empty;
+            }).ToList();
+            
+            var (textLines, collapsibleRanges) = GetCollapsibleRanges(text, rootCollapsedLineTextSubstitutions);
+            _textLines = textLines;
+            CollapsibleRanges = new List<(int start, int length)>();
+            foreach (((int start, int length) range , StringRange substitution) r in collapsibleRanges)
+            {
+                CollapsibleRanges.Add(r.range);
+                if (!r.substitution.IsEmpty)
+                {
+                    _substitutions ??= new Dictionary<int, StringRange>();
+                    _substitutions[r.range.start] = r.substitution;
+                }
+            }
         }
     }
     
     private (List<StringRange> textLines,
-        List<(int start, int length)> ranges) GetCollapsibleRanges(string source)
+        List<((int start, int length), StringRange)> ranges) GetCollapsibleRanges(string source, 
+            List<StringRange> rootCollapsedLineTextSubstitutions)
     {
         var lines = source.Tokenize().ToList();
-        List<(int start, int length)> result = new();
-            
+        List<((int start, int length), StringRange collapsedTextSubstitution)> result = new();
+        var ranges = TextOperations.GetJsonRanges(source).ToList();
+        var rootIntervals = ranges.Select((r, i) => ((start: r.start, length: r.length), 
+            rootCollapsedLineTextSubstitutions[i])).ToList();
+        var jsonIntervals = new Stack<((int start, int length), StringRange collapsedTextSubstitution)>(rootIntervals);
+        
+        
         int GetLineNumber(int position)
         {
             for (var  i =0; i<lines?.Count; i++)
@@ -85,23 +123,21 @@ public class TextModel : IReadOnlyList<StringRange>
             throw new InvalidOperationException();
         }
 
-        void AddInterval((int start, int length) interval)
+        void AddInterval(((int start, int length), StringRange collapsedTextSubstitution) interval)
         {
-            var (start, length) = interval;
+            var ((start, length), substitution) = interval;
             var startLine = GetLineNumber(start);
             var endLine = GetLineNumber(start + length);
             var lengthLines = endLine - startLine + 1;
-            if (lengthLines > 1) 
-                result.Add((startLine, lengthLines));
+            if (lengthLines > 1)
+                result.Add(((startLine, lengthLines), substitution));
         }
 
-        var jsonIntervals = new Stack<(int start, int length)>(TextOperations.GetJsonRanges(source));
-        
         while (jsonIntervals.TryPop(out var interval))
         {
             AddInterval(interval);
                 
-            var (start, length) = interval;
+            var ((start, length), _) = interval;
             if (length > 2)
             {
                 var offset = start + 1;
@@ -110,7 +146,7 @@ public class TextModel : IReadOnlyList<StringRange>
                         .Select(g => (g.start + offset, g.length));
                 foreach (var group in groups)
                 {
-                    jsonIntervals.Push(group);
+                    jsonIntervals.Push((group, StringRange.Empty));
                 }
             }
         }
