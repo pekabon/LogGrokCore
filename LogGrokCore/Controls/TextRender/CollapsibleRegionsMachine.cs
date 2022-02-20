@@ -77,8 +77,8 @@ public class CollapsibleRegionsMachine : IEnumerable<(Outline outline, int index
         }
 
         _lines = Enumerable.Range(0, lineCount).ToArray();
-        _collapsibleRegions = collapsibleRegions.Select((region, i) 
-            => (_collapsedLines.Contains(i), region.start, region.length)).ToArray();
+        _collapsibleRegions = collapsibleRegions.Select(region 
+            => (_collapsedLines.Contains(region.start), region.start, region.length)).ToArray();
         _regions = new List<(Outline, int)>(collapsibleRegions.Length);
         _toggleAction = Toggle;
         Update();

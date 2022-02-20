@@ -116,24 +116,6 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
       
         protected override Size ArrangeOverride(Size finalSize)
         {
-            foreach (var (item, _, upperBound, lowerBound) in _visibleItems)
-            {
-                var childRect = new Rect(-_offset.X, upperBound, item.DesiredSize.Width, lowerBound - upperBound);
-                var clippingRect = Rect.Intersect(childRect, new Rect(new Point(0, 0), finalSize));
-                if (clippingRect == childRect)
-                {
-                    SetClippingRect(item, null);
-                }
-                else
-                {
-                    var clippingRectScreen = new Rect(PointToScreen(clippingRect.TopLeft),
-                        PointToScreen(clippingRect.BottomRight));
-                    SetClippingRect(item, (clippingRectScreen, PointToScreen(childRect.TopLeft)));
-                }
-                
-                item.Arrange(childRect);
-            }
-
             var screenBound = finalSize.Height;
 
             var invisibleItemOffset = screenBound;
@@ -154,9 +136,43 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
 
             UpdateViewPort(onScreenCount);
             UpdateExtent();
+            
+            // TODO switch from clipping rect propagation to 'clipping provider' property 
+            UpdateChildrenClipping(finalSize);
+            
+            foreach (var (item, _, upperBound, lowerBound) in _visibleItems)
+            {
+                var childRect = new Rect(-_offset.X, upperBound, item.DesiredSize.Width, lowerBound - upperBound);
+                item.Arrange(childRect);
+            }
+
+            // 
+            Dispatcher.BeginInvoke(new Action(() => { UpdateChildrenClipping(finalSize); }));
 
             return finalSize;
         }
+
+        private void UpdateChildrenClipping(Size finalSize)
+        {
+            foreach (var (item, _, upperBound, lowerBound) in _visibleItems)
+            {
+                var childRect = new Rect(-_offset.X, upperBound, item.DesiredSize.Width, lowerBound - upperBound);
+
+                var clippingRect =
+                    new Rect(new Point(0, 0), finalSize); //Rect.Intersect(childRect, new Rect(new Point(0, 0), finalSize));
+                if (clippingRect == childRect)
+                {
+                    SetClippingRect(item, null);
+                }
+                else
+                {
+                    var clippingRectScreen = new Rect(PointToScreen(clippingRect.TopLeft),
+                        PointToScreen(clippingRect.BottomRight));
+                    SetClippingRect(item, (clippingRectScreen, PointToScreen(childRect.TopLeft)));
+                }
+            }
+        }
+
 
         private void BuildVisibleItems(Size availableSize, double verticalOffset)
         {
