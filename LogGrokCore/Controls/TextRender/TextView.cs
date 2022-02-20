@@ -68,18 +68,22 @@ public class TextView : Control,IClippingRectChangesAware
     private static readonly Brush OutlineBrush = Brushes.Gray;
     private readonly TextControl _textControl;
     private AuxLinesControl? _auxLinesControl;
-
+    private Border? _debugBorder;
     
     private double _cachedWidth;
     private TextModel? _cachedTextModel;
     private bool _isCollapsibleStateDirty;
     private TextViewTransientSettings? _transientSettings;
-    
+
     private UIElementCollection Children
     {
         get
         {
-            _children ??= new UIElementCollection(this, this) { _textControl };
+            if (_children != null) return _children;
+            _children = new UIElementCollection(this, this) { _textControl };
+            if (_debugBorder != null)
+                _children.Add(_debugBorder);
+
             return _children;
         }
     }
@@ -217,6 +221,7 @@ public class TextView : Control,IClippingRectChangesAware
 
     public TextView()
     {
+        //_debugBorder = new Border() { BorderBrush = Brushes.Red, BorderThickness = new Thickness(2) };
         _textControl = new TextControl(this);
         _glyphTypeface = new Lazy<GlyphTypeface>(CreateGlyphTypeface);
     }
@@ -332,7 +337,16 @@ public class TextView : Control,IClippingRectChangesAware
         _textControl.SetTextLines(visibleLines.ToList());
         _textControl.Measure(constraint);
 
-        return new Size(_textControl.DesiredSize.Width, _textControl.DesiredSize.Height);
+     
+        var measuredSize = new Size(_textControl.DesiredSize.Width, _textControl.DesiredSize.Height);
+        if (_debugBorder != null)
+        {        
+            _debugBorder.Height = measuredSize.Height;
+            _debugBorder.Width = measuredSize.Width;
+            _debugBorder?.Measure(measuredSize);
+        }
+
+        return measuredSize;
     }
     
     protected override Size ArrangeOverride(Size arrangeBounds)
@@ -342,8 +356,20 @@ public class TextView : Control,IClippingRectChangesAware
         var textControlRect =
             new Rect(0, 0, _textControl.DesiredSize.Width, _textControl.DesiredSize.Height);
         _textControl.Arrange(textControlRect);
+
+        if (_debugBorder != null && GetClippingRect() is {} rect)
+        {
+            _debugBorder.Arrange(rect);
+        }
         
-        if (_outlineData is not {} outlineData)
+        RearrangeOutlineChildren(arrangeBounds);
+  
+        return arrangeBounds;
+    }
+
+    private void RearrangeOutlineChildren(Size arrangeBounds)
+    {
+        if (_outlineData is not { } outlineData)
         {
             var children = Children;
             for (var i = children.Count - 1; i >= 0; i--)
@@ -351,15 +377,14 @@ public class TextView : Control,IClippingRectChangesAware
                 if (children[i] is OutlineExpander)
                     children.RemoveAt(i);
             }
-
-            return arrangeBounds;
+            return;
         }
 
-        var (newChildren, newChildrenByPosition) = 
+        var (newChildren, newChildrenByPosition) =
             UpdateChildren(_outlineData);
-        
+
         outlineData.ChildrenByPosition = newChildrenByPosition;
-        
+
         var toDelete = Children.OfType<OutlineExpander>().Except(newChildren).ToList();
         var toAdd = newChildren.Except(Children.OfType<OutlineExpander>()).ToList();
         foreach (var outlineExpander in toDelete)
@@ -381,15 +406,17 @@ public class TextView : Control,IClippingRectChangesAware
 
         var childrenRectangles = _outlineData?.ChildrenRectangles;
 
-        if (childrenRectangles is not {} || _auxLinesControl is not {} auxLinesControl)
-            return arrangeBounds;
+        if (childrenRectangles is not { } || _auxLinesControl is not { } auxLinesControl)
+        {
+            return;
+        }
 
         var sortedRectangles =
             childrenRectangles.OrderBy(kv => kv.Key)
                 .Select(kv => kv.Value).ToList();
 
         auxLinesControl.Arrange(new Rect(ExpanderMargin / 2 - ExpanderSize / 2, 0, ExpanderSize, arrangeBounds.Height));
-        
+
         var newLines = new List<(double, double)>();
         for (var i = 1; i < sortedRectangles.Count; i++)
         {
@@ -402,10 +429,8 @@ public class TextView : Control,IClippingRectChangesAware
         {
             auxLinesControl.Lines = newLines;
         }
-
-        return arrangeBounds;
     }
-    
+
     private (HashSet<OutlineExpander> newChildren, 
         Dictionary<int, OutlineExpander> newChildrenByPosition) UpdateChildren(OutlineData outlineData)
     {
@@ -528,7 +553,9 @@ public class TextView : Control,IClippingRectChangesAware
         Dispatcher.BeginInvoke(new Action(
             () =>
             {
-                InvalidateArrange();
+                if (_outlineData == null)
+                    return;
+                RearrangeOutlineChildren(new Size(ActualWidth, ActualHeight));
                 _auxLinesControl?.Update();
             }));
     }
