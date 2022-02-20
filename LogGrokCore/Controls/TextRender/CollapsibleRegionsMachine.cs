@@ -55,6 +55,7 @@ public sealed class Collapsed : Expandable
 
 public class CollapsibleRegionsMachine : IEnumerable<(Outline outline, int index)>
 {
+    private readonly Func<HashSet<int>?> _collapsedLineIndicesGetter;
     public (Outline, int) this[int index] => _regions[index];
     public int LineCount => _regions.Count;
 
@@ -63,13 +64,21 @@ public class CollapsibleRegionsMachine : IEnumerable<(Outline outline, int index
     private readonly int[] _lines;
     private readonly Action<int> _toggleAction;
 
-    private readonly HashSet<int> _collapsedLines = new ();
+    private HashSet<int> _collapsedLines = new ();
 
-    public CollapsibleRegionsMachine(int lineCount, (int start, int length)[] collapsibleRegions)
+    public CollapsibleRegionsMachine(int lineCount, (int start, int length)[] collapsibleRegions,
+        Func<HashSet<int>?> collapsedLineIndicesGetter)
     {
+        _collapsedLineIndicesGetter = collapsedLineIndicesGetter;
+        var collapsedLines = collapsedLineIndicesGetter();
+        if (collapsedLines != null)
+        {
+            _collapsedLines = collapsedLines;
+        }
+
         _lines = Enumerable.Range(0, lineCount).ToArray();
-        _collapsibleRegions = collapsibleRegions.Select(static region 
-            => (false, region.start, region.length)).ToArray();
+        _collapsibleRegions = collapsibleRegions.Select((region, i) 
+            => (_collapsedLines.Contains(i), region.start, region.length)).ToArray();
         _regions = new List<(Outline, int)>(collapsibleRegions.Length);
         _toggleAction = Toggle;
         Update();
@@ -84,6 +93,12 @@ public class CollapsibleRegionsMachine : IEnumerable<(Outline outline, int index
     
     private void Update()
     {
+        var collapsedLines = _collapsedLineIndicesGetter();
+        if (collapsedLines != null)
+        {
+            _collapsedLines = collapsedLines;
+        }
+        
         _regions.Clear();
         _collapsedLines.Clear();
         var starts = _collapsibleRegions.ToDictionary(r => r.start, r => r);

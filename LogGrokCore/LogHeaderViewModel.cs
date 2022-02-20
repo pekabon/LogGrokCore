@@ -4,8 +4,8 @@ namespace LogGrokCore
     {
         public LinePartViewModel Text { get; }
 
-        public  LogHeaderViewModel(string text) => Text = new LinePartViewModel(text);
+        public  LogHeaderViewModel(string text) => Text = new LinePartViewModel(-1, text);
 
-        public override string ToString() => Text.OriginalText ?? string.Empty;
+        public override string ToString() => Text.OriginalText;
     }
 }

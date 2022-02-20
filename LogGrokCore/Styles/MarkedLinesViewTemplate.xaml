@@ -7,6 +7,7 @@
                     xmlns:colors="clr-namespace:LogGrokCore.Colors"
                     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
                     xmlns:listControls="clr-namespace:LogGrokCore.Controls.ListControls"
+                    xmlns:textRender="clr-namespace:LogGrokCore.Controls.TextRender"
                     mc:Ignorable="d">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
@@ -42,6 +43,9 @@
                 IsSynchronizedWithCurrentItem="True"
                 ReadonlySelectedItems="{Binding SelectedItems, Mode=OneWayToSource}"
                 listControls:BaseLogListViewItem.OnItemActivatedCommand="{Binding ItemActivatedCommand}">
+                <textRender:TextView.TransientSettings>
+                    <textRender:TextViewTransientSettings/>
+                </textRender:TextView.TransientSettings>
                 <listControls:MarkedLinesListView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <VirtualizingStackPanel

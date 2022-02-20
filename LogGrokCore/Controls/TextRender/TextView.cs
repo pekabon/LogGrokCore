@@ -14,13 +14,32 @@ using VirtualizingStackPanel = LogGrokCore.Controls.ListControls.VirtualizingSta
 
 namespace LogGrokCore.Controls.TextRender;
 
+public class TextViewTransientSettings
+{
+    public HashSet<int> this[int index]
+    {
+        get
+        {
+            if (_collapsedLineIndicesByUniqueId.TryGetValue(index, out var result))
+                return result;
+            var newSettings  = new HashSet<int>();
+            _collapsedLineIndicesByUniqueId[index] = newSettings;
+            return newSettings;
+        }
+    }
+
+    private readonly Dictionary<int, HashSet<int>> _collapsedLineIndicesByUniqueId = new();
+}
+
 public class TextView : Control,IClippingRectChangesAware
 {
     private class OutlineData
     {
-        public OutlineData(int lineCount, (int start, int length)[] collapsibleRegions)
+        public OutlineData(int lineCount, 
+            (int start, int length)[] collapsibleRegions,
+            Func<HashSet<int>?> collapsedLineIndicesGetter)
         {
-            CollapsibleRegionsMachine = new CollapsibleRegionsMachine(lineCount, collapsibleRegions);
+            CollapsibleRegionsMachine = new CollapsibleRegionsMachine(lineCount, collapsibleRegions, collapsedLineIndicesGetter);
             
             foreach (var (start, length) in collapsibleRegions)
             {
@@ -54,6 +73,7 @@ public class TextView : Control,IClippingRectChangesAware
     private double _cachedWidth;
     private TextModel? _cachedTextModel;
     private bool _isCollapsibleStateDirty;
+    private TextViewTransientSettings? _transientSettings;
     
     private UIElementCollection Children
     {
@@ -106,6 +126,17 @@ public class TextView : Control,IClippingRectChangesAware
         set => SetValue(TextModelProperty, value);
     }
 
+    private HashSet<int>? GetTransientSettings()
+    {        
+        HashSet<int>? settings = null;
+        if (TransientSettings is { } savedSettings && TextModel is { } textModel)
+        {
+            settings = savedSettings[textModel.UniqueId];
+        }
+
+        return settings;
+    }
+
     private static void OnTextModelChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is not TextView textView)
@@ -120,7 +151,11 @@ public class TextView : Control,IClippingRectChangesAware
             return;
         }
 
-        textView._outlineData = new OutlineData(textModel.Count, collapsibleRanges.ToArray());
+
+        textView._outlineData = new OutlineData(
+            textModel.Count, 
+            collapsibleRanges.ToArray(),
+            () => textView.GetTransientSettings());
         textView._outlineData.CollapsibleRegionsMachine.Changed += () =>
         {
             textView._isCollapsibleStateDirty = true;
@@ -158,6 +193,27 @@ public class TextView : Control,IClippingRectChangesAware
     }
 
     #endregion
+
+    #region TransientSettings property
+    
+    public static readonly DependencyProperty TransientSettingsProperty = DependencyProperty.RegisterAttached(
+        "TransientSettings", typeof(TextViewTransientSettings), typeof(TextView), 
+            new FrameworkPropertyMetadata(default(TextViewTransientSettings), 
+                FrameworkPropertyMetadataOptions.Inherits));
+
+    public static void SetTransientSettings(DependencyObject element, TextViewTransientSettings value)
+    {
+        element.SetValue(TransientSettingsProperty, value);
+    }
+
+    public static TextViewTransientSettings? GetTransientSettings(DependencyObject element)
+    {
+        return (TextViewTransientSettings)element.GetValue(TransientSettingsProperty);
+    }
+    
+    #endregion
+    
+    private TextViewTransientSettings? TransientSettings => _transientSettings ??=  GetTransientSettings(this);
 
     public TextView()
     {
@@ -332,7 +388,7 @@ public class TextView : Control,IClippingRectChangesAware
             childrenRectangles.OrderBy(kv => kv.Key)
                 .Select(kv => kv.Value).ToList();
 
-        _auxLinesControl.Arrange(new Rect(ExpanderMargin / 2 - ExpanderSize / 2, 0, ExpanderSize, arrangeBounds.Height));
+        auxLinesControl.Arrange(new Rect(ExpanderMargin / 2 - ExpanderSize / 2, 0, ExpanderSize, arrangeBounds.Height));
         
         var newLines = new List<(double, double)>();
         for (var i = 1; i < sortedRectangles.Count; i++)
@@ -342,9 +398,9 @@ public class TextView : Control,IClippingRectChangesAware
             newLines.Add((prev.Bottom, current.Top));
         }
 
-        if (!(_auxLinesControl.Lines?.SequenceEqual(newLines) ?? false))
+        if (!(auxLinesControl.Lines?.SequenceEqual(newLines) ?? false))
         {
-            _auxLinesControl.Lines = newLines;
+            auxLinesControl.Lines = newLines;
         }
 
         return arrangeBounds;

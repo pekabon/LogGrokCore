@@ -13,10 +13,11 @@ public class TextModel : IReadOnlyList<StringRange>
     private readonly List<StringRange>? _textLines;
     private readonly StringRange? _sourceText;
     private Dictionary<int, StringRange>? _substitutions;
+    private Dictionary<int, (int start, int length)>? _indexedCollapsibleRanges;
+
+    public int UniqueId { get; }
 
     public List<(int start, int length)>? CollapsibleRanges { get; }
-
-    private Dictionary<int, (int start, int length)>? _indexedCollapsibleRanges;
 
     public StringRange GetCollapsedTextSubstitution(int index)
     {
@@ -76,8 +77,9 @@ public class TextModel : IReadOnlyList<StringRange>
     }
     
     
-    public TextModel(string source)
+    public TextModel(int uniqueId, string source)
     {
+        UniqueId = uniqueId;
         var jsonIntervals = TextOperations.GetJsonRanges(source).ToList();
         if (jsonIntervals.Count == 0)
         {

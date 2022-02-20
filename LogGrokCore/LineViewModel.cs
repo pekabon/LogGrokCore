@@ -25,11 +25,12 @@ namespace LogGrokCore
 
         private LinePartViewModel GetValue(int index)
         {
+            var uniqueId = HashCode.Combine(base.Index, index);
             var lineMeta = _parseResult.Get().ParsedLineComponents;
             var text = _transformResult.Substring(lineMeta.ComponentStart(index),
                 lineMeta.ComponentLength(index));
 
-            return new LinePartViewModel(text);
+            return new LinePartViewModel(uniqueId, text);
         }
 
         public override bool Equals(object? o)

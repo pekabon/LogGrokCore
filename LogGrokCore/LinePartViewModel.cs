@@ -2,9 +2,9 @@
 
 public class LinePartViewModel : ViewModelBase
 {
-   public LinePartViewModel(string source)
+   public LinePartViewModel(int uniqueId, string source)
     {
-        TextModel = new TextModel(source);
+        TextModel = new TextModel(uniqueId, source);
         OriginalText = source;
     }
 

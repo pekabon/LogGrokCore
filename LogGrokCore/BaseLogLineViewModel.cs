@@ -1,4 +1,5 @@
-﻿using LogGrokCore.Controls;
+﻿using System;
+using LogGrokCore.Controls;
 using LogGrokCore.MarkedLines;
 
 namespace LogGrokCore
@@ -10,7 +11,7 @@ namespace LogGrokCore
         protected BaseLogLineViewModel(int index, Selection markedLines)
         {
             Index = index;
-            IndexViewModel = new LinePartViewModel(Index.ToString());
+            IndexViewModel = new LinePartViewModel(HashCode.Combine(-1, index), Index.ToString());
             _markedLines = markedLines;
             _markedLines.Changed += () => InvokePropertyChanged(nameof(IsMarked));
         }

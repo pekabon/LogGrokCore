@@ -45,7 +45,9 @@
                                     FontFamily="{StaticResource JetBrainsMono}"
                                     ColumnSettings="{Binding ColumnSettings}"
                                     x:Name="ItemsListView">
-                
+                <textRender:TextView.TransientSettings>
+                    <textRender:TextViewTransientSettings/>
+                </textRender:TextView.TransientSettings>
                 <ListView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <virtualizingStackPanel1:VirtualizingStackPanel

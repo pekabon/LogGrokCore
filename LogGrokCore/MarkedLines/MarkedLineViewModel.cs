@@ -1,4 +1,5 @@
-﻿using LogGrokCore.Colors;
+﻿using System;
+using LogGrokCore.Colors;
 
 namespace LogGrokCore.MarkedLines
 {
@@ -12,8 +13,9 @@ namespace LogGrokCore.MarkedLines
             : base(lineNumber, document.MarkedLines)        
         {
             Document = document;
-    
-            Text = new LinePartViewModel(text);
+
+            var uniqueId = HashCode.Combine(document, lineNumber);
+            Text = new LinePartViewModel(uniqueId, text);
             ColorSettings = document.ColorSettings;
         }
 
