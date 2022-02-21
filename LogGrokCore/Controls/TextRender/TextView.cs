@@ -8,9 +8,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
-using LogGrokCore.Controls.ListControls.VirtualizingStackPanel;
 using LogGrokCore.Data;
-using VirtualizingStackPanel = LogGrokCore.Controls.ListControls.VirtualizingStackPanel.VirtualizingStackPanel;
 
 namespace LogGrokCore.Controls.TextRender;
 
@@ -31,7 +29,7 @@ public class TextViewTransientSettings
     private readonly Dictionary<int, HashSet<int>> _collapsedLineIndicesByUniqueId = new();
 }
 
-public class TextView : Control,IClippingRectChangesAware
+public class TextView : Control, IClippingRectChangesAware
 {
     private class OutlineData
     {
@@ -74,6 +72,7 @@ public class TextView : Control,IClippingRectChangesAware
     private TextModel? _cachedTextModel;
     private bool _isCollapsibleStateDirty;
     private TextViewTransientSettings? _transientSettings;
+    private FrameworkElement? _clippingRectProvider;
 
     private UIElementCollection Children
     {
@@ -221,7 +220,7 @@ public class TextView : Control,IClippingRectChangesAware
 
     public TextView()
     {
-        //_debugBorder = new Border() { BorderBrush = Brushes.Red, BorderThickness = new Thickness(2) };
+        _debugBorder = new Border() { BorderBrush = Brushes.Red, BorderThickness = new Thickness(2) };
         _textControl = new TextControl(this);
         _glyphTypeface = new Lazy<GlyphTypeface>(CreateGlyphTypeface);
     }
@@ -287,16 +286,13 @@ public class TextView : Control,IClippingRectChangesAware
         return expander;
     }
 
-    Rect? GetClippingRect()
+    private Rect? GetClippingRect()
     {
+        _clippingRectProvider ??= ClippingRectProviderBehavior.GetClippingRectProvider(this);
+        if (_clippingRectProvider is not {} clippingRectProvider)
+            return null;
         
-        var ss = VirtualizingStackPanel.GetClippingRect(this);
-        if (ss is not { } r) return null;
-        var (rect, _) = r;
-
-        var result = new Rect(PointFromScreen(rect.TopLeft), PointFromScreen(rect.BottomRight));
-        return result;
-
+        return ClippingRectProviderBehavior.GetClippingRect(clippingRectProvider, this);
     }
     
     protected override Size MeasureOverride(Size constraint)
@@ -357,17 +353,12 @@ public class TextView : Control,IClippingRectChangesAware
             new Rect(0, 0, _textControl.DesiredSize.Width, _textControl.DesiredSize.Height);
         _textControl.Arrange(textControlRect);
 
-        if (_debugBorder != null && GetClippingRect() is {} rect)
-        {
-            _debugBorder.Arrange(rect);
-        }
-        
-        RearrangeOutlineChildren(arrangeBounds);
+        RearrangeOutlineChildren(GetClippingRect(), arrangeBounds);
   
         return arrangeBounds;
     }
 
-    private void RearrangeOutlineChildren(Size arrangeBounds)
+    private void RearrangeOutlineChildren(Rect? clippingRect, Size arrangeBounds)
     {
         if (_outlineData is not { } outlineData)
         {
@@ -381,7 +372,7 @@ public class TextView : Control,IClippingRectChangesAware
         }
 
         var (newChildren, newChildrenByPosition) =
-            UpdateChildren(_outlineData);
+            UpdateChildren(clippingRect, _outlineData);
 
         outlineData.ChildrenByPosition = newChildrenByPosition;
 
@@ -429,10 +420,17 @@ public class TextView : Control,IClippingRectChangesAware
         {
             auxLinesControl.Lines = newLines;
         }
+        
+        if (_debugBorder != null && clippingRect is { IsEmpty: false } r)
+        {
+            _debugBorder.Arrange(r);
+        }
+
+
     }
 
     private (HashSet<OutlineExpander> newChildren, 
-        Dictionary<int, OutlineExpander> newChildrenByPosition) UpdateChildren(OutlineData outlineData)
+        Dictionary<int, OutlineExpander> newChildrenByPosition) UpdateChildren(Rect? clippingRect, OutlineData outlineData)
     {
         if (_textLines == null)
             throw new InvalidOperationException();
@@ -440,7 +438,6 @@ public class TextView : Control,IClippingRectChangesAware
         double verticalPosition = 0;
         var pixelsPerDip = (float)VisualTreeHelper.GetDpi(this).PixelsPerDip;
 
-        var clippingRect = GetClippingRect();
         outlineData.ChildrenRectangles.Clear();
         HashSet<OutlineExpander> newChildren = new(); 
         Dictionary<int, OutlineExpander> newChildrenByPosition = new();
@@ -462,7 +459,7 @@ public class TextView : Control,IClippingRectChangesAware
                     clippingRect is {} clip 
                         && (rect.IntersectsWith(clip) || clip.Contains(rect) || rect.Contains(clip)))
                 {
-                    Debug.WriteLine($"Add and Measure: {index}, ClippingRect = {clippingRect}");
+                    //Debug.WriteLine($"Add and Measure: {index}, ClippingRect = {clippingRect}");
                     var newChild = AddAndMeasureChild(outline, index, outlineData);
                     newChildren.Add(newChild);
                     newChildrenByPosition[index] = newChild;
@@ -547,16 +544,11 @@ public class TextView : Control,IClippingRectChangesAware
         return solidColorBrush;
     }
 
-    public void OnChildRectChanged((Rect, Point)? rect)
+    public void OnChildRectChanged(Rect rect)
     {
-        //TODO remove this spike 
-        Dispatcher.BeginInvoke(new Action(
-            () =>
-            {
-                if (_outlineData == null)
-                    return;
-                RearrangeOutlineChildren(new Size(ActualWidth, ActualHeight));
-                _auxLinesControl?.Update();
-            }));
+        if (_outlineData == null)
+            return;
+        Debug.WriteLine($"teop: {rect.Top}");
+        RearrangeOutlineChildren(rect, new Size(ActualWidth, ActualHeight));
     }
 }

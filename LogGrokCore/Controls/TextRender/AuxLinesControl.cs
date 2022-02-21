@@ -3,11 +3,10 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using VirtualizingStackPanel = LogGrokCore.Controls.ListControls.VirtualizingStackPanel.VirtualizingStackPanel;
 
 namespace LogGrokCore.Controls.TextRender;
 
-public class AuxLinesControl : Control
+public class AuxLinesControl : Control, IClippingRectChangesAware
 {
     private static readonly Brush OutlineBrush = Brushes.Gray;    
     private double _width;
@@ -42,24 +41,27 @@ public class AuxLinesControl : Control
         }
     }
 
+    private static Rect? InflateHeightTwice(Rect? source)
+    {
+        if (source == null)
+            return null;
+        
+        var inflated = source.Value;
+        inflated.Inflate(new Size(0, source.Value.Height));
+        return inflated;
+    }
+    
     protected override void OnRender(DrawingContext drawingContext)
     {
         if (Lines == null) 
             return;
         
         var clippingRect = GetClippingRect();
-        Rect? inflated = null;
-        if (clippingRect != null)
-        {
-            var temp = clippingRect.Value;
-            temp.Inflate(new Size(0, clippingRect.Value.Height));
-            inflated = temp;
-        }
+        Rect? inflated = InflateHeightTwice(clippingRect);
 
         var x = _width / 2;
         var outlinePen = new Pen(OutlineBrush, 0.5);
-        
-        
+
         var lines = inflated != null ? EnumerateLinesInRect(Lines, inflated.Value) : Lines;
         _renderedLines.Clear();
         foreach (var (y1, y2) in lines)
@@ -69,20 +71,19 @@ public class AuxLinesControl : Control
         }
     }
     
-    Rect? GetClippingRect()
-    {
-        var ss = VirtualizingStackPanel.GetClippingRect(this);
-        if (ss is not { } r) return null;
-        var (rect, _) = r;
+    private FrameworkElement? _clippingRectProvider;
 
-        var result = new Rect(PointFromScreen(rect.TopLeft), PointFromScreen(rect.BottomRight));
-        return result;
+    private Rect? GetClippingRect()
+    {
+        _clippingRectProvider ??= ClippingRectProviderBehavior.GetClippingRectProvider(this);
+        if (_clippingRectProvider is not {} clippingRectProvider)
+            return null;
+        
+        return ClippingRectProviderBehavior.GetClippingRect(clippingRectProvider, this);
     }
 
-    public void Update()
+    private void Update(Rect? clippingRect)
     {
-        var clippingRect = GetClippingRect();
-
         var visibleRenderedLines =
             EnumerateLinesInRect(_renderedLines, clippingRect).ToHashSet();
 
@@ -90,5 +91,10 @@ public class AuxLinesControl : Control
             return;
 
         InvalidateVisual();
+    }
+
+    public void OnChildRectChanged(Rect rect)
+    {
+        Update(rect);
     }
 }

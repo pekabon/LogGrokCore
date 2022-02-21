@@ -57,6 +57,7 @@
                 <listControls:ListView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <virtualizingStackPanel:VirtualizingStackPanel
+                            textRender:ClippingRectProviderBehavior.ClippingRectProvider="{Binding RelativeSource={RelativeSource Self}}"
                             CurrentPosition="{Binding CurrentItemIndex}" 
                             textRender:TextView.HighlightRegex="{Binding HighlightRegex}"
                             Tag="{Binding 
