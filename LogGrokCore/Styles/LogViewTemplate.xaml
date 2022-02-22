@@ -44,7 +44,6 @@
                                     localControls:NavigateToLineBehavior.ChangeCurrentItem="True"
                                     FontFamily="{StaticResource JetBrainsMono}"
                                     ColumnSettings="{Binding ColumnSettings}"
-                                    
                                     x:Name="ItemsListView">
                 <textRender:TextView.TransientSettings>
                     <textRender:TextViewTransientSettings/>

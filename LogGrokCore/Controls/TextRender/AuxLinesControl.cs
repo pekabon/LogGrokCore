@@ -25,6 +25,7 @@ public class AuxLinesControl : Control, IClippingRectChangesAware
     protected override Size ArrangeOverride(Size arrangeBounds)
     {
         _width = arrangeBounds.Width;
+        Update(GetClippingRect());
         return base.ArrangeOverride(arrangeBounds);
     }
 
@@ -95,6 +96,8 @@ public class AuxLinesControl : Control, IClippingRectChangesAware
 
     public void OnChildRectChanged(Rect rect)
     {
-        Update(rect);
+        InvalidateArrange();
+        // Dispatcher.BeginInvoke(() => 
+        //     Update(GetClippingRect()));
     }
 }

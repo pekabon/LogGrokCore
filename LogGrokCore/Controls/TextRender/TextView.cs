@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -66,7 +65,6 @@ public class TextView : Control, IClippingRectChangesAware
     private static readonly Brush OutlineBrush = Brushes.Gray;
     private readonly TextControl _textControl;
     private AuxLinesControl? _auxLinesControl;
-    private Border? _debugBorder;
     
     private double _cachedWidth;
     private TextModel? _cachedTextModel;
@@ -80,9 +78,6 @@ public class TextView : Control, IClippingRectChangesAware
         {
             if (_children != null) return _children;
             _children = new UIElementCollection(this, this) { _textControl };
-            if (_debugBorder != null)
-                _children.Add(_debugBorder);
-
             return _children;
         }
     }
@@ -220,7 +215,6 @@ public class TextView : Control, IClippingRectChangesAware
 
     public TextView()
     {
-        _debugBorder = new Border() { BorderBrush = Brushes.Red, BorderThickness = new Thickness(2) };
         _textControl = new TextControl(this);
         _glyphTypeface = new Lazy<GlyphTypeface>(CreateGlyphTypeface);
     }
@@ -333,15 +327,7 @@ public class TextView : Control, IClippingRectChangesAware
         _textControl.SetTextLines(visibleLines.ToList());
         _textControl.Measure(constraint);
 
-     
         var measuredSize = new Size(_textControl.DesiredSize.Width, _textControl.DesiredSize.Height);
-        if (_debugBorder != null)
-        {        
-            _debugBorder.Height = measuredSize.Height;
-            _debugBorder.Width = measuredSize.Width;
-            _debugBorder?.Measure(measuredSize);
-        }
-
         return measuredSize;
     }
     
@@ -354,7 +340,6 @@ public class TextView : Control, IClippingRectChangesAware
         _textControl.Arrange(textControlRect);
 
         RearrangeOutlineChildren(GetClippingRect(), arrangeBounds);
-  
         return arrangeBounds;
     }
 
@@ -420,13 +405,6 @@ public class TextView : Control, IClippingRectChangesAware
         {
             auxLinesControl.Lines = newLines;
         }
-        
-        if (_debugBorder != null && clippingRect is { IsEmpty: false } r)
-        {
-            _debugBorder.Arrange(r);
-        }
-
-
     }
 
     private (HashSet<OutlineExpander> newChildren, 
@@ -511,7 +489,6 @@ public class TextView : Control, IClippingRectChangesAware
                 return substitution;
             }
             return StringRange.FromString(stringRange.ToString().TrimEnd().TrimEnd('{') + "{...}");
-
         }
 
         foreach (var stringRange in newText)
@@ -548,7 +525,21 @@ public class TextView : Control, IClippingRectChangesAware
     {
         if (_outlineData == null)
             return;
-        Debug.WriteLine($"teop: {rect.Top}");
-        RearrangeOutlineChildren(rect, new Size(ActualWidth, ActualHeight));
+        
+        InvalidateArrange();
+        // Debug.WriteLine($"Before: Child rect: {rect.Top}");
+        // Debug.WriteLine($"Before: RenderTransformOrigin: {RenderTransformOrigin}");
+        // Debug.WriteLine($"Before: IsArrangeValid: {IsArrangeValid}");
+        // Dispatcher.BeginInvoke(() =>
+        //     {
+        //         var r = GetClippingRect(); 
+        //         Debug.WriteLine($"After: Child rect: {r?.Top}");
+        //         Debug.WriteLine($"After: RenderTransformOrigin: {RenderTransformOrigin}");
+        //         Debug.WriteLine($"After: IsArrangeValid: {IsArrangeValid}");
+        //
+        //         RearrangeOutlineChildren(GetClippingRect(), new Size(ActualWidth, ActualHeight));
+        //         
+        //     }
+        // );
     }
 }

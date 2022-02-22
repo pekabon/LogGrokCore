@@ -42,7 +42,9 @@
                 VirtualizingStackPanel.VirtualizationMode="Recycling"
                 IsSynchronizedWithCurrentItem="True"
                 ReadonlySelectedItems="{Binding SelectedItems, Mode=OneWayToSource}"
-                listControls:BaseLogListViewItem.OnItemActivatedCommand="{Binding ItemActivatedCommand}">
+                listControls:BaseLogListViewItem.OnItemActivatedCommand="{Binding ItemActivatedCommand}"
+                textRender:ClippingRectProviderBehavior.ClippingRectProvider=
+                    "{Binding RelativeSource={RelativeSource Self}}">
                 <textRender:TextView.TransientSettings>
                     <textRender:TextViewTransientSettings/>
                 </textRender:TextView.TransientSettings>

@@ -72,7 +72,7 @@ public class OutlineExpander : ButtonBase
         var xOffset = (ActualWidth - width) / 2;
         var yOffset = (ActualHeight - height) / 2;
 
-        var pen = new Pen(Foreground, 1.0);
+        var pen = new Pen(Foreground, 0.6);
         
         void DrawLine(double x1, double y1, double x2, double y2)
         {
