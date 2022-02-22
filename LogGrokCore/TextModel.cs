@@ -12,7 +12,7 @@ public class TextModel : IReadOnlyList<StringRange>
 {
     private readonly List<StringRange>? _textLines;
     private readonly StringRange? _sourceText;
-    private Dictionary<int, StringRange>? _substitutions;
+    private readonly Dictionary<int, StringRange>? _substitutions;
     private Dictionary<int, (int start, int length)>? _indexedCollapsibleRanges;
 
     public int UniqueId { get; }
@@ -99,12 +99,23 @@ public class TextModel : IReadOnlyList<StringRange>
                 TextOperations.FormatInlineJson(source, jsonIntervals.AsSpan()),
                 viewSettings);
 
+            static StringRange GetContainingLine(StringRange range)
+            {
+                foreach (var line in range.SourceString.Tokenize())
+                {
+                    if (line.Start <= range.Start && line.End >= range.End)
+                        return line;
+                }
+
+                throw new InvalidOperationException();
+            }
+
             var rootCollapsedLineTextSubstitutions = jsonIntervals.Select(interval 
                 =>
             {
                 var range = new StringRange()
                     { SourceString = source, Start = interval.start, Length = interval.length };
-                return range.IsSingleLine() ? range : StringRange.Empty;
+                return range.IsSingleLine() ? GetContainingLine(range) : StringRange.Empty;
             }).ToList();
             
             var (textLines, collapsibleRanges) = GetCollapsibleRanges(text, rootCollapsedLineTextSubstitutions);

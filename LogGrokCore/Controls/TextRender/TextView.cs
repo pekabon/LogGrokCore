@@ -64,7 +64,7 @@ public class TextView : Control, IClippingRectChangesAware
 
     private static readonly Brush OutlineBrush = Brushes.Gray;
     private readonly TextControl _textControl;
-    private AuxLinesControl? _auxLinesControl;
+    private GuideLinesControl? _guideLinesControl;
     
     private double _cachedWidth;
     private TextModel? _cachedTextModel;
@@ -301,16 +301,16 @@ public class TextView : Control, IClippingRectChangesAware
             _cachedTextModel = text;
             _isCollapsibleStateDirty = false;
 
-            if (text.CollapsibleRanges == null && _auxLinesControl != null)
+            if (text.CollapsibleRanges == null && _guideLinesControl != null)
             {
-                Children.Remove(_auxLinesControl);
-                _auxLinesControl = null;
+                Children.Remove(_guideLinesControl);
+                _guideLinesControl = null;
             }
 
-            if (text.CollapsibleRanges != null && _auxLinesControl == null)
+            if (text.CollapsibleRanges != null && _guideLinesControl == null)
             {
-                _auxLinesControl = new AuxLinesControl();
-                Children.Add(_auxLinesControl);
+                _guideLinesControl = new GuideLinesControl();
+                Children.Add(_guideLinesControl);
             }
         }
         
@@ -382,7 +382,7 @@ public class TextView : Control, IClippingRectChangesAware
 
         var childrenRectangles = _outlineData?.ChildrenRectangles;
 
-        if (childrenRectangles is not { } || _auxLinesControl is not { } auxLinesControl)
+        if (childrenRectangles is not { } || _guideLinesControl is not { } guideLinesControl)
         {
             return;
         }
@@ -391,7 +391,7 @@ public class TextView : Control, IClippingRectChangesAware
             childrenRectangles.OrderBy(kv => kv.Key)
                 .Select(kv => kv.Value).ToList();
 
-        auxLinesControl.Arrange(new Rect(ExpanderMargin / 2 - ExpanderSize / 2, 0, ExpanderSize, arrangeBounds.Height));
+        guideLinesControl.Arrange(new Rect(ExpanderMargin / 2 - ExpanderSize / 2, 0, ExpanderSize, arrangeBounds.Height));
 
         var newLines = new List<(double, double)>();
         for (var i = 1; i < sortedRectangles.Count; i++)
@@ -401,9 +401,9 @@ public class TextView : Control, IClippingRectChangesAware
             newLines.Add((prev.Bottom, current.Top));
         }
 
-        if (!(auxLinesControl.Lines?.SequenceEqual(newLines) ?? false))
+        if (!(guideLinesControl.Lines?.SequenceEqual(newLines) ?? false))
         {
-            auxLinesControl.Lines = newLines;
+            guideLinesControl.Lines = newLines;
         }
     }
 
@@ -437,7 +437,6 @@ public class TextView : Control, IClippingRectChangesAware
                     clippingRect is {} clip 
                         && (rect.IntersectsWith(clip) || clip.Contains(rect) || rect.Contains(clip)))
                 {
-                    //Debug.WriteLine($"Add and Measure: {index}, ClippingRect = {clippingRect}");
                     var newChild = AddAndMeasureChild(outline, index, outlineData);
                     newChildren.Add(newChild);
                     newChildrenByPosition[index] = newChild;

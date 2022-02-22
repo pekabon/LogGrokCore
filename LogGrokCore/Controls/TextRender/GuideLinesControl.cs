@@ -6,14 +6,14 @@ using System.Windows.Media;
 
 namespace LogGrokCore.Controls.TextRender;
 
-public class AuxLinesControl : Control, IClippingRectChangesAware
+public class GuideLinesControl : Control, IClippingRectChangesAware
 {
     private static readonly Brush OutlineBrush = Brushes.Gray;    
     private double _width;
     private readonly HashSet<(double, double)> _renderedLines = new();
 
     public static readonly DependencyProperty LinesProperty = DependencyProperty.Register(
-        nameof(Lines), typeof(List<(double, double)>), typeof(AuxLinesControl), 
+        nameof(Lines), typeof(List<(double, double)>), typeof(GuideLinesControl), 
         new FrameworkPropertyMetadata(default(List<(double, double)>), FrameworkPropertyMetadataOptions.AffectsRender));
 
     public List<(double, double)>? Lines
@@ -47,9 +47,14 @@ public class AuxLinesControl : Control, IClippingRectChangesAware
         if (source == null)
             return null;
         
-        var inflated = source.Value;
-        inflated.Inflate(new Size(0, source.Value.Height));
-        return inflated;
+        var value = source.Value;
+        
+        if (!value.IsEmpty)
+        {
+            value.Inflate(new Size(0, value.Height));
+        }
+        
+        return value;
     }
     
     protected override void OnRender(DrawingContext drawingContext)
@@ -65,6 +70,7 @@ public class AuxLinesControl : Control, IClippingRectChangesAware
 
         var lines = inflated != null ? EnumerateLinesInRect(Lines, inflated.Value) : Lines;
         _renderedLines.Clear();
+        
         foreach (var (y1, y2) in lines)
         {
             drawingContext.DrawLine(outlinePen, new Point(x, y1), new Point(x, y2));

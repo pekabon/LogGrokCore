@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace LogGrokCore.Data;
 
@@ -9,6 +10,8 @@ public readonly struct StringRange
     public int Start { get; init; }
 
     public int Length { get; init; }
+    
+    public int End => Start + Length;
 
     public ReadOnlySpan<char> Span => SourceString.AsSpan(Start, Length);
 
