@@ -11,4 +11,6 @@ public class LinePartViewModel : ViewModelBase
     public TextModel TextModel { get; }
     
     public string OriginalText { get; }
-}
+
+    public override string ToString() => OriginalText;
+};

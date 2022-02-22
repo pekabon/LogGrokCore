@@ -49,7 +49,7 @@ namespace LogGrokCore.Controls
                 else
                 {
                     menuItem.DataContext = singleObject;
-                    _ = menuItem.SetBinding(MenuItem.HeaderProperty, new Binding($"[{fieldIndex}].Text"));
+                    _ = menuItem.SetBinding(MenuItem.HeaderProperty, new Binding($"[{fieldIndex}]"));
                     menuItem.HeaderStringFormat = $"{fieldName}: {{0}}";
                 }
                 return menuItem;
