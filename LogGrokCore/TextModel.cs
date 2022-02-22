@@ -81,8 +81,15 @@ public class TextModel : IReadOnlyList<StringRange>
     {
         UniqueId = uniqueId;
         var jsonIntervals = TextOperations.GetJsonRanges(source).ToList();
+        var viewSettings = ApplicationSettings.Instance().ViewSettings;
         if (jsonIntervals.Count == 0)
         {
+            var textLines = source.Tokenize().ToList();
+            if (textLines.Count > 1)
+            {
+                _textLines = textLines.Select(c => TextOperations.Normalize(c, viewSettings)).ToList();
+            }
+
             _sourceText = StringRange.FromString(TextOperations.Normalize(source, 
                 ApplicationSettings.Instance().ViewSettings));
         }
@@ -90,7 +97,7 @@ public class TextModel : IReadOnlyList<StringRange>
         {
             var text = TextOperations.Normalize(
                 TextOperations.FormatInlineJson(source, jsonIntervals.AsSpan()),
-                ApplicationSettings.Instance().ViewSettings);
+                viewSettings);
 
             var rootCollapsedLineTextSubstitutions = jsonIntervals.Select(interval 
                 =>
@@ -125,7 +132,6 @@ public class TextModel : IReadOnlyList<StringRange>
         var rootIntervals = ranges.Select((r, i) => ((start: r.start, length: r.length), 
             rootCollapsedLineTextSubstitutions[i])).ToList();
         var jsonIntervals = new Stack<((int start, int length), StringRange collapsedTextSubstitution)>(rootIntervals);
-        
         
         int GetLineNumber(int position)
         {

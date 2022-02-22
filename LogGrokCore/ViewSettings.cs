@@ -10,7 +10,7 @@ namespace LogGrokCore
         }
 
         public ViewBigLine BigLine { get; set; } = ViewBigLine.Break;
-        public int SizeBigLine { get; set; } = 9728;
+        public int BigLineSize { get; set; } = 9728;
 
     }
 }
