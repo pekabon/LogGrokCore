@@ -57,7 +57,7 @@ public class TextView : Control, IClippingRectChangesAware
 
     private PooledList<GlyphLine>? _textLines;
     private readonly Lazy<GlyphTypeface> _glyphTypeface;
-    private const double ExpanderSize = 10;
+    private const double ExpanderSize = 8;
     public const double ExpanderMargin = 20;
 
     private UIElementCollection? _children;
@@ -275,7 +275,7 @@ public class TextView : Control, IClippingRectChangesAware
         if (newChildCreated)
             Children.Add(expander);
         
-        expander.Measure(new Size(ExpanderSize, ExpanderSize));
+        expander.Measure(new Size(ExpanderSize, double.PositiveInfinity));
         outlineData.ChildrenByPosition[index] = expander;
         return expander;
     }

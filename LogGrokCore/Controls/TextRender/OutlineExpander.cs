@@ -56,6 +56,7 @@ public class OutlineExpander : ButtonBase
         };
 
         var normalizedByWidth = new Size(constraint.Width, constraint.Width / sz.Width * sz.Height);
+        
         _currentSize = normalizedByWidth.Height <= constraint.Height
             ? normalizedByWidth
             : new Size(constraint.Height / sz.Height * sz.Width, constraint.Height);
@@ -72,7 +73,7 @@ public class OutlineExpander : ButtonBase
         var xOffset = (ActualWidth - width) / 2;
         var yOffset = (ActualHeight - height) / 2;
 
-        var pen = new Pen(Foreground, 0.6);
+        var pen = new Pen(Foreground, 1);
         
         void DrawLine(double x1, double y1, double x2, double y2)
         {
