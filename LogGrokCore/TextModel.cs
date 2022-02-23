@@ -95,9 +95,7 @@ public class TextModel : IReadOnlyList<StringRange>
         }
         else
         {
-            var text = TextOperations.Normalize(
-                TextOperations.FormatInlineJson(source, jsonIntervals.AsSpan()),
-                viewSettings);
+            var text = TextOperations.FormatInlineJson(source, jsonIntervals.AsSpan()); 
 
             static StringRange GetContainingLine(StringRange range)
             {
@@ -167,21 +165,43 @@ public class TextModel : IReadOnlyList<StringRange>
                 result.Add(((startLine, lengthLines), substitution));
         }
 
-        while (jsonIntervals.TryPop(out var interval))
+        var bracesStack = new Stack<(char brace, int position)>();
+
+        int PopChar(char ch)
         {
-            AddInterval(interval);
-                
-            var ((start, length), _) = interval;
-            if (length > 2)
+            if (!bracesStack!.TryPeek(out var prev) || prev.brace != ch) 
+                throw new InvalidOperationException();
+            
+            bracesStack.Pop();
+            return prev.position;
+        }
+        foreach (var jsonInterval in jsonIntervals)
+        {
+            var ((offset, length), _) = jsonInterval;
+
+            var position = 0;
+            var span = source.AsSpan(offset, length);
+
+            while (position < length)
             {
-                var offset = start + 1;
-                var groups =
-                    TextOperations.GetBracedGroups(source.AsSpan(offset, length - 2))
-                        .Select(g => (g.start + offset, g.length));
-                foreach (var group in groups)
+                position = span[position..].IndexOfAny("{}[]") + position;
+                if (position < 0)
+                    break;
+                switch (span[position])
                 {
-                    jsonIntervals.Push((group, StringRange.Empty));
+                    case '{':
+                    case '[':
+                        bracesStack.Push((span[position], position));
+                        break;
+                    case '}':
+                    case ']':
+                        var start = PopChar(span[position] == ']' ? '[' : '{');
+                        var len = position - start;
+                        AddInterval(((start+offset, len), StringRange.Empty));
+                        break;
                 }
+
+                position++;
             }
         }
 
