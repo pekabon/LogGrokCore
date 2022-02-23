@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -37,8 +38,12 @@ public class GuideLinesControl : Control, IClippingRectChangesAware
         foreach (var (y1, y2) in lines)
         {
             if (rect is not { } r ||
-                (y1 <= r.Bottom && y1 >= r.Top) || (y2 <= r.Bottom && y2 >= r.Top))
-                yield return (y1, y2);
+                (y1 <= r.Bottom && y1 >= r.Top)
+                || (y2 <= r.Bottom && y2 >= r.Top)
+                || (Math.Min(y1, y2) <= r.Top && Math.Max(y1, y2) >= r.Bottom))
+            {
+                yield return (Math.Max(y1, r.Top), Math.Min(y2, r.Bottom));
+            }
         }
     }
 
@@ -103,7 +108,5 @@ public class GuideLinesControl : Control, IClippingRectChangesAware
     public void OnChildRectChanged(Rect rect)
     {
         InvalidateArrange();
-        // Dispatcher.BeginInvoke(() => 
-        //     Update(GetClippingRect()));
     }
 }
