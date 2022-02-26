@@ -58,7 +58,7 @@ public class TextView : Control, IClippingRectChangesAware
     private PooledList<GlyphLine>? _textLines;
     private readonly Lazy<GlyphTypeface> _glyphTypeface;
     private const double ExpanderSize = 8;
-    public const double ExpanderMargin = 20;
+    public const double ExpanderMargin = 12;
 
     private UIElementCollection? _children;
 
@@ -391,7 +391,8 @@ public class TextView : Control, IClippingRectChangesAware
             childrenRectangles.OrderBy(kv => kv.Key)
                 .Select(kv => kv.Value).ToList();
 
-        guideLinesControl.Arrange(new Rect(ExpanderMargin / 2 - ExpanderSize / 2, 0, ExpanderSize, arrangeBounds.Height));
+        guideLinesControl.Arrange(new 
+            Rect(0, 0, ExpanderSize, arrangeBounds.Height));
 
         var newLines = new List<(double, double)>();
         for (var i = 1; i < sortedRectangles.Count; i++)
@@ -431,7 +432,7 @@ public class TextView : Control, IClippingRectChangesAware
             {
                 var ySize = ExpanderSize;
                 var xSize = ExpanderSize;
-                var rect = new Rect(ExpanderMargin / 2 - xSize / 2, yCenter - ySize / 2, xSize, ySize);
+                var rect = new Rect(0, yCenter - ySize / 2, xSize, ySize);
 
                 if (clippingRect == null ||
                     clippingRect is {} clip 
@@ -445,7 +446,9 @@ public class TextView : Control, IClippingRectChangesAware
                     ySize = desiredSize.Height;
                 }
                 
-                rect = new Rect(ExpanderMargin / 2 - xSize / 2, yCenter - ySize / 2, xSize, ySize);
+                rect = new Rect(0, 
+                    yCenter - ySize / 2, 
+                    xSize, ySize);
                 outlineData.ChildrenRectangles[index] = rect;
             }
 

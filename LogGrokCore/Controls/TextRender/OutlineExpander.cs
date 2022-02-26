@@ -73,17 +73,36 @@ public class OutlineExpander : ButtonBase
         var xOffset = (ActualWidth - width) / 2;
         var yOffset = (ActualHeight - height) / 2;
 
-        var pen = new Pen(Foreground, 1);
+        var pen = new Pen(Foreground, thickness: 1);
         
+        var pixelsPerDip = (float)VisualTreeHelper.GetDpi(this).PixelsPerDip;
+
+        double Round(double x)
+        {
+            return Math.Round(x * pixelsPerDip,
+                MidpointRounding.ToEven) / pixelsPerDip;
+        }
+
         void DrawLine(double x1, double y1, double x2, double y2)
         {
-            drawingContext.DrawLine(pen, new Point(x1 + xOffset,y1 + yOffset), 
-                new Point(x2 + xOffset, y2 + yOffset));
+            drawingContext.DrawLine(pen, new Point(Round(x1 + xOffset),Round(y1 + yOffset)), 
+                new Point(Round(x2 + xOffset), Round(y2 + yOffset)));
         }
+
+        var halfPixel = 0.5;
+        var guidelines = new GuidelineSet();
+        guidelines.GuidelinesX.Add(0 + halfPixel);
+        guidelines.GuidelinesX.Add(width + halfPixel);
+        guidelines.GuidelinesX.Add(Round(width/2) + halfPixel);
+        guidelines.GuidelinesX.Add(Round(width/6) + halfPixel);
+        guidelines.GuidelinesX.Add(Round(width*5/6) + halfPixel);
+        guidelines.GuidelinesY.Add(0 + halfPixel);
         
         switch (State)
         {
             case OutlineExpanderState.Collapsed:
+                guidelines.GuidelinesY.Add(height - halfPixel );
+                drawingContext.PushGuidelineSet(guidelines);
                 DrawLine(0, 0, width, 0);
                 DrawLine(width, 0, width, height);
                 DrawLine(width, height, 0, height );
@@ -92,6 +111,9 @@ public class OutlineExpander : ButtonBase
                 DrawLine(width/6, height/2, width*5/6, height/2);
                 break;
             case OutlineExpanderState.ExpandedUpper:
+                guidelines.GuidelinesY.Add(Round(height/2 - height/12) + halfPixel);
+                guidelines.GuidelinesY.Add(height + halfPixel );
+                drawingContext.PushGuidelineSet(guidelines);
                 DrawLine(0, 0, width, 0);
                 DrawLine(width, 0, width, height * 7.5 / 12);
                 DrawLine(width, height * 7.5 / 12, width / 2, height);
@@ -100,6 +122,9 @@ public class OutlineExpander : ButtonBase
                 DrawLine(width/6, height/2 - height/12, width*5/6, height/2 - height/12);
                 break;
             case OutlineExpanderState.ExpandedLower:
+                guidelines.GuidelinesY.Add(Round(height/2 + height/12) + halfPixel);
+                guidelines.GuidelinesY.Add(height + halfPixel );
+                drawingContext.PushGuidelineSet(guidelines);
                 DrawLine(0, height, width, height);
                 DrawLine(width, height, width, height * 4.5 / 12);
                 DrawLine(width, height * 4.5 / 12, width / 2, 0);
@@ -111,6 +136,8 @@ public class OutlineExpander : ButtonBase
                 DrawLine(width/6, height/2, width*5/6, height/2);
                 break;
         }
+        
+        drawingContext.Pop();
     }
 
     private Size _currentSize;

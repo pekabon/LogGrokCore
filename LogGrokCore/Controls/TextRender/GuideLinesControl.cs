@@ -70,17 +70,35 @@ public class GuideLinesControl : Control, IClippingRectChangesAware
         var clippingRect = GetClippingRect();
         Rect? inflated = InflateHeightTwice(clippingRect);
 
+        var pixelsPerDip = (float)VisualTreeHelper.GetDpi(this).PixelsPerDip;
+
         var x = _width / 2;
+        
         var outlinePen = new Pen(OutlineBrush, 0.5);
 
+        var guidelines = new GuidelineSet();
+        guidelines.GuidelinesX.Add(x + 0.5);
+        drawingContext.PushGuidelineSet(guidelines);
+        
+        
         var lines = inflated != null ? EnumerateLinesInRect(Lines, inflated.Value) : Lines;
         _renderedLines.Clear();
         
         foreach (var (y1, y2) in lines)
         {
+            var (upper, lower) = y1 < y2 ? (y1, y2) : (y2, y1);
+            var yGuidelineSet = new GuidelineSet();
+             yGuidelineSet.GuidelinesY.Add(upper + 0.5);
+             yGuidelineSet.GuidelinesY.Add(lower + 0.5);
+            yGuidelineSet.GuidelinesX.Add(x + 0.5);
+            drawingContext.PushGuidelineSet(yGuidelineSet);
             drawingContext.DrawLine(outlinePen, new Point(x, y1), new Point(x, y2));
+            drawingContext.Pop();
+            
             _renderedLines.Add((y1, y2));
         }
+        
+        drawingContext.Pop();
     }
     
     private FrameworkElement? _clippingRectProvider;
