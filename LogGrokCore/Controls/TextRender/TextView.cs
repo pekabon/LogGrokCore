@@ -13,23 +13,19 @@ namespace LogGrokCore.Controls.TextRender;
 
 public class TextViewTransientSettings
 {
-    public HashSet<int> this[int index]
+    public HashSet<int>? this[int index]
     {
-        get
-        {
-            if (_collapsedLineIndicesByUniqueId.TryGetValue(index, out var result))
-                return result;
-            var newSettings  = new HashSet<int>();
-            _collapsedLineIndicesByUniqueId[index] = newSettings;
-            return newSettings;
-        }
+        get => _collapsedLineIndicesByUniqueId.TryGetValue(index, out var result) ? result : null;
+        set => _collapsedLineIndicesByUniqueId[index] = value;
     }
 
-    private readonly Dictionary<int, HashSet<int>> _collapsedLineIndicesByUniqueId = new();
+    private readonly Dictionary<int, HashSet<int>?> _collapsedLineIndicesByUniqueId = new();
 }
 
 public class TextView : Control, IClippingRectChangesAware
 {
+    private const int DefaultMaxVisibleLines = 20;
+    
     private class OutlineData
     {
         public OutlineData(int lineCount, 
@@ -125,14 +121,111 @@ public class TextView : Control, IClippingRectChangesAware
     }
 
     private HashSet<int>? GetTransientSettings()
-    {        
-        HashSet<int>? settings = null;
-        if (TransientSettings is { } savedSettings && TextModel is { } textModel)
-        {
-            settings = savedSettings[textModel.UniqueId];
-        }
+    {
+        if (TransientSettings is not { } savedSettings || TextModel is not { } textModel) 
+            return null;
+        
+        if (savedSettings[textModel.UniqueId] is { } settings) 
+            return settings;
+        
+        settings = CreateDefaultSettings();
+        savedSettings[textModel.UniqueId] = settings;
 
         return settings;
+
+    }
+
+    private class HierarchicalInterval
+    {
+        public (int start, int length) Range { get; init; }
+        public List<HierarchicalInterval> SubIntervals { get; } = new();
+
+        public int MinLength => Range.length - SubIntervals.Sum(h => h.Range.length - 1);
+
+        public override string ToString()
+        {
+            return $"{Range} -> {string.Join(',', SubIntervals.Select(s=> s.Range.ToString()))}";
+        }
+    }
+
+    private HashSet<int>? CreateDefaultSettings()
+    {
+        if (TextModel is not { } textModel)
+            return null;
+        
+        var ranges = textModel.CollapsibleRanges?.OrderBy(v => v.start).ToList();
+        if (ranges == null)
+            return null;
+
+        IEnumerable<HierarchicalInterval> CreateHierarchicalIntervals(
+            IEnumerable<(int start, int length)> sourceRanges)
+        {
+            Stack<HierarchicalInterval> traverseStack = new();
+
+            foreach (var range in sourceRanges)
+            {
+                if (!traverseStack.TryPeek(out var currentInterval))
+                {
+                    currentInterval = new HierarchicalInterval { Range = range };
+                    traverseStack.Push(currentInterval);
+                    continue;
+                }
+
+                while (true)
+                {
+                    if (traverseStack.TryPeek(out var newCurrentInterval))
+                    {
+                        currentInterval = newCurrentInterval;
+                        if (range.start < currentInterval.Range.start + currentInterval.Range.length)
+                        {
+                            var newSubInterval = new HierarchicalInterval { Range = range };
+                            currentInterval.SubIntervals.Add(newSubInterval);
+                            traverseStack.Push(newSubInterval);
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        yield return currentInterval;
+                        traverseStack.Push(new HierarchicalInterval { Range = range });
+                        break;
+                    }
+
+                    _ = traverseStack.Pop();
+                }
+            }
+
+            var last = traverseStack.Pop();
+            while (traverseStack.Count > 0)
+                last = traverseStack.Pop();
+
+            yield return last;
+        }
+
+        var hierarchicalIntervals = CreateHierarchicalIntervals(ranges);
+       
+        var expandedIntervals = new HashSet<int>();
+        
+        Queue<HierarchicalInterval> traverseQueue = new(hierarchicalIntervals);
+        var minLength = textModel.Count - traverseQueue.Sum(h => h.Range.length - 1);
+        var rest = DefaultMaxVisibleLines - minLength;
+        
+        while (rest > 0 && traverseQueue.TryDequeue(out var interval))
+        {
+            var intervalMinLength = interval.MinLength;
+            if (rest >= intervalMinLength)
+            {
+                rest -= intervalMinLength;
+                expandedIntervals.Add(interval.Range.start);
+                foreach (var subInterval in interval.SubIntervals)
+                {
+                    traverseQueue.Enqueue(subInterval);
+                }
+            }
+        }
+
+        var collapsedIntervals = ranges.Select(r => r.start).Except(expandedIntervals);
+        return new HashSet<int>(collapsedIntervals);
     }
 
     private static void OnTextModelChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -148,7 +241,6 @@ public class TextView : Control, IClippingRectChangesAware
             textView.InvalidateVisual();
             return;
         }
-
 
         textView._outlineData = new OutlineData(
             textModel.Count, 
@@ -211,7 +303,8 @@ public class TextView : Control, IClippingRectChangesAware
     
     #endregion
     
-    private TextViewTransientSettings? TransientSettings => _transientSettings ??=  GetTransientSettings(this);
+    private TextViewTransientSettings? TransientSettings => 
+        _transientSettings ??=  GetTransientSettings(this);
 
     public TextView()
     {
@@ -529,19 +622,5 @@ public class TextView : Control, IClippingRectChangesAware
             return;
         
         InvalidateArrange();
-        // Debug.WriteLine($"Before: Child rect: {rect.Top}");
-        // Debug.WriteLine($"Before: RenderTransformOrigin: {RenderTransformOrigin}");
-        // Debug.WriteLine($"Before: IsArrangeValid: {IsArrangeValid}");
-        // Dispatcher.BeginInvoke(() =>
-        //     {
-        //         var r = GetClippingRect(); 
-        //         Debug.WriteLine($"After: Child rect: {r?.Top}");
-        //         Debug.WriteLine($"After: RenderTransformOrigin: {RenderTransformOrigin}");
-        //         Debug.WriteLine($"After: IsArrangeValid: {IsArrangeValid}");
-        //
-        //         RearrangeOutlineChildren(GetClippingRect(), new Size(ActualWidth, ActualHeight));
-        //         
-        //     }
-        // );
     }
 }
