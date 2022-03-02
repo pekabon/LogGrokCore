@@ -19,7 +19,6 @@ namespace LogGrokCore.Controls.ListControls
                 },
                 (_, args) =>
                 {
-                    Trace.TraceInformation("CopyToClipboard.CanExecute");
                     args.CanExecute = GetSelectedIndices().Any();
                     args.Handled = true;
                 }));
