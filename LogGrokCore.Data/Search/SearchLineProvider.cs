@@ -36,7 +36,7 @@ namespace LogGrokCore.Data.Search
                 var (originalIndex, offset, len) = _lineIndex.GetLine(index);
                 stream.Seek(offset, SeekOrigin.Begin);
                 using var owner = MemoryPool<byte>.Shared.Rent(len);
-                var span = owner.Memory.Span.Slice(0, len);
+                var span = owner.Memory.Span[..len];
                 stream.Read(span);
                 values[index - start] = (originalIndex, _encoding.GetString(span).TrimEnd());
             }

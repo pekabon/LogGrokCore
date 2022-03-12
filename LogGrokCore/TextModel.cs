@@ -109,7 +109,6 @@ public class TextModel : IReadOnlyList<StringRange>
 
             }
             
-            
             _sourceText = StringRange.FromString(TextOperations.Normalize(source,
                 ApplicationSettings.Instance().ViewSettings));
         }
@@ -233,5 +232,10 @@ public class TextModel : IReadOnlyList<StringRange>
         }
 
         return (lines, result);
+    }
+
+    public override string ToString()
+    {
+        return _sourceText?.ToString() ?? "<null>" ;
     }
 }

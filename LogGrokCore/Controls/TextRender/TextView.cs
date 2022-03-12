@@ -195,11 +195,12 @@ public class TextView : Control, IClippingRectChangesAware
                 }
             }
 
-            var last = traverseStack.Pop();
+            HierarchicalInterval? last = null;
             while (traverseStack.Count > 0)
                 last = traverseStack.Pop();
 
-            yield return last;
+            if (last != null)
+                yield return last;
         }
 
         var hierarchicalIntervals = CreateHierarchicalIntervals(ranges);
@@ -238,7 +239,7 @@ public class TextView : Control, IClippingRectChangesAware
         if (e.NewValue is not TextModel textModel || textModel.CollapsibleRanges is not {} collapsibleRanges)
         {
             textView._outlineData = null;
-            textView.InvalidateVisual();
+            
             return;
         }
 
@@ -381,14 +382,15 @@ public class TextView : Control, IClippingRectChangesAware
         
         return ClippingRectProviderBehavior.GetClippingRect(clippingRectProvider, this);
     }
-    
+
     protected override Size MeasureOverride(Size constraint)
     {
         var text = TextModel;
         if (text == null) return new Size(0, 0);
 
         if (_textLines == null || _cachedTextModel != text || _cachedWidth < constraint.Width || _isCollapsibleStateDirty)
-        {
+        { 
+            ResetText();
             _textLines = CreateTextLines(text, constraint.Width);
             _cachedWidth = constraint.Width;
             _cachedTextModel = text;
@@ -417,7 +419,7 @@ public class TextView : Control, IClippingRectChangesAware
             textLine: _textLines[idx],
             isCollapsible: outlineData?.CollapsibleLineIndices.Contains(idx) ?? false));
 
-        _textControl.SetTextLines(visibleLines.ToList());
+        _textControl.TextLines = visibleLines.ToList();
         _textControl.Measure(constraint);
 
         var measuredSize = new Size(_textControl.DesiredSize.Width, _textControl.DesiredSize.Height);

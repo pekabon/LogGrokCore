@@ -12,33 +12,34 @@ namespace LogGrokCore.Controls.TextRender;
 
 public class TextControl : Control
 {
-    private IList<(GlyphLine glyphLine, bool isCollapsible)>? _textLines;
 
     private readonly TextView _textView;
     private Point? _startSelectionPoint;
 
+    public static readonly DependencyProperty TextLinesProperty = DependencyProperty.Register(
+        "TextLines", typeof(IList<(GlyphLine glyphLine, bool isCollapsible)>), 
+        typeof(TextControl), new FrameworkPropertyMetadata(
+            default(IList<(GlyphLine textLine, bool isCollapsible)>?),
+            FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public IList<(GlyphLine glyphLine, bool isCollapsible)>? TextLines
+    {
+        get => (IList<(GlyphLine, bool)>?)GetValue(TextLinesProperty);
+        set => SetValue(TextLinesProperty, value);
+    }
+    
     public TextControl(TextView textView)
     {
         _textView = textView;
     }
 
-    public void SetTextLines(IList<(GlyphLine textLine, bool isCollapsible)>? textLines)
-    {
-        if (_textLines == null && textLines == null)
-        {
-            return;
-        }
-
-        _textLines = textLines;
-        InvalidateMeasure();
-    }
-
     protected override Size MeasureOverride(Size constraint)
     {
-        if (_textLines == null) return new Size(0, 0);
+        var textLines = TextLines;
+        if (textLines == null) return new Size(0, 0);
         var height = 0.0;
         var width = 0.0;
-        foreach (var textLine in _textLines)
+        foreach (var textLine in textLines)
         {
             height += textLine.glyphLine.AdvanceHeight;
             width = Math.Max(width, textLine.glyphLine.Size.Width
@@ -50,10 +51,11 @@ public class TextControl : Control
 
     protected override void OnRender(DrawingContext drawingContext)
     {
-        if (_textLines == null)
+        var textLines = TextLines;
+        if (textLines == null)
             return;
 
-        var highlightGeometries = GetHighlightGeometries(_textLines, TextView.GetHighlightRegex(_textView));
+        var highlightGeometries = GetHighlightGeometries(textLines, TextView.GetHighlightRegex(_textView));
 
         if (highlightGeometries != null)
         {
@@ -62,7 +64,7 @@ public class TextControl : Control
                 highlightGeometries);
         }
 
-        var selectionGeometries = GetSelectionGeometries();
+        var selectionGeometries = GetSelectionGeometries(textLines);
         if (selectionGeometries != null)
         {
             var selectionBrush = _textView.SelectionBrush;
@@ -75,7 +77,7 @@ public class TextControl : Control
         var verticalPosition = 0.0;
         var pixelsPerDip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
         var foreground = Foreground;
-        foreach (var textLine in _textLines)
+        foreach (var textLine in textLines)
         {
             textLine.glyphLine.Render(
                 new Point(GetHorizontalOffset(textLine),
@@ -103,7 +105,7 @@ public class TextControl : Control
         _cachedGetDrawingGeometries ??=
             Cached.Of<(IList<(GlyphLine glyphLine, bool isCollapsible)>?, Regex? regex), Geometry?>(
                 value => GetDrawingGeometriesUncached(
-                    _textLines, value.regex));
+                    text, value.regex));
         return _cachedGetDrawingGeometries((text, regex));
     }
 
@@ -141,15 +143,15 @@ public class TextControl : Control
     private Geometry GeometryFromRect(Rect rect) => new RectangleGeometry(
         Rect.Inflate(rect, new Size(2, 2)), 3, 3);
 
-    private Geometry? GetSelectionGeometries()
+    private Geometry? GetSelectionGeometries(IList<(GlyphLine glyphLine, bool isCollapsible)>? textLines)
     {
-        if (_textLines == null) return null;
+        if (textLines == null) return null;
 
         GeometryGroup? accumulatedGeometry = null; // = new GeometryGroup {FillRule = FillRule.Nonzero};
 
         var verticalOffset = 0.0;
 
-        foreach (var (glyphLine, isCollapsible) in _textLines)
+        foreach (var (glyphLine, isCollapsible) in textLines)
         {
             var selection = glyphLine.Selection;
             if (selection.HasValue)
@@ -172,15 +174,14 @@ public class TextControl : Control
 
     #region Selection support
 
-    private void UpdateSelection(Point startSelectionPoint, Point endSelectionPoint)
+    private void UpdateSelection(IList<(GlyphLine glyphLine, bool isCollapsible)>? textLines,
+        Point startSelectionPoint, Point endSelectionPoint)
     {
-        if (_textLines == null ||
-            _textLines.Count == 0)
+        if (textLines == null ||
+            textLines.Count == 0)
         {
             return;
         }
-
-        var textLines = _textLines;
 
         var textPosition1 = GetTextPosition(startSelectionPoint, textLines);
         var textPosition2 = GetTextPosition(endSelectionPoint, textLines);
@@ -260,7 +261,7 @@ public class TextControl : Control
                 _startSelectionPoint = e.GetPosition(this);
             }
 
-            if (e.ClickCount == 2 && _textLines is { } textLines)
+            if (e.ClickCount == 2 && TextLines is { } textLines)
             {
                 _startSelectionPoint = null;
                 var point = e.GetPosition(this);
@@ -311,10 +312,11 @@ public class TextControl : Control
             ReleaseMouseCapture();
             UpdateCursor();
             var endPosition = e.GetPosition(this);
-            UpdateSelection(startSelectionPoint.Value, endPosition);
-            if (_textLines != null)
+            var textLines = TextLines;
+            UpdateSelection(textLines, startSelectionPoint.Value, endPosition);
+            if (textLines != null)
                 _textView.SelectedText = string.Join("\r\n",
-                    _textLines
+                    textLines
                         .Where(line => line.glyphLine.Selection != null)
                         .Select(line =>
                         {
@@ -329,7 +331,7 @@ public class TextControl : Control
 
     protected override void OnMouseMove(MouseEventArgs e)
     {
-        if (_startSelectionPoint.HasValue && _textLines != null && _textLines.Count != 0)
+        if (_startSelectionPoint.HasValue && TextLines is {} textLines && textLines.Count != 0)
         {
             if (!IsMouseCaptured)
             {
@@ -342,7 +344,7 @@ public class TextControl : Control
             }
 
             var endSelectionPoint = e.GetPosition(this);
-            UpdateSelection(_startSelectionPoint.Value, endSelectionPoint);
+            UpdateSelection(textLines, _startSelectionPoint.Value, endSelectionPoint);
         }
 
         UpdateCursor();
@@ -376,9 +378,9 @@ public class TextControl : Control
 
     protected override void OnLostFocus(RoutedEventArgs e)
     {
-        if (_textLines != null)
+        if (TextLines is {} textLines)
         {
-            foreach (var (line, _) in _textLines)
+            foreach (var (line, _) in textLines)
             {
                 line.ResetSelection();
             }

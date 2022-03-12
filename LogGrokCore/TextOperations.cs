@@ -147,7 +147,7 @@ namespace LogGrokCore
         }
 
         private static string FormatInlineJsonCore(ReadOnlySpan<char> text, ReadOnlySpan<(int start, int length)> jsonIntervals, 
-            int startOffset)
+            int startOffset, bool isFirstInterval = true)
         {
             if (jsonIntervals.Length == 0)
                 return text.ToString();
@@ -157,10 +157,14 @@ namespace LogGrokCore
             
             StringBuilder stringBuilder = new();
             stringBuilder.Append(text[..firstStart]);
+            
+            if (!isFirstInterval)
+                stringBuilder.Append(Environment.NewLine);
+
             stringBuilder.Append(FormatJsonText(text.Slice(firstStart, firstLength).ToString()));
             stringBuilder.Append(FormatInlineJsonCore(
                 text[(firstStart + firstLength)..], 
-                jsonIntervals[1..], firstStart + firstLength + startOffset));
+                jsonIntervals[1..], firstStart + firstLength + startOffset, false));
             return stringBuilder.ToString();
         }
 
