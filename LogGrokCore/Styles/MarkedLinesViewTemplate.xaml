@@ -69,7 +69,7 @@
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate DataType="markedLines:MarkedLineViewModel">
                                     <ContentControl ContentTemplate="{StaticResource MarkedLineCellTemplate}"
-                                                    Content="{Binding Index}" />
+                                                    Content="{Binding IndexViewModel}" />
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>

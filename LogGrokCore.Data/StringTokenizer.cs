@@ -19,7 +19,6 @@ namespace LogGrokCore.Data
         public static IEnumerable<StringRange> Tokenize(this StringRange source)
         {
             var currentIndex = 0;
-            var firstCrLfIndex = -1;
             while (currentIndex < source.Length)
             {
                 var crlfIndex = source.Span[currentIndex..].IndexOfAny(Crlf);
