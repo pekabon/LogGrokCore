@@ -76,11 +76,26 @@ public class CollapsibleRegionsMachine : IEnumerable<(Outline outline, int index
             _collapsedLines = collapsedLines;
         }
 
+        // TODO : remove _lines
         _lines = Enumerable.Range(0, lineCount).ToArray();
+        
         _collapsibleRegions = collapsibleRegions.Select(region 
             => (_collapsedLines.Contains(region.start), region.start, region.length)).ToArray();
         _regions = new List<(Outline, int)>(collapsibleRegions.Length);
+        
         _toggleAction = Toggle;
+        Update();
+    }
+
+    public void UpdateCollapsedLines(HashSet<int> collapsedLines)
+    {
+        _collapsedLines = collapsedLines;
+        for (var i = 0; i < _collapsibleRegions.Length; i++)
+        {
+            var (_, start, length) = _collapsibleRegions[i];
+            _collapsibleRegions[i] = (_collapsedLines.Contains(start), start, length);
+        }
+
         Update();
     }
 
@@ -90,7 +105,7 @@ public class CollapsibleRegionsMachine : IEnumerable<(Outline outline, int index
     }
 
     public event Action? Changed;
-    
+
     private void Update()
     {
         var collapsedLines = _collapsedLineIndicesGetter();
@@ -129,9 +144,14 @@ public class CollapsibleRegionsMachine : IEnumerable<(Outline outline, int index
 
             if (outline is Collapsed)
             {
-                _collapsedLines.Add(i);
                 i += rangeStart.length - 1;
             }
+        }
+        
+        foreach (var (isCollapsed, start,_) in _collapsibleRegions)
+        {
+            if (isCollapsed)
+                _collapsedLines.Add(start);
         }
         
         Changed?.Invoke();
@@ -148,6 +168,30 @@ public class CollapsibleRegionsMachine : IEnumerable<(Outline outline, int index
             return;
         } 
     }
+
+    public void ExpandRecursively()
+    {
+        for (var i = 0; i < _collapsibleRegions.Length; i++)
+        {
+            var (_, start, length) = _collapsibleRegions[i];
+            _collapsibleRegions[i] = (false, start, length);
+        }
+        Update();
+    }
+
+    public bool HasCollapsedRegions() => _collapsibleRegions.Any(c => c.isCollapsed);
+
+    public void CollapseRecursively()
+    {
+        for (var i = 0; i < _collapsibleRegions.Length; i++)
+        {
+            var (_, start, length) = _collapsibleRegions[i];
+            _collapsibleRegions[i] = (true, start, length);
+        }
+        Update();
+    }
+
+    public bool HasExpandedRegions() => _collapsibleRegions.Any(c => !c.isCollapsed);
 
     public IEnumerator<(Outline, int)> GetEnumerator()
     {

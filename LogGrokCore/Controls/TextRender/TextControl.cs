@@ -12,7 +12,6 @@ namespace LogGrokCore.Controls.TextRender;
 
 public class TextControl : Control
 {
-
     private readonly TextView _textView;
     private Point? _startSelectionPoint;
 

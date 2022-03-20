@@ -51,9 +51,9 @@
                                ContextMenu="{StaticResource LogViewContextMenu}"
                                listControls:BaseLogListViewItem.OnItemActivatedCommand="{Binding ItemActivatedCommand}"
                                ColumnSettings="{Binding ColumnSettings}">
-                <textRender:TextView.TransientSettings>
-                    <textRender:TextViewTransientSettings/>
-                </textRender:TextView.TransientSettings>
+                <textRender:TextView.SharedFoldingState>
+                    <textRender:TextViewSharedFoldingState/>
+                </textRender:TextView.SharedFoldingState>
                 <listControls:ListView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <virtualizingStackPanel:VirtualizingStackPanel

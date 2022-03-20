@@ -11,21 +11,8 @@ using LogGrokCore.Data;
 
 namespace LogGrokCore.Controls.TextRender;
 
-public class TextViewTransientSettings
-{
-    public HashSet<int>? this[int index]
-    {
-        get => _collapsedLineIndicesByUniqueId.TryGetValue(index, out var result) ? result : null;
-        set => _collapsedLineIndicesByUniqueId[index] = value;
-    }
-
-    private readonly Dictionary<int, HashSet<int>?> _collapsedLineIndicesByUniqueId = new();
-}
-
 public class TextView : Control, IClippingRectChangesAware
 {
-    private const int DefaultMaxVisibleLines = 20;
-    
     private class OutlineData
     {
         public OutlineData(int lineCount, 
@@ -65,7 +52,7 @@ public class TextView : Control, IClippingRectChangesAware
     private double _cachedWidth;
     private TextModel? _cachedTextModel;
     private bool _isCollapsibleStateDirty;
-    private TextViewTransientSettings? _transientSettings;
+    private TextViewSharedFoldingState? _sharedFoldingState;
     private FrameworkElement? _clippingRectProvider;
 
     private UIElementCollection Children
@@ -120,115 +107,26 @@ public class TextView : Control, IClippingRectChangesAware
         set => SetValue(TextModelProperty, value);
     }
 
-    private HashSet<int>? GetTransientSettings()
+    private HashSet<int>? GetSharedFoldingState()
     {
-        if (TransientSettings is not { } savedSettings || TextModel is not { } textModel) 
+        if (SharedFoldingState is not { } sharedState || TextModel is not { } textModel) 
             return null;
         
-        if (savedSettings[textModel.UniqueId] is { } settings) 
+        if (sharedState[textModel.UniqueId] is { } settings) 
             return settings;
         
-        settings = CreateDefaultSettings();
-        savedSettings[textModel.UniqueId] = settings;
+        if (textModel is not
+            {
+                CollapsibleRanges: {} collapsibleRanges,
+                Count: var totalLineCount
+            })
+            return null;
 
+        settings = sharedState.GetDefaultSettings(collapsibleRanges, totalLineCount);
+        sharedState[textModel.UniqueId] = settings;
         return settings;
-
     }
-
-    private class HierarchicalInterval
-    {
-        public (int start, int length) Range { get; init; }
-        public List<HierarchicalInterval> SubIntervals { get; } = new();
-
-        public int MinLength => Range.length - SubIntervals.Sum(h => h.Range.length - 1);
-
-        public override string ToString()
-        {
-            return $"{Range} -> {string.Join(',', SubIntervals.Select(s=> s.Range.ToString()))}";
-        }
-    }
-
-    private HashSet<int>? CreateDefaultSettings()
-    {
-        if (TextModel is not { } textModel)
-            return null;
-        
-        var ranges = textModel.CollapsibleRanges?.OrderBy(v => v.start).ToList();
-        if (ranges == null)
-            return null;
-
-        IEnumerable<HierarchicalInterval> CreateHierarchicalIntervals(
-            IEnumerable<(int start, int length)> sourceRanges)
-        {
-            Stack<HierarchicalInterval> traverseStack = new();
-
-            foreach (var range in sourceRanges)
-            {
-                if (!traverseStack.TryPeek(out var currentInterval))
-                {
-                    currentInterval = new HierarchicalInterval { Range = range };
-                    traverseStack.Push(currentInterval);
-                    continue;
-                }
-
-                while (true)
-                {
-                    if (traverseStack.TryPeek(out var newCurrentInterval))
-                    {
-                        currentInterval = newCurrentInterval;
-                        if (range.start < currentInterval.Range.start + currentInterval.Range.length)
-                        {
-                            var newSubInterval = new HierarchicalInterval { Range = range };
-                            currentInterval.SubIntervals.Add(newSubInterval);
-                            traverseStack.Push(newSubInterval);
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        yield return currentInterval;
-                        traverseStack.Push(new HierarchicalInterval { Range = range });
-                        break;
-                    }
-
-                    _ = traverseStack.Pop();
-                }
-            }
-
-            HierarchicalInterval? last = null;
-            while (traverseStack.Count > 0)
-                last = traverseStack.Pop();
-
-            if (last != null)
-                yield return last;
-        }
-
-        var hierarchicalIntervals = CreateHierarchicalIntervals(ranges);
-       
-        var expandedIntervals = new HashSet<int>();
-        
-        Queue<HierarchicalInterval> traverseQueue = new(hierarchicalIntervals);
-        var minLength = textModel.Count - traverseQueue.Sum(h => h.Range.length - 1);
-        var rest = DefaultMaxVisibleLines - minLength;
-        
-        while (rest > 0 && traverseQueue.TryDequeue(out var interval))
-        {
-            var intervalMinLength = interval.MinLength;
-            if (rest >= intervalMinLength)
-            {
-                rest -= intervalMinLength;
-                expandedIntervals.Add(interval.Range.start);
-                foreach (var subInterval in interval.SubIntervals)
-                {
-                    traverseQueue.Enqueue(subInterval);
-                }
-            }
-        }
-
-        var collapsedIntervals = ranges.Select(r => r.start).Except(expandedIntervals);
-        return new HashSet<int>(collapsedIntervals);
-    }
-
+    
     private static void OnTextModelChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is not TextView textView)
@@ -236,23 +134,41 @@ public class TextView : Control, IClippingRectChangesAware
         
         textView.ResetText();
 
-        if (e.NewValue is not TextModel textModel || textModel.CollapsibleRanges is not {} collapsibleRanges)
+        textView.SetCollapsibleRanges(textView.TextModel?.CollapsibleRanges);
+    }
+
+    void SetCollapsibleRanges(List<(int start, int length)>? collapsibleRanges)
+    {
+        if (collapsibleRanges == null)
         {
-            textView._outlineData = null;
-            
+            _outlineData = null;
+            FoldingManager = null;
+            SharedFoldingState?.Unregister(this);
             return;
         }
 
-        textView._outlineData = new OutlineData(
-            textModel.Count, 
-            collapsibleRanges.ToArray(),
-            () => textView.GetTransientSettings());
-        textView._outlineData.CollapsibleRegionsMachine.Changed += () =>
+        var count = TextModel?.Count ?? 0;
+        var collapsibleRangesArray = collapsibleRanges.ToArray();
+        _outlineData = new OutlineData(
+            count, 
+            collapsibleRangesArray,
+            GetSharedFoldingState);
+        
+        _outlineData.CollapsibleRegionsMachine.Changed += () =>
         {
-            textView._isCollapsibleStateDirty = true;
-            textView.InvalidateMeasure();
-            textView.InvalidateVisual();
+            _isCollapsibleStateDirty = true;
+            InvalidateMeasure();
+            InvalidateVisual();
         };
+
+        if (SharedFoldingState is not { } sharedFoldingState)
+            return;
+
+        SharedFoldingState.Register(this);
+        FoldingManager = new FoldingManager(
+            _outlineData.CollapsibleRegionsMachine,
+            sharedFoldingState,
+            () => sharedFoldingState.GetDefaultFoldingSettings(collapsibleRangesArray, count));
     }
 
     #endregion
@@ -287,26 +203,47 @@ public class TextView : Control, IClippingRectChangesAware
 
     #region TransientSettings property
     
-    public static readonly DependencyProperty TransientSettingsProperty = DependencyProperty.RegisterAttached(
-        "TransientSettings", typeof(TextViewTransientSettings), typeof(TextView), 
-            new FrameworkPropertyMetadata(default(TextViewTransientSettings), 
+    public static readonly DependencyProperty SharedFoldingStateProperty = DependencyProperty.RegisterAttached(
+        "SharedFoldingState", typeof(TextViewSharedFoldingState), typeof(TextView), 
+            new FrameworkPropertyMetadata(default(TextViewSharedFoldingState), 
                 FrameworkPropertyMetadataOptions.Inherits));
 
-    public static void SetTransientSettings(DependencyObject element, TextViewTransientSettings value)
+    public static void SetSharedFoldingState(DependencyObject element, TextViewSharedFoldingState value)
     {
-        element.SetValue(TransientSettingsProperty, value);
+        element.SetValue(SharedFoldingStateProperty, value);
     }
 
-    public static TextViewTransientSettings? GetTransientSettings(DependencyObject element)
+    public static TextViewSharedFoldingState? GetSharedFoldingState(DependencyObject element)
     {
-        return (TextViewTransientSettings)element.GetValue(TransientSettingsProperty);
+        return (TextViewSharedFoldingState)element.GetValue(SharedFoldingStateProperty);
     }
+
+    private TextViewSharedFoldingState? SharedFoldingState
+    {
+        get
+        {
+            if (_sharedFoldingState == null)
+            {
+                _sharedFoldingState = GetSharedFoldingState(this);
+            }
+
+            return _sharedFoldingState;
+        }
+    }
+        
     
     #endregion
-    
-    private TextViewTransientSettings? TransientSettings => 
-        _transientSettings ??=  GetTransientSettings(this);
 
+    public static readonly DependencyProperty FoldingManagerProperty = DependencyProperty.Register(
+        "FoldingManager", typeof(FoldingManager), typeof(TextView), 
+        new FrameworkPropertyMetadata(default(FoldingManager)));
+
+    public FoldingManager? FoldingManager
+    {
+        get => (FoldingManager?)GetValue(FoldingManagerProperty);
+        set => SetValue(FoldingManagerProperty, value);
+    }
+    
     public TextView()
     {
         _textControl = new TextControl(this);
@@ -436,6 +373,13 @@ public class TextView : Control, IClippingRectChangesAware
 
         RearrangeOutlineChildren(GetClippingRect(), arrangeBounds);
         return arrangeBounds;
+    }
+
+    protected override void OnRender(DrawingContext drawingContext)
+    {
+        var background = Background ?? Brushes.Transparent;
+        drawingContext.DrawRectangle(background, new Pen(background, 0), new Rect(0, 0, ActualWidth, ActualHeight));
+        base.OnRender(drawingContext);
     }
 
     private void RearrangeOutlineChildren(Rect? clippingRect, Size arrangeBounds)
@@ -624,5 +568,23 @@ public class TextView : Control, IClippingRectChangesAware
             return;
         
         InvalidateArrange();
+    }
+
+    public void ResetFoldingToDefault()
+    {
+        if (TextModel is not
+            {
+                CollapsibleRanges: {} collapsibleRanges,
+                Count: var totalLineCount
+            } ||
+            SharedFoldingState is not {} sharedFoldingState)
+            return;
+        var defaultSettings = sharedFoldingState.GetDefaultSettings(collapsibleRanges, totalLineCount);
+        _outlineData?.CollapsibleRegionsMachine.UpdateCollapsedLines(defaultSettings);
+    }
+
+    public override string ToString()
+    {
+        return TextModel?.ToString() ?? "<null>";
     }
 }

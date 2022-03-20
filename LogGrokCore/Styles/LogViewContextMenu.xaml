@@ -9,6 +9,7 @@
                     xmlns:listControls="clr-namespace:LogGrokCore.Controls.ListControls"
                     mc:Ignorable="d">
 
+    <localControls:IsNullToVisibilityConverter x:Key="IsNullToVisibilityConverter"/>
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     <xcad:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
     <Style x:Key="FilterContextMenuItem"
@@ -59,7 +60,6 @@
                     Kind="CheckboxMultipleBlankCircle" />
             </MenuItem.Icon>
         </MenuItem>
-
         <MenuItem Command="logGrokCore:RoutedCommands.SearchText"
                   Header="{Binding PlacementTarget.SelectedText,
                             Converter={localControls:FormatText},
@@ -124,6 +124,19 @@
                     HorizontalAlignment="Center"
                     Kind="FilterRemoveOutline" />
             </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="Folding"
+                  DataContext="{Binding PlacementTarget.FoldingManager, 
+                            RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContextMenu}}}"
+              Visibility="{Binding  
+                            Converter={StaticResource IsNullToVisibilityConverter}, 
+                            FallbackValue={x:Static Visibility.Collapsed}}">
+            <MenuItem Header="Expand recursively" Command="{Binding ExpandRecursivelyCommand}"/>
+            <MenuItem Header="Collapse recursively" Command="{Binding CollapseRecursivelyCommand}"/>
+            <MenuItem Header="Reset to default" Command="{Binding ResetToDefaultCommand}"/>
+            <MenuItem Header="Expand All" Command="{Binding ExpandAllCommand}"/>
+            <MenuItem Header="Collapse All" Command="{Binding CollapseAllCommand}"/>
+            <MenuItem Header="Reset All" Command="{Binding ResetAllToDefaultCommand}"/>
         </MenuItem>
     </ContextMenu>
 </ResourceDictionary>

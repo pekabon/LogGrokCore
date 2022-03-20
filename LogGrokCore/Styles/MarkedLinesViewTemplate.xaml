@@ -45,9 +45,9 @@
                 listControls:BaseLogListViewItem.OnItemActivatedCommand="{Binding ItemActivatedCommand}"
                 textRender:ClippingRectProviderBehavior.ClippingRectProvider=
                     "{Binding RelativeSource={RelativeSource Self}}">
-                <textRender:TextView.TransientSettings>
-                    <textRender:TextViewTransientSettings/>
-                </textRender:TextView.TransientSettings>
+                <textRender:TextView.SharedFoldingState>
+                    <textRender:TextViewSharedFoldingState/>
+                </textRender:TextView.SharedFoldingState>
                 <listControls:MarkedLinesListView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <VirtualizingStackPanel
