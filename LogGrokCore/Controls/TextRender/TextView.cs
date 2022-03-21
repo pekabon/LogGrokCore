@@ -230,7 +230,6 @@ public class TextView : Control, IClippingRectChangesAware
             return _sharedFoldingState;
         }
     }
-        
     
     #endregion
 

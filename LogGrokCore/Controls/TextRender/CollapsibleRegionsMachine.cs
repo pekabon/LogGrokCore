@@ -55,13 +55,13 @@ public sealed class Collapsed : Expandable
 
 public class CollapsibleRegionsMachine : IEnumerable<(Outline outline, int index)>
 {
+    private readonly int _lineCount;
     private readonly Func<HashSet<int>?> _collapsedLineIndicesGetter;
     public (Outline, int) this[int index] => _regions[index];
     public int LineCount => _regions.Count;
 
     private readonly List<(Outline, int)> _regions;
     private readonly (bool isCollapsed, int start, int length)[] _collapsibleRegions;
-    private readonly int[] _lines;
     private readonly Action<int> _toggleAction;
 
     private HashSet<int> _collapsedLines = new ();
@@ -69,15 +69,13 @@ public class CollapsibleRegionsMachine : IEnumerable<(Outline outline, int index
     public CollapsibleRegionsMachine(int lineCount, (int start, int length)[] collapsibleRegions,
         Func<HashSet<int>?> collapsedLineIndicesGetter)
     {
+        _lineCount = lineCount;
         _collapsedLineIndicesGetter = collapsedLineIndicesGetter;
         var collapsedLines = collapsedLineIndicesGetter();
         if (collapsedLines != null)
         {
             _collapsedLines = collapsedLines;
         }
-
-        // TODO : remove _lines
-        _lines = Enumerable.Range(0, lineCount).ToArray();
         
         _collapsibleRegions = collapsibleRegions.Select(region 
             => (_collapsedLines.Contains(region.start), region.start, region.length)).ToArray();
@@ -119,7 +117,7 @@ public class CollapsibleRegionsMachine : IEnumerable<(Outline outline, int index
         var starts = _collapsibleRegions.ToDictionary(r => r.start, r => r);
         var ends = _collapsibleRegions.ToDictionary(r => r.start + r.length - 1, r => r);
         
-        for (var i = 0; i < _lines.Length; i++)
+        for (var i = 0; i < _lineCount; i++)
         {
             if (!starts.TryGetValue(i, out var rangeStart))
             {
@@ -140,7 +138,7 @@ public class CollapsibleRegionsMachine : IEnumerable<(Outline outline, int index
                 _ => throw new InvalidOperationException()
             };
             
-            _regions.Add((outline, _lines[i]));
+            _regions.Add((outline, i));
 
             if (outline is Collapsed)
             {

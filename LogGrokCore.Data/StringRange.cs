@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace LogGrokCore.Data;
 
-public readonly struct StringRange
+public readonly struct StringRange : IEquatable<StringRange>
 {
     public string SourceString { get; init; }
 
@@ -31,5 +31,20 @@ public readonly struct StringRange
         {
             SourceString = source, Length = source.Length, Start = 0
         };
+    }
+
+    public bool Equals(StringRange other)
+    {
+        return Span.SequenceEqual(other.Span);
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is StringRange other && Equals(other);
+    }
+
+    public override int GetHashCode()
+    {
+        return string.GetHashCode(Span);
     }
 }

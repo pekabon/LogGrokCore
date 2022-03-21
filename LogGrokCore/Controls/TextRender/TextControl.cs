@@ -99,13 +99,46 @@ public class TextControl : Control
     private Func<(IList<(GlyphLine glyphLine, bool isCollapsible)>? text, Regex? regex), Geometry?>?
         _cachedGetDrawingGeometries;
 
+    private List<StringRange>? _cachedStringRanges;
+    private Regex? _cachedRegex;
+    private Geometry? _cachedGeometry;
+    
     private Geometry? GetHighlightGeometries(IList<(GlyphLine glyphLine, bool isCollapsible)>? text, Regex? regex)
     {
-        _cachedGetDrawingGeometries ??=
-            Cached.Of<(IList<(GlyphLine glyphLine, bool isCollapsible)>?, Regex? regex), Geometry?>(
-                value => GetDrawingGeometriesUncached(
-                    text, value.regex));
-        return _cachedGetDrawingGeometries((text, regex));
+        if (text == null || regex == null)
+        {
+            _cachedStringRanges = null;
+            _cachedRegex = null;
+            _cachedGeometry = null;
+            return null;
+        }
+
+        bool CanUseCachedGeometry(IList<(GlyphLine glyphLine, bool isCollapsible)> text, Regex regex)
+        {
+            if (regex != _cachedRegex)
+                return false;
+
+            if (text.Count != _cachedStringRanges?.Count)
+                return false;
+        
+            return !_cachedStringRanges.Where((t, i) => !text[i].glyphLine.Text.Equals(t)).Any();
+        }
+
+        if (CanUseCachedGeometry(text, regex))
+        {
+            return _cachedGeometry;
+        }
+
+        _cachedGeometry = GetDrawingGeometriesUncached(text, regex);
+        _cachedRegex = regex;
+        _cachedStringRanges?.Clear();
+        _cachedStringRanges ??= new List<StringRange>(text.Count);
+        foreach (var (glyphLine, _) in text)
+        {
+            _cachedStringRanges.Add(glyphLine.Text);
+        }
+
+        return _cachedGeometry;
     }
 
     private Geometry? GetDrawingGeometriesUncached(IList<(GlyphLine glyphLine, bool isCollapsible)>? textLines,
