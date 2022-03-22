@@ -3,13 +3,12 @@
                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-                     xmlns:avalonDock="http://schemas.xceed.com/wpf/xaml/avalondock"
-                     xmlns:localBehaviors="clr-namespace:LogGrokCore.AvalonDock"
                      xmlns:localControls="clr-namespace:LogGrokCore.Controls"
                      xmlns:local="clr-namespace:LogGrokCore"
                      xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
-                     xmlns:th="clr-namespace:Xceed.Wpf.AvalonDock.Themes;assembly=Xceed.Wpf.AvalonDock.Themes.Metro"
+                     xmlns:th="clr-namespace:AvalonDock.Themes;assembly=AvalonDock.Themes.Metro"
                      xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+                     xmlns:avalonDockExtensions="clr-namespace:LogGrokCore.AvalonDockExtensions"
                      d:DataContext="{d:DesignInstance Type=local:MainWindowViewModel, IsDesignTimeCreatable=False}"
                      localControls:DragnDropBehavior.AllowDrop="True"
                      localControls:DragnDropBehavior.DropCommand="{Binding DropCommand}"
@@ -28,10 +27,10 @@
             </ResourceDictionary.MergedDictionaries>
             <th:MetroTheme x:Key="MetroTheme" />
             <localControls:StringShortenerConvereter x:Key="StringShortenerConverter" />
-            <localBehaviors:MenuItemCollection x:Key="AdditionalDocumentMenuItems">
+            <avalonDockExtensions:MenuItemCollection x:Key="AdditionalDocumentMenuItems">
                 <MenuItem Header="Copy Full Path" Command="{Binding Model.Content.CopyPathToClipboardCommand}" />
                 <MenuItem Header="Open Containing Folder" Command="{Binding Model.Content.OpenContainingFolderCommand}" />
-            </localBehaviors:MenuItemCollection>
+            </avalonDockExtensions:MenuItemCollection>
         </ResourceDictionary>
     </mahapps:MetroWindow.Resources>
     <mahapps:MetroWindow.LeftWindowCommands>
@@ -75,16 +74,16 @@
         <KeyBinding Command="{Binding OpenFileCommand}" Gesture="CTRL+O" />
     </mahapps:MetroWindow.InputBindings>
     <Grid>
-        <avalonDock:DockingManager x:Name="DockingManager"
-                                   Theme="{StaticResource MetroTheme}"
-                                   GridSplitterWidth="10"
-                                   GridSplitterHeight="10"
-                                   localBehaviors:BindingBehavior.CurrentDocument="{Binding CurrentDocument}"
-                                   localBehaviors:BindingBehavior.DocumentViewTemplate="{StaticResource DocumentTemplate}"
-                                   localBehaviors:BindingBehavior.DocumentsSource="{Binding Documents}"
-                                   localBehaviors:DocumentContextMenu.AdditionalContextMenuItems="{StaticResource AdditionalDocumentMenuItems}">
-            <avalonDock:DockingManager.LayoutItemContainerStyle>
-                <Style TargetType="{x:Type avalonDock:LayoutItem}">
+        <DockingManager
+            x:Name="DockingManager" Theme="{StaticResource MetroTheme}"
+                                  GridSplitterWidth="10"
+                                  GridSplitterHeight="10"
+                                  avalonDockExtensions:BindingBehavior.CurrentDocument="{Binding CurrentDocument}"
+                                  avalonDockExtensions:BindingBehavior.DocumentViewTemplate="{StaticResource DocumentTemplate}"
+                                  avalonDockExtensions:BindingBehavior.DocumentsSource="{Binding Documents}"
+                                  avalonDockExtensions:DocumentContextMenu.AdditionalContextMenuItems="{StaticResource AdditionalDocumentMenuItems}">
+            <DockingManager.LayoutItemContainerStyle>
+                <Style TargetType="{x:Type LayoutItem}">
                     <Setter Property="ToolTip" Value="{Binding Model.Content.Title}" />
                     <Setter Property="Title" Value="{Binding Model.Content.Title}" />
                     <Style.Triggers>
@@ -93,12 +92,12 @@
                         </DataTrigger>
                         <DataTrigger Binding="{Binding Model.Content.IsCurrentDocument}" Value="False">
                             <Setter Property="Title"
-                                    Value="{Binding Model.Content.Title, 
+                                    Value="{Binding Model.Content.Title,
                             Converter={StaticResource StringShortenerConverter}, ConverterParameter=25}" />
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
-            </avalonDock:DockingManager.LayoutItemContainerStyle>
-        </avalonDock:DockingManager>
+            </DockingManager.LayoutItemContainerStyle>
+        </DockingManager>
     </Grid>
 </mahapps:MetroWindow>

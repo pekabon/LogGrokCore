@@ -7,9 +7,9 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Shell;
-using LogGrokCore.AvalonDock;
-using Xceed.Wpf.AvalonDock.Layout;
-using Xceed.Wpf.AvalonDock.Layout.Serialization;
+using AvalonDock.Layout;
+using AvalonDock.Layout.Serialization;
+using LogGrokCore.AvalonDockExtensions;
 
 namespace LogGrokCore
 {

@@ -7,7 +7,7 @@ using System.IO;
 using System.Reflection.Metadata;
 using System.Windows;
 using System.Windows.Input;
-using LogGrokCore.AvalonDock;
+using LogGrokCore.AvalonDockExtensions;
 using LogGrokCore.Data;
 using LogGrokCore.MarkedLines;
 using LogGrokCore.Search;

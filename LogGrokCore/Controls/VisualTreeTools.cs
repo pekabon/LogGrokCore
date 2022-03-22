@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
-using Xceed.Wpf.AvalonDock.Controls;
+using AvalonDock.Controls;
 
 namespace LogGrokCore.Controls
 {

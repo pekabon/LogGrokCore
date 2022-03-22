@@ -3,14 +3,13 @@
                     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                     xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
-                    xmlns:avalonDock="http://schemas.xceed.com/wpf/xaml/avalondock"
-                    xmlns:localBehaviors="clr-namespace:LogGrokCore.AvalonDock"
                     xmlns:controls="clr-namespace:LogGrokCore.Controls"
                     xmlns:search="clr-namespace:LogGrokCore.Search"
                     xmlns:listControls="clr-namespace:LogGrokCore.Controls.ListControls"
                     xmlns:virtualizingStackPanel="clr-namespace:LogGrokCore.Controls.ListControls.VirtualizingStackPanel"
                     xmlns:behaviors="clr-namespace:WPFTextBoxAutoComplete;assembly=WPFTextBoxAutoComplete"
                     xmlns:textRender="clr-namespace:LogGrokCore.Controls.TextRender"
+                    xmlns:avalonDockExtensions="clr-namespace:LogGrokCore.AvalonDockExtensions"
                     mc:Ignorable="d">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="ListViewItemStyle.xaml" />
@@ -19,9 +18,10 @@
         <ResourceDictionary Source="../Resources/Icons.xaml" />
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/controls.xaml" />
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/styles/themes/light.blue.xaml" />
-        <ResourceDictionary Source="pack://application:,,,/Xceed.Wpf.AvalonDock.Themes.Metro;component/Theme.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/AvalonDock.Themes.Metro;component/Theme.xaml" />
     </ResourceDictionary.MergedDictionaries>
-
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    <ActivateCommandLayoutItemFromLayoutModelConverter x:Key="ActivateCommandLayoutItemFromLayoutModelConverter" />
     <DataTemplate x:Key="SearchDocumentViewTemplate" DataType="search:SearchDocumentViewModel">
         <Grid>
             <Grid.RowDefinitions>
@@ -152,26 +152,26 @@
                 Grid.Row="1"
                 Grid.ColumnSpan="3"
                 VerticalAlignment="Stretch"
-                Visibility="{Binding IsFilterEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
+                Visibility="{Binding IsFilterEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
 
-            <avalonDock:DockingManager localBehaviors:BindingBehavior.CurrentDocument="{Binding CurrentDocument}"
-                                       localBehaviors:BindingBehavior.DocumentsSource="{Binding Documents}"
-                                       localBehaviors:BindingBehavior.OnDocumentCloseCommand="{Binding CloseDocumentCommand}"
-                                       localBehaviors:BindingBehavior.DocumentViewTemplate="{StaticResource SearchDocumentViewTemplate}">
+            <DockingManager avalonDockExtensions:BindingBehavior.CurrentDocument="{Binding CurrentDocument}"
+                                       avalonDockExtensions:BindingBehavior.DocumentsSource="{Binding Documents}"
+                                       avalonDockExtensions:BindingBehavior.OnDocumentCloseCommand="{Binding CloseDocumentCommand}"
+                                       avalonDockExtensions:BindingBehavior.DocumentViewTemplate="{StaticResource SearchDocumentViewTemplate}">
 
                 <!-- localBehaviors:BindingBehavior.OnDocumentCloseCommand="{Binding CloseDocument}" -->
-                <avalonDock:DockingManager.LayoutItemContainerStyle>
-                    <Style TargetType="{x:Type avalonDock:LayoutItem}">
+                <DockingManager.LayoutItemContainerStyle>
+                    <Style TargetType="{x:Type LayoutItem}">
                         <Setter Property="Title" Value="{Binding Model.Content.Title}" />
                     </Style>
-                </avalonDock:DockingManager.LayoutItemContainerStyle>
+                </DockingManager.LayoutItemContainerStyle>
 
-                <avalonDock:DockingManager.DocumentPaneControlStyle>
+                <DockingManager.DocumentPaneControlStyle>
                     <Style BasedOn="{StaticResource AvalonDock_ThemeMetro_DocumentPaneControlStyle}"
-                           TargetType="{x:Type avalonDock:LayoutDocumentPaneControl}">
+                           TargetType="{x:Type LayoutDocumentPaneControl}">
                         <Setter Property="Control.Template">
                             <Setter.Value>
-                                <ControlTemplate TargetType="{x:Type avalonDock:LayoutDocumentPaneControl}">
+                                <ControlTemplate TargetType="{x:Type LayoutDocumentPaneControl}">
                                     <Grid ClipToBounds="True"
                                           KeyboardNavigation.TabNavigation="Local"
                                           SnapsToDevicePixels="True">
@@ -202,23 +202,23 @@
                                                     </Rectangle>
                                                 </Button.Content>
                                             </Button>
-                                            <avalonDock:DocumentPaneTabPanel Name="HeaderPanel"
+                                            <DocumentPaneTabPanel Name="HeaderPanel"
                                                                              Grid.Row="0"
                                                                              Grid.Column="1"
                                                                              Margin="2,0,2,0"
                                                                              IsItemsHost="True"
                                                                              KeyboardNavigation.TabIndex="1" />
-                                            <avalonDock:DropDownButton Name="MenuDropDownButton"
+                                            <DropDownButton Name="MenuDropDownButton"
                                                                        Grid.Column="2"
                                                                        VerticalAlignment="Center"
                                                                        Focusable="False"
                                                                        Style="{StaticResource AvalonDock_ThemeMetro_ToolButtonStyle}">
-                                                <avalonDock:DropDownButton.DropDownContextMenu>
-                                                    <avalonDock:ContextMenuEx
+                                                <DropDownButton.DropDownContextMenu>
+                                                    <ContextMenuEx
                                                         ItemsSource="{Binding Model.ChildrenSorted, RelativeSource={RelativeSource TemplatedParent}}">
-                                                        <avalonDock:ContextMenuEx.ItemContainerStyle>
+                                                        <ContextMenuEx.ItemContainerStyle>
                                                             <Style BasedOn="{StaticResource {x:Type MenuItem}}"
-                                                                   TargetType="{x:Type avalonDock:MenuItemEx}">
+                                                                   TargetType="{x:Type MenuItemEx}">
                                                                 <Setter
                                                                     Property="HeaderTemplate"
                                                                     Value="{Binding Path=Root.Manager.DocumentPaneMenuItemHeaderTemplate}" />
@@ -234,10 +234,10 @@
                                                                 <Setter Property="Command"
                                                                         Value="{Binding Path=., Converter={StaticResource ActivateCommandLayoutItemFromLayoutModelConverter}}" />
                                                             </Style>
-                                                        </avalonDock:ContextMenuEx.ItemContainerStyle>
-                                                    </avalonDock:ContextMenuEx>
-                                                </avalonDock:DropDownButton.DropDownContextMenu>
-                                            </avalonDock:DropDownButton>
+                                                        </ContextMenuEx.ItemContainerStyle>
+                                                    </ContextMenuEx>
+                                                </DropDownButton.DropDownContextMenu>
+                                            </DropDownButton>
                                         </Grid>
                                         <Border Name="ContentPanel"
                                                 Grid.Row="1"
@@ -298,13 +298,13 @@
                             </Setter.Value>
                         </Setter>
                     </Style>
-                </avalonDock:DockingManager.DocumentPaneControlStyle>
-                <avalonDock:LayoutRoot>
-                    <avalonDock:LayoutPanel Orientation="Horizontal">
-                        <avalonDock:LayoutDocumentPane />
-                    </avalonDock:LayoutPanel>
-                </avalonDock:LayoutRoot>
-            </avalonDock:DockingManager>
+                </DockingManager.DocumentPaneControlStyle>
+                <LayoutRoot>
+                    <LayoutPanel Orientation="Horizontal">
+                        <LayoutDocumentPane />
+                    </LayoutPanel>
+                </LayoutRoot>
+            </DockingManager>
         </Border>
     </DataTemplate>
 </ResourceDictionary>

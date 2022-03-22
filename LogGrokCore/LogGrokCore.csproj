@@ -36,13 +36,14 @@
 
 
   <ItemGroup>
+    <PackageReference Include="Dirkster.AvalonDock" Version="4.70.0" />
+    <PackageReference Include="Dirkster.AvalonDock.Themes.Metro" Version="4.70.0" />
     <PackageReference Include="MahApps.Metro" Version="2.4.7" />
     <PackageReference Include="MahApps.Metro.IconPacks.Material" Version="4.9.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.31" />
-    <PackageReference Include="MiqM.Xceed.Wpf.Toolkit.NETCore" Version="3.5.1.3" />
     <PackageReference Include="NetEscapades.Configuration.Yaml" Version="2.1.0" />
     <PackageReference Include="NLog" Version="4.7.11" />
     <PackageReference Include="NLog.Extensions.Logging" Version="1.7.4" />
