@@ -36,7 +36,7 @@ Settings:
         - Severity
         - Component
       Transformations:
-        - lic\t\[ContentImp\.cpp.*\].*"TicketBody"\s+:\s+\{[^}]+"Data"\s+:\s+"(?'Base64DecodeFormatJson'[^"]+)"
+        - lic\t\[ContentImp\.cpp.*\].*"TicketBody"\s+:\s+\{[^}]+"Data"\s+:\s+(?'Base64Decode'"[^"]+")
         - ucp.*\t.*Rest response received body:\s+(?<FormatJson>\{.*\})
         - ksnclnt\.ds\tRequest for discovery service finished with resultCode.*response=(?<FormatJson>\{.*\})
 # xor-ed KL logs

@@ -95,7 +95,7 @@ namespace LogGrokCore.Data
 
         private static string Base64Decode(string input)
         {
-            var buffer = Encoding.UTF8.GetBytes(input);
+            var buffer = Encoding.UTF8.GetBytes(input.Trim('"', ' ', '\t', '\r', '\n'));
             Base64.DecodeFromUtf8InPlace(buffer, out var bytesWritten);
             return Encoding.UTF8.GetString(buffer, 0, bytesWritten);
         }
