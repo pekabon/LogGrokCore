@@ -49,7 +49,7 @@ namespace LogGrokCore.Bootstrap
                 HomeDirectoryPathProvider.GetDirectoryFullPath("Dumps"),
                 RegistryValueKind.ExpandString);
             key.SetValue("DumpCount", 10, RegistryValueKind.DWord);
-            key.SetValue("DumpType", 1, RegistryValueKind.DWord);
+            key.SetValue("DumpType", 2, RegistryValueKind.DWord);
         }
         
         private static void StartElevatedInstanceToSetupWer()
