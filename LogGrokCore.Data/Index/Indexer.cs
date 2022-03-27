@@ -12,15 +12,30 @@ namespace LogGrokCore.Data.Index
         private readonly ConcurrentDictionary<IndexKey, IndexTree<int, SimpleLeaf<int>>> _indices =
             new(1, 16384);
 
+        private readonly Func<IndexKey, IndexTree<int, SimpleLeaf<int>>> _indexValueFactory;
+
         private readonly ConcurrentDictionary<int, HashSet<IndexKey>> _components = new();
-        
+
         private readonly CountIndex<IndexTree<int, SimpleLeaf<int>>> _countIndex;
-            
+
         private readonly object _componentsLocker = new();
+
+        private readonly Dictionary<IndexKey, IndexKey> _keyDictionary = new();
+
+        private readonly IndexTree<LineAndKey, SimpleLeaf<LineAndKey>> _lineAndKeyIndex;
 
         public Indexer()
         {
             _countIndex = new CountIndex<IndexTree<int, SimpleLeaf<int>>>(_indices);
+            _lineAndKeyIndex =
+                new IndexTree<LineAndKey, SimpleLeaf<LineAndKey>>(16384,
+                    static value => new SimpleLeaf<LineAndKey>(value, 0));
+            _indexValueFactory = indexedKey =>
+            {
+                indexedKey.MakeLocalCopy();
+                _keyDictionary[indexedKey] = indexedKey;
+                return CreateIndexTree();
+            };
         }
 
         public IEnumerable<string> GetAllComponents(int componentNumber)
@@ -35,35 +50,41 @@ namespace LogGrokCore.Data.Index
             }
         }
 
-        public IIndexedLinesProvider GetIndexedLinesProvider(IReadOnlyDictionary<int, IEnumerable<string>> excludedComponents)
+        public IIndexedLinesProvider GetIndexedLinesProvider(
+            IReadOnlyDictionary<int, IEnumerable<string>> excludedComponents)
         {
-            var updatableCounts = 
+            var updatableCounts =
                 UpdatableValue.Create(() => _countIndex.Counts);
-            return new IndexedLinesProvider(this, updatableCounts, 
+            return new IndexedLinesProvider(this, updatableCounts,
                 CountIndex<IndexTree<int, SimpleLeaf<int>>>.Granularity, excludedComponents);
         }
 
         public IndexTree<int, SimpleLeaf<int>> GetIndex(IndexKey key) => _indices[key];
-        
+
+
         public void Add(IndexKey key, int lineNumber)
         {
-            var index = _indices.GetOrAdd(key,
-                static indexedKey =>
-                {
-                    indexedKey.MakeLocalCopy();
-                    return CreateIndexTree();
-                });
+            var index = _indices.GetOrAdd(key, _indexValueFactory);
             
-            index.Add(lineNumber);    
+            index.Add(lineNumber);
             _countIndex.Add(lineNumber, _indices);
 
             var newIndexCreated = key.HasLocalBuffer;
             if (newIndexCreated)
                 UpdateComponents(key);
+
+            if (!_keyDictionary.TryGetValue(key, out var localKey))
+            {
+                key.MakeLocalCopy();
+                _keyDictionary[key] = key;
+                localKey = key;
+            }
+
+            _lineAndKeyIndex.Add(new LineAndKey(lineNumber, localKey));
         }
 
         public event Action<(int compnentNumber, IndexKey key)>? NewComponentAdded;
-        
+
         public int GetIndexCountForComponent(int componentIndex, string componentValue)
         {
             return _indices
@@ -84,7 +105,7 @@ namespace LogGrokCore.Data.Index
 
             public int GetHashCode(IndexKey obj) => string.GetHashCode(obj.GetComponent(_index));
         }
-        
+
         private void UpdateComponents(IndexKey key)
         {
             for (var componentIndex = 0; componentIndex < key.ComponentCount; componentIndex++)
@@ -99,13 +120,13 @@ namespace LogGrokCore.Data.Index
                 }
 
                 if (isAdded)
-                    NewComponentAdded?.Invoke((componentIndex, key)); 
+                    NewComponentAdded?.Invoke((componentIndex, key));
             }
         }
 
         private static IndexTree<int, SimpleLeaf<int>> CreateIndexTree()
         {
-            return new(16, 
+            return new(16,
                 static value => new SimpleLeaf<int>(value, 0));
         }
 
@@ -146,61 +167,7 @@ namespace LogGrokCore.Data.Index
         public IEnumerable<LineAndKey> GetIndexedSequenceFrom(int from)
         {
             Trace.TraceInformation($"GetIndexedSequenceFrom({from})");
-            static bool IsNext(LineAndKey lk1, LineAndKey lk2)
-            {
-                return lk2.LineNumber == lk1.LineNumber + 1;
-            }
-
-            var cursors = _indices
-                .Select(kv
-                    => kv.Value.GetEnumerableFromValue(from).Select(ln => new LineAndKey(ln, kv.Key)).GetEnumerator())
-                .Where(enumerator => enumerator.MoveNext()).ToList();
-
-            var startValues = string.Join(",", cursors.Select(c => c.Current.LineNumber).OrderBy(i => i)
-                .Select(j => j.ToString()));
-
-            return CollectionUtils.MergeSorted(cursors, IsNext);
-        }
-    
-        public Indexer CreateFilteredIndexer(IAsyncEnumerable<IEnumerable<int>> filterSequence)
-        {
-            var filteredIndexer = new Indexer();
-            FillFilteredIndexer(this, filteredIndexer, filterSequence);
-            return filteredIndexer;
-        }
-
-        private static async void FillFilteredIndexer(Indexer source, Indexer target,
-            IAsyncEnumerable<IEnumerable<int>> filterSequences)
-        {
-            await foreach (var filterSequence in filterSequences)
-            {
-                using var filterEnumerator = filterSequence.GetEnumerator();
-                if (!filterEnumerator.MoveNext()) continue;
-                MergeAndFilterIndices(target, source._indices, filterEnumerator);
-            }
-        }
-
-        private static void MergeAndFilterIndices(
-            Indexer target,
-            IDictionary<IndexKey, IndexTree<int, SimpleLeaf<int>>> source, 
-            IEnumerator<int> filterEnumerator)
-        {
-            var cursors =
-                source.Select(kv => kv.Value.GetEnumerableFromIndex(filterEnumerator.Current)
-                        .Select(value => (kv.Key, value)).GetEnumerator())
-                        .Where(c => c.MoveNext());
-            
-            var merged = CollectionUtils.MergeSorted(cursors, (k1, k2) => k2.value == k1.value + 1);
-            using var sourceSequenceEnumerator = merged.GetEnumerator();
-
-            while (sourceSequenceEnumerator.MoveNext())
-            {
-                if (sourceSequenceEnumerator.Current.value != filterEnumerator.Current) continue;
-
-                var (key, value) = sourceSequenceEnumerator.Current;
-                target.Add(key, value);
-                if (!filterEnumerator.MoveNext()) return;
-            }
+            return _lineAndKeyIndex.GetEnumerableFromIndex(from);
         }
     }
 }

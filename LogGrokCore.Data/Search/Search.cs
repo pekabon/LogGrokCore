@@ -7,13 +7,12 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using LogGrokCore.Data.Index;
-using LogGrokCore.Data.IndexTree;
 
 namespace LogGrokCore.Data.Search
 {
     public static class Search
     {
-        private const int MaxSearchSizeLines = 2048;
+        private const int MaxSearchSizeLines = 512;
         private const double Throttle = 0.01;
        
         public class Progress
@@ -105,6 +104,7 @@ namespace LogGrokCore.Data.Search
 
                     var bytes =
                         memorySpan.Slice((int) (currentLineOffset - firstLineOffset), currentLineLength);
+                   
                     var stringLength = 0;
                     unsafe
                     {
