@@ -7,13 +7,13 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using LogGrokCore.Data.Index;
+using LogGrokCore.Data.IndexTree;
 
 namespace LogGrokCore.Data.Search
 {
     public static class Search
     {
-        private static readonly StringPool SearchStringPool = new();
-        private const int MaxSearchSizeLines = 256;
+        private const int MaxSearchSizeLines = 2048;
         private const double Throttle = 0.01;
        
         public class Progress
@@ -83,6 +83,12 @@ namespace LogGrokCore.Data.Search
                 var currentLineOffset = firstLineOffset;
                 var currentLineLength = firstLineLength;
 
+                var tempString = new string('\0', 2048);
+
+                var lineCount = end - start + 1;
+                using var offsets = new PooledList<(long offset, int length)>(lineCount);
+                sourceLineIndex.Fetch(start, offsets.AllocateSpan(lineCount));
+
                 do
                 {
                     var enumerateResult = lineAndKeyEnumerator.MoveNext();
@@ -92,7 +98,11 @@ namespace LogGrokCore.Data.Search
                     
                     var charCount = encoding.GetMaxCharCount(currentLineLength);
 
-                    var tempString = SearchStringPool.Rent(charCount);
+                    if (tempString.Length < charCount)
+                    {
+                        tempString = new string('\0', Pow2Roundup(charCount));
+                    }
+
                     var bytes =
                         memorySpan.Slice((int) (currentLineOffset - firstLineOffset), currentLineLength);
                     var stringLength = 0;
@@ -113,13 +123,12 @@ namespace LogGrokCore.Data.Search
                         searchIndexer.Add(indexKey, currentSearchResultLineNumber);
                     }
 
-                    SearchStringPool.Return(tempString);
                     index++;
 
                     if (index > end)
                         break;
                     
-                    (currentLineOffset, currentLineLength) = sourceLineIndex.GetLine(index);
+                    (currentLineOffset, currentLineLength) = offsets[index - start];
                     
                 } while (!cancellationToken.IsCancellationRequested);
             }
@@ -155,6 +164,19 @@ namespace LogGrokCore.Data.Search
                 }, cancellationToken);
         
             return (progress, searchIndexer, lineIndex);
+        }
+        
+        private static int Pow2Roundup (int x)
+        {
+            if (x < 0)
+                return 0;
+            --x;
+            x |= x >> 1;
+            x |= x >> 2;
+            x |= x >> 4;
+            x |= x >> 8;
+            x |= x >> 16;
+            return x+1;
         }
     }
 }

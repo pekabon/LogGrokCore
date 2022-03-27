@@ -22,6 +22,15 @@ namespace LogGrokCore.Data
             _count = 0;
         }
 
+        public Span<T> AllocateSpan(int count)
+        {
+            while (_data.Length < count)
+                Grow();
+
+            _count = Math.Max(count, _count);
+            return _data.AsSpan(0, count);
+        }
+
         public void Add(T value)
         {
             if (_count >= _data.Length)
