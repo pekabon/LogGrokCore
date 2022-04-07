@@ -75,7 +75,7 @@ namespace LogGrokCore.Data.IndexTree
 
         private static TreeNode<T, TLeaf>? AddToTree(TreeNode<T, TLeaf> node, TLeaf newLeaf)
         {
-            var lastSubNode = node.LastSubnode;
+            var lastSubNode = node.LastSubNode;
             switch (lastSubNode)
             {
                 case TreeNode<T, TLeaf> subNode:

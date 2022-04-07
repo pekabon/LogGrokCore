@@ -52,7 +52,7 @@ namespace LogGrokCore.Data.Tests
         public override (int index, TestIndexTreeLeaf leaf) FindByValue(int value)
         {
             var index = _storage.BinarySearch((int) (value));
-            return (_firstValueIndex + (index > 0 ? index : ~index), this);
+            return (_firstValueIndex + (index >= 0 ? index : ~index), this);
         }
 
         public int this[int index] => _storage[index];

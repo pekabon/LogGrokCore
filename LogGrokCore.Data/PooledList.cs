@@ -117,8 +117,11 @@ namespace LogGrokCore.Data
         public void Dispose()
         {
             ArrayPool<T>.Shared.Return(_data);
+            _isDisposed = true;
         }
 
+        private bool _isDisposed = false;
+        
         public IEnumerator<T> GetEnumerator()
         {
             for (var i = 0; i < _count; i++)

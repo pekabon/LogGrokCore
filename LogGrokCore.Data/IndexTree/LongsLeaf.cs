@@ -52,7 +52,7 @@ namespace LogGrokCore.Data.IndexTree
         public override (int index, LongsLeaf leaf) FindByValue(long value)
         {
             var index = _storage.BinarySearch((int) (value - _firstIndex));
-            return (_firstIndex + (index > 0 ? index : ~index), this);
+            return (_firstIndex + (index >= 0 ? index : ~index), this);
         }
 
         public IEnumerator<long> GetEnumerator()
