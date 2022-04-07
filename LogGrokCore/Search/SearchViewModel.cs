@@ -177,8 +177,9 @@ namespace LogGrokCore.Search
                     CurrentDocument.Dispose();
                     Documents.Remove(CurrentDocument);
                     CurrentDocument = null;
-                    return;
                 }
+                
+                return;
             }
 
             if (CurrentDocument != null)
@@ -203,6 +204,7 @@ namespace LogGrokCore.Search
         {
             searchDocumentViewModel.Dispose();
             if (Documents.Count != 0) return;
+            CommitSearchPatternImmediately(string.Empty, IsCaseSensitive, UseRegex);
             TextToSearch = string.Empty;
             CurrentDocument = null;
         }

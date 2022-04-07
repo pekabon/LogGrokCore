@@ -23,6 +23,9 @@ namespace LogGrokCore.Data
             var isInCrLfs = false;
             var crLength = cr.Length;
 
+            var firstBytes = new[] { cr[0], lf[0] };
+            var isIsSingleByteCrLf = cr.Length == 1 && lf.Length == 1; 
+            
             var lineStartFromCurrentDataOffset = 0;
 
             var buffer = ArrayPool<byte>.Shared.Rent(_bufferSize);
@@ -47,34 +50,21 @@ namespace LogGrokCore.Data
                         var i = 0;
                         while (i < bytesRead)
                         {
-                            if (!isInCrLfs
-                                && (dataOffsetFromBufferStart + i) % sizeof(ulong) == 0
-                                && i < bufferSize - dataOffsetFromBufferStart - sizeof(ulong))
+                            if (!isInCrLfs)
                             {
-                                var longs = MemoryMarshal.Cast<byte, ulong>(data.Slice(i));
-
-                                foreach (var longValue in longs)
+                                var crlfPosition = data.Slice(i).IndexOfAny(firstBytes);
+                                if (crlfPosition < 0)
                                 {
-                                    bool CheckValuePresence(ulong sourceData, ulong valuePattern)
-                                    {
-                                        var masked = sourceData ^ valuePattern;
-                                        return ((masked - minusPattern) & ~masked & andPattern) != 0;
-                                    }
-
-                                    if (CheckValuePresence(longValue, rPattern) ||
-                                        CheckValuePresence(longValue, nPattern))
-                                    {
-                                        break;
-                                    }
-                                    
-                                    i += sizeof(ulong);
+                                    break;
                                 }
+
+                                i += crlfPosition;
                             }
 
                             if (i >= bytesRead) break;
                             
                             var current = data.Slice(i, crLength);
-                            if (current.SequenceEqual(cr) || current.SequenceEqual(lf))
+                            if ((!isInCrLfs && isIsSingleByteCrLf) || current.SequenceEqual(cr) || current.SequenceEqual(lf))
                             {
                                 isInCrLfs = true;
                             }

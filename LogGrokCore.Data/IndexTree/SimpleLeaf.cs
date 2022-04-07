@@ -50,7 +50,7 @@ namespace LogGrokCore.Data.IndexTree
         public override (int index, SimpleLeaf<T> leaf) FindByValue(T value)
         {
             var index = _storage.BinarySearch(value);
-            return ((index > 0 ? index : ~index) + _firstValueIndex, this);
+            return ((index >= 0 ? index : ~index) + _firstValueIndex, this);
         }
 
         public SimpleLeaf<T>? Next { get; private set; }

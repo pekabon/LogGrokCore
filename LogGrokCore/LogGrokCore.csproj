@@ -66,9 +66,9 @@
 
   <ItemGroup>
     <None Remove="appsettings.yaml" />
-    <AdditionalFiles Include="appsettings.yaml">
+    <Content Include="appsettings.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </AdditionalFiles>
+    </Content>
   </ItemGroup>
 
 
