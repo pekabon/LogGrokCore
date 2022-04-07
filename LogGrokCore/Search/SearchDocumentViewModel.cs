@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,7 +37,7 @@ namespace LogGrokCore.Search
         private readonly LogModelFacade _logModelFacade;
         private SearchLineIndex? _currentSearchLineIndex;
         private readonly Selection _markedLines;
-        private TransformationPerformer _transformationPerformer;
+        private readonly TransformationPerformer _transformationPerformer;
 
         public SearchDocumentViewModel(LogModelFacade logModelFacade,
             FilterSettings filterSettings,
@@ -72,7 +73,7 @@ namespace LogGrokCore.Search
 
         public ColumnSettings ColumnSettings { get; }
         
-        public string Title => $"{SearchPattern.Pattern} ({Lines?.Count})";
+        public string Title => $"{SearchPattern.Pattern} ({Lines.Count})";
 
         public NavigateToLineRequest NavigateToLineRequest { get; } = new();
 
@@ -153,7 +154,6 @@ namespace LogGrokCore.Search
 
             SearchProgress = 0;
             IsIndeterminateProgress = true;
-            IsSearching = true;
             CurrentItemIndex = null;
             
             var (progress, searchIndexer, searchLineIndex) = Data.Search.Search.CreateSearchIndex(
@@ -198,13 +198,48 @@ namespace LogGrokCore.Search
                             _markedLines, _transformationPerformer));
         } 
         
+        private DateTime _isSearchingShowStartTime = DateTime.Now;
+        private bool _localIsSearching;
+        
+        private async void SetIsSearching(bool isSearching)
+        {
+            var minProgressShowTimeMs = 500;
+            var delayBeforeShowProgress = 500;
+            
+            if (isSearching == _localIsSearching)
+                return;
+                
+            _localIsSearching = isSearching;
+            Trace.TraceInformation($"localIsSearching = {_localIsSearching}");
+
+            if (!IsSearching)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(delayBeforeShowProgress));
+                if (!_localIsSearching) return;
+                IsSearching = true;
+                _isSearchingShowStartTime = DateTime.Now;
+            }
+            else
+            {
+                var showTime = DateTime.Now - _isSearchingShowStartTime;
+                var minShowTime = minProgressShowTimeMs;
+                if (DateTime.Now -  _isSearchingShowStartTime < TimeSpan.FromMilliseconds(minShowTime))
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(minShowTime - showTime.TotalMilliseconds));
+                } 
+                    
+                IsSearching = false;
+            }
+        }
+        
         private async void UpdateDocumentWhileLoading(Data.Search.Search.Progress progress,
             CancellationToken cancellationToken)
         {
             try
             {
+                SetIsSearching(true);
+
                 var delay = 10;
-                IsSearching = true;
                 while (!progress.IsFinished)
                 {
                     var count = Lines?.Count;
@@ -215,7 +250,7 @@ namespace LogGrokCore.Search
                     IsIndeterminateProgress = false;
                     SearchProgress = progress.Value * 100.0;
 
-                    await Task.Delay(delay, cancellationToken);
+                    await Task.WhenAny(Task.Delay(delay, cancellationToken), progress.Completion);
                     if (cancellationToken.IsCancellationRequested)
                         return;
                     if (delay < 150)
@@ -227,7 +262,7 @@ namespace LogGrokCore.Search
 
                 Lines?.UpdateCount();
                 SearchProgress = progress.Value * 100.0;
-                IsSearching = false;
+                SetIsSearching(false);
                 InvokePropertyChanged(nameof(Title));
             }
             catch (OperationCanceledException)
