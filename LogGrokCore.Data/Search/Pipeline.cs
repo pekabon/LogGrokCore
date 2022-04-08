@@ -75,7 +75,6 @@ public class Pipeline
             var current = start;
             while (current < start + count && !cancellationToken.IsCancellationRequested)
             {
-
                 var end = Math.Min(current + MaxSearchSizeLines, start + count) - 1;
                     
                 var (firstLineOffset, _) = sourceLineIndex.GetLine(current);
