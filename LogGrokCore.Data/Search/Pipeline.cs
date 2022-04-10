@@ -39,7 +39,7 @@ public class Pipeline
 
         System.Diagnostics.Trace.TraceInformation($"Search({_regex}, {_id}): {message}");
     }
-
+    
     public async Task StartSearch(
         Indexer searchIndexer,
         SearchLineIndex lineIndex,
@@ -85,49 +85,27 @@ public class Pipeline
                 catch (OperationCanceledException)
                 {
                     Trace($"Operation canceled: {actionExpression}.");
-                    throw;
                 }
             } , cancellationToken);
         }
 
-        var completionSource = new TaskCompletionSource();
+        var processSearchResultsCompletionSource = new TaskCompletionSource();
         var workers = new List<Task>
         {
             StartAsyncTask(() => LoadBuffersWorker(_logModelFacade, progress, buffersChannel.Writer, cancellationToken)),
             StartAsyncTask(() => ProcessSearchResultsWorker(lineIndex, 
-                 sourceIndexer, searchIndexer, searchResultsChannel.Reader, completionSource, cancellationToken))
+                 sourceIndexer, searchIndexer, searchResultsChannel.Reader, 
+                 processSearchResultsCompletionSource, cancellationToken))
 
         };
         
-        var searchWorkers = new List<Task>();
-        
-        var aliveWorkers = _searchWorkersCount;
-        for (var i = 0; i < _searchWorkersCount; i++)
-        {
-            async Task SearchInBuffer()
-            {
-                try
-                {
-                    await SearchInBufferWorker(_regex, sourceLineIndex, encoding,
-                        buffersChannel.Reader, searchResultsChannel.Writer, cancellationToken);
+        var searchInBufferCompletion = searchResultsChannel.StartProducers(channelWriter =>
+            SearchInBufferWorker(_regex, sourceLineIndex, encoding,
+                buffersChannel.Reader, channelWriter, cancellationToken), _searchWorkersCount);
 
-                }
-                finally
-                {
-                    if (Interlocked.Decrement(ref aliveWorkers) == 0)
-                    {
-                        Trace("Completing searchResults channel.");
-                        searchResultsChannel.Writer.Complete();    
-                    }
-                }
-            }
-
-            searchWorkers.Add(StartAsyncTask(SearchInBuffer));
-        }
-
-        await Task.WhenAll(searchWorkers);
+        await searchInBufferCompletion;
         await Task.WhenAll(workers.ToArray());
-        await completionSource.Task;
+        await processSearchResultsCompletionSource.Task;
         Trace($"Search finished, spent: {DateTime.Now-timestamp}");
     }
 
