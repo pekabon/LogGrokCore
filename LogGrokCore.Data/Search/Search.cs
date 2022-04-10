@@ -1,3 +1,5 @@
+using System;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -57,16 +59,25 @@ public static class Search
         var searchIndexer = new Indexer();                // components -> searchResultLineNumber
         var progress = new Progress();
 
-        var pipeline = new Pipeline();
+        var pipeline = new Pipeline(regex, logModelFacade);
         Task.Run(async () =>
-                await pipeline.StartSearch(regex, logModelFacade, lineIndex, searchIndexer, progress,
-                    cancellationToken), cancellationToken)
-            .ContinueWith(_ =>
+        {
+            try
+            {
+                await pipeline.StartSearch(searchIndexer, lineIndex, progress,
+                    cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                Trace.TraceInformation($"Search cancelled ({regex})");
+            }
+            finally
             {
                 searchIndexer.Finish();
-                return progress.IsFinished = true;
-            }, cancellationToken);
-       
+                progress.IsFinished = true;
+                Trace.TraceInformation($"Search finished ({regex})");
+            }
+        }, cancellationToken);
             
         return (progress, searchIndexer, lineIndex);
     }

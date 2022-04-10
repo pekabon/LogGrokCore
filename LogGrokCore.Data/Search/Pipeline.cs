@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -14,20 +15,44 @@ namespace LogGrokCore.Data.Search;
 
 public class Pipeline
 {
+    private readonly Regex _regex;
+    private readonly LogModelFacade _logModelFacade;
     private const int MaxSearchSizeLines = 1024;
     private readonly int _searchWorkersCount = Math.Max(Environment.ProcessorCount - 1, 1);
     private readonly StringPool _stringPool = new();
+
+    private uint? _id;
+    
+    public Pipeline(Regex regex,
+        LogModelFacade logModelFacade)
+    {
+        _regex = regex;
+        _logModelFacade = logModelFacade;
+    }
+
+    private void Trace(string message)
+    {
+        unchecked
+        {
+            _id ??= (uint)GetHashCode(); 
+        }
+
+        System.Diagnostics.Trace.TraceInformation($"Search({_regex}, {_id}): {message}");
+    }
+
     public async Task StartSearch(
-        Regex regex,
-        LogModelFacade logModelFacade,
-        SearchLineIndex lineIndex,
         Indexer searchIndexer,
+        SearchLineIndex lineIndex,
         Search.Progress progress,
         CancellationToken cancellationToken)
     {
-        var encoding = logModelFacade.LogFile.Encoding;
-        var sourceLineIndex = logModelFacade.LineIndex;
-        var sourceIndexer = logModelFacade.Indexer;
+        var timestamp = DateTime.Now;
+
+        Trace($"Search started.");
+        
+        var encoding = _logModelFacade.LogFile.Encoding;
+        var sourceLineIndex = _logModelFacade.LineIndex;
+        var sourceIndexer = _logModelFacade.Indexer;
 
         var buffersChannel = Channel.CreateBounded<(IMemoryOwner<byte> memory,
             int startLine, int EndLine)>(new BoundedChannelOptions(Environment.ProcessorCount)
@@ -47,26 +72,70 @@ public class Pipeline
                 SingleReader = true
             });
 
+        
+        async Task StartAsyncTask(Func<Task> action,
+            [CallerArgumentExpression("action")] string actionExpression = "")
+        {
+            await Task.Factory.StartNew(async () =>
+            {
+                try
+                {
+                    await action();
+                }
+                catch (OperationCanceledException)
+                {
+                    Trace($"Operation canceled: {actionExpression}.");
+                    throw;
+                }
+            } , cancellationToken);
+        }
+
+        var completionSource = new TaskCompletionSource();
         var workers = new List<Task>
         {
-            LoadBuffersWorker(logModelFacade, progress, buffersChannel.Writer, cancellationToken),
-            ProcessSearchResultsWorker(lineIndex, 
-                 sourceIndexer, searchIndexer, searchResultsChannel.Reader, cancellationToken)
+            StartAsyncTask(() => LoadBuffersWorker(_logModelFacade, progress, buffersChannel.Writer, cancellationToken)),
+            StartAsyncTask(() => ProcessSearchResultsWorker(lineIndex, 
+                 sourceIndexer, searchIndexer, searchResultsChannel.Reader, completionSource, cancellationToken))
 
         };
+        
+        var searchWorkers = new List<Task>();
+        
+        var aliveWorkers = _searchWorkersCount;
         for (var i = 0; i < _searchWorkersCount; i++)
         {
-            workers.Add(SearchInBufferWorker(regex, sourceLineIndex, encoding,
-                buffersChannel.Reader, searchResultsChannel.Writer, cancellationToken));
+            async Task SearchInBuffer()
+            {
+                try
+                {
+                    await SearchInBufferWorker(_regex, sourceLineIndex, encoding,
+                        buffersChannel.Reader, searchResultsChannel.Writer, cancellationToken);
+
+                }
+                finally
+                {
+                    if (Interlocked.Decrement(ref aliveWorkers) == 0)
+                    {
+                        Trace("Completing searchResults channel.");
+                        searchResultsChannel.Writer.Complete();    
+                    }
+                }
+            }
+
+            searchWorkers.Add(StartAsyncTask(SearchInBuffer));
         }
-       
+
+        await Task.WhenAll(searchWorkers);
         await Task.WhenAll(workers.ToArray());
+        await completionSource.Task;
+        Trace($"Search finished, spent: {DateTime.Now-timestamp}");
     }
 
-    private static async Task LoadBuffersWorker(LogModelFacade logModelFacade, Search.Progress progress,
+    private async Task LoadBuffersWorker(LogModelFacade logModelFacade, Search.Progress progress,
         ChannelWriter<(IMemoryOwner<byte> memory, int startLine, int endLine)> buffersQueue,
         CancellationToken cancellationToken)
     {
+        Trace("LoadBuffersWorker started");
         var sourceLineIndex = logModelFacade.LineIndex;
         await using var stream = logModelFacade.LogFile.OpenForSequentialRead();
         await foreach (var (start, count) in
@@ -95,7 +164,8 @@ public class Pipeline
             }
         }
 
-        _ = buffersQueue.TryComplete();
+        buffersQueue.Complete();
+        Trace("LoadBuffersWorker finished, buffersChannel completed");
     }
     
     private async Task SearchInBufferWorker(
@@ -103,24 +173,32 @@ public class Pipeline
         ChannelReader<(IMemoryOwner<byte> memory, int startLine, int EndLine)> buffersReader,
         ChannelWriter<ValueTask<PooledList<int>>> resultChannelWriter,
         CancellationToken cancellationToken)
-    {            
-        var stringBuffer = _stringPool.Rent(2048); 
+    {
+        Trace("SearchInBufferWorker started");
+        var stringBuffer = _stringPool.Rent(2048);
+        var counter = 0;
         await foreach(var (memory, startLine, endLine) in buffersReader.ReadAllAsync(cancellationToken))
         {
+            if (counter == 0)
+            {
+                Trace("SearchInBufferWorker: processing first data");
+            }
+
+            counter++;
             var source = new ValueTaskSource<PooledList<int>>();
             var resultTask = new ValueTask<PooledList<int>>(source, 0);
             await resultChannelWriter.WriteAsync(resultTask, cancellationToken);
-            var result = SearchInBuffer(regex, memory.Memory, startLine, endLine,
+            var result = SearchInBufferRegex(regex, memory.Memory, startLine, endLine,
                 lineIndex, encoding, ref stringBuffer, cancellationToken);
             memory.Dispose();
             source.SetResult(result);            
         }
         
         _stringPool.Return(stringBuffer);
-        _ = resultChannelWriter.TryComplete();
+        Trace($"SearchInBufferWorker finished, processed {counter} chunks of data");
     }
     
-    PooledList<int> SearchInBuffer(Regex regex, Memory<byte> memory, int start, int end, 
+    PooledList<int> SearchInBufferRegex(Regex regex, Memory<byte> memory, int start, int end, 
         LineIndex lineIndex, Encoding encoding, ref string stringBuffer, CancellationToken cancellationToken)
     {
         var result = new PooledList<int>();
@@ -175,13 +253,15 @@ public class Pipeline
         return result;
     }
     
-    private static async Task ProcessSearchResultsWorker(
-        SearchLineIndex lineIndex,
+    private async Task ProcessSearchResultsWorker(SearchLineIndex lineIndex,
         Indexer sourceIndexer,
         Indexer searchIndexer,
         ChannelReader<ValueTask<PooledList<int>>> searchResultsChannelReader,
+        TaskCompletionSource taskCompletionSource,
         CancellationToken cancellationToken)
     {
+        Trace("ProcessSearchResultsWorker started");
+
         await foreach (var searchResult in searchResultsChannelReader.ReadAllAsync(cancellationToken))
         {
             using var result = await searchResult;
@@ -209,5 +289,7 @@ public class Pipeline
                 searchIndexer.Add(indexKey, currentSearchResultLineNumber);
             }
         }
+        taskCompletionSource.SetResult();
+        Trace("ProcessSearchResultsWorker finished");
     }
 }
