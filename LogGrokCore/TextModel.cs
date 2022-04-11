@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using LogGrokCore.Data;
+using LogGrokCore.Data.Index;
 using Microsoft.Toolkit.HighPerformance;
 
 namespace LogGrokCore;
@@ -169,15 +170,8 @@ public class TextModel : IReadOnlyList<StringRange>
 
         int GetLineNumber(int position)
         {
-            for (var i = 0; i < lines?.Count; i++)
-
-            {
-                var stringRange = lines[i];
-                if (position >= stringRange.Start && position <= stringRange.Start + stringRange.Length)
-                    return i;
-            }
-
-            throw new InvalidOperationException();
+            var found = lines.BinarySearch(position, (s, p) => s.Start.CompareTo(p));
+            return found >= 0 ? found : ~found - 1;
         }
 
         void AddInterval(((int start, int length), StringRange collapsedTextSubstitution) interval)

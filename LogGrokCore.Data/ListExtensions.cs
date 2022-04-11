@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace LogGrokCore.Data.Index
+namespace LogGrokCore.Data
 {
     public static class ListExtensions
     {
