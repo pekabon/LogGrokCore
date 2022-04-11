@@ -52,7 +52,7 @@ namespace LogGrokCore.Data
                         {
                             if (!isInCrLfs)
                             {
-                                var crlfPosition = data.Slice(i).IndexOfAny(firstBytes);
+                                var crlfPosition = data[i..].IndexOfAny(firstBytes);
                                 if (crlfPosition < 0)
                                 {
                                     break;

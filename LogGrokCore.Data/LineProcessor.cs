@@ -1,9 +1,32 @@
 using System;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading.Channels;
+using System.Threading.Tasks;
 using LogGrokCore.Data.Monikers;
+using LogGrokCore.Data.Search;
+using Microsoft.Toolkit.HighPerformance.Buffers;
 
 namespace LogGrokCore.Data
 {
+
+    
+    internal readonly struct ParseTaskData : IDisposable
+    {
+        public MemoryOwner<byte> Memory { get; init; } 
+        
+        public PooledList<(long offset, int start, int length)> Lines { get; init; }
+
+        public ValueTaskSource<(long bufferStartOffset, int lineCount, string parsedBuffer)> Completion { get; init; }
+            
+        public void Dispose()
+        {
+            Memory.Dispose();
+            Lines.Dispose();
+        }
+    }
+
     public class LineProcessor : ILineDataConsumer
     {
         private const int InitialBufferSize = 64 * 1024;
@@ -18,7 +41,14 @@ namespace LogGrokCore.Data
         private readonly ILineParser _parser;
         private readonly int _componentCount;
         private readonly ParsedBufferConsumer _parsedBufferConsumer;
+        private readonly Channel<ParseTaskData> _parseTaskDataChannel;
+        private readonly ChannelWriter<ParseTaskData> _parseTaskDataChannelWriter;
 
+        private readonly Channel<ValueTask<(long bufferStartOffset, int lineCount, string parsedBuffer)>>
+            _parseResultsChannel;
+        private readonly ChannelWriter<ValueTask<(long bufferStartOffset, int lineCount, string parsedBuffer)>>
+            _parseResultsChannelWriter;
+        
         public LineProcessor(LogFile logFile,
             LogMetaInformation metaInformation,
             ILineParser parser,
@@ -29,8 +59,46 @@ namespace LogGrokCore.Data
             _componentCount = metaInformation.IndexedFieldNumbers.Length;
             _parsedBufferConsumer = parsedBufferConsumer;
             _stringPool = stringPool;
-
             _parser = parser;
+
+            _parseTaskDataChannel = Channel.CreateBounded<ParseTaskData>(
+                new BoundedChannelOptions(Environment.ProcessorCount)
+                {
+                    FullMode = BoundedChannelFullMode.Wait,
+                    AllowSynchronousContinuations = true,
+                    SingleWriter = true,
+                    SingleReader = true
+                });
+            
+            _parseTaskDataChannelWriter = _parseTaskDataChannel.Writer;
+            
+            _parseResultsChannel = Channel.CreateBounded<ValueTask<(long bufferStartOffset, int lineCount, string parsedBuffer)>>(
+                new BoundedChannelOptions(Environment.ProcessorCount)
+                {
+                    FullMode = BoundedChannelFullMode.Wait,
+                    AllowSynchronousContinuations = true,
+                    SingleWriter = true,
+                    SingleReader = true
+                });
+
+            _parseResultsChannelWriter = _parseResultsChannel.Writer;
+            
+            
+        }
+
+        async Task StartAsyncTask(Func<Task> action,
+            [CallerArgumentExpression("action")] string actionExpression = "")
+        {
+            await Task.Factory.StartNew(async () =>
+            {
+                try
+                {
+                    await action();
+                }
+                catch (OperationCanceledException)
+                {
+                }
+            } );
         }
 
         public void CompleteAdding(long totalBytesRead)
@@ -41,6 +109,33 @@ namespace LogGrokCore.Data
             }
             
             _parsedBufferConsumer.CompleteAdding(totalBytesRead);
+        }
+
+        public async void AddLineData(
+            MemoryOwner<byte> memory, 
+            PooledList<(long offset, int start, int length)> lines)
+        {
+
+            ValueTaskSource<(long bufferStartOffset, int lineCount, string parsedBuffer)> parseTaskCompletionSource 
+                = new();
+            
+            await _parseTaskDataChannelWriter.WriteAsync(
+                new ParseTaskData
+                {
+                    Memory = memory,
+                    Lines = lines,
+                    Completion = parseTaskCompletionSource 
+                });
+
+            await _parseResultsChannel.Writer.WriteAsync(parseTaskCompletionSource.GetTask());
+        }
+
+        private async void ProcessParseTaskData()
+        {
+            await foreach (var p in _parseTaskDataChannel.Reader.ReadAllAsync())
+            {
+                
+            }
         }
 
         public unsafe void AddLineData(long lineOffset, Span<byte> lineData)
