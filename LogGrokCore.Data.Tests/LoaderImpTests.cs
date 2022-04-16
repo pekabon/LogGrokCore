@@ -16,6 +16,13 @@ namespace LogGrokCore.Data.Tests
         private int CrlfLength => _cr.Length + _lf.Length;
         private const int BufferSize = 256;
 
+
+        [TestMethod]
+        public void CheckSmallFile()
+        {
+            CheckLines(BufferSize /2, true, BufferSize /6, BufferSize /4);
+        }
+
         [TestMethod]
         public void CheckNoCrlfsInBuffer()
         {
@@ -207,7 +214,7 @@ namespace LogGrokCore.Data.Tests
             var loader = new LoaderImpl(BufferSize, dataConsumer);
             var stream = new MemoryStream(buffer);
             var token = new CancellationToken();
-            loader.Load(stream, _cr.AsSpan(), _lf.AsSpan(), token);
+            loader.Load(stream, _cr, _lf, token);
             return lineIndex;
         }
     }

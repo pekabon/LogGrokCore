@@ -1,192 +1,248 @@
 using System;
-using System.Linq;
+using System.Buffers;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using LogGrokCore.Data.Index;
 using LogGrokCore.Data.Monikers;
 using LogGrokCore.Data.Search;
-using Microsoft.Toolkit.HighPerformance.Buffers;
 
-namespace LogGrokCore.Data
+namespace LogGrokCore.Data;
+
+internal readonly struct ParseTaskData : IDisposable
 {
-
-    
-    internal readonly struct ParseTaskData : IDisposable
-    {
-        public MemoryOwner<byte> Memory { get; init; } 
+    public IMemoryOwner<byte> Memory { get; init; } 
         
-        public PooledList<(long offset, int start, int length)> Lines { get; init; }
+    public PooledList<(long offset, int start, int length)> Lines { get; init; }
 
-        public ValueTaskSource<(long bufferStartOffset, int lineCount, string parsedBuffer)> Completion { get; init; }
+    public ValueTaskSource<(long bufferStartOffset, int lineCount, string parsedBuffer)> Completion { get; init; }
             
-        public void Dispose()
+    public void Dispose()
+    {
+        Memory.Dispose();
+        Lines.Dispose();
+    }
+}
+
+public class LineProcessor : ILineDataConsumer
+{
+    private readonly StringPool _stringPool;
+    private readonly Encoding _encoding;
+    private readonly ILineParser _parser;
+    private readonly int _componentCount;
+    private readonly LineIndex _lineIndex;
+    private readonly Indexer _indexer;
+
+    private readonly Channel<ParseTaskData> _parseTaskDataChannel;
+    private readonly ChannelWriter<ParseTaskData> _parseTaskDataChannelWriter;
+
+    private readonly Channel<ValueTask<(long bufferStartOffset, int lineCount, string parsedBuffer)>>
+        _parseResultsChannel;
+
+    private readonly ChannelWriter<ValueTask<(long bufferStartOffset, int lineCount, string parsedBuffer)>>
+        _parseResultsChannelWriter;
+
+    private readonly List<Task> _workers = new();
+    private long _lineOffsetFromBufferStart;
+    private readonly TaskCompletionSource _consumerCompletionSource = new();
+
+    public LineProcessor(LogFile logFile,
+        LogMetaInformation metaInformation,
+        ILineParser parser,
+        StringPool stringPool, LineIndex lineIndex, Indexer indexer)
+    {
+        _encoding = logFile.Encoding;
+        _componentCount = metaInformation.IndexedFieldNumbers.Length;
+
+        _stringPool = stringPool;
+        _lineIndex = lineIndex;
+        _indexer = indexer;
+        _parser = parser;
+
+        _parseTaskDataChannel = Channel.CreateBounded<ParseTaskData>(
+            new BoundedChannelOptions(Environment.ProcessorCount)
+            {
+                FullMode = BoundedChannelFullMode.Wait,
+                AllowSynchronousContinuations = false,
+                SingleWriter = false,
+                SingleReader = false
+            });
+
+        _parseTaskDataChannelWriter = _parseTaskDataChannel.Writer;
+
+        _parseResultsChannel =
+            Channel.CreateBounded<ValueTask<(long bufferStartOffset, int lineCount, string parsedBuffer)>>(
+                new BoundedChannelOptions(Environment.ProcessorCount)
+                {
+                    FullMode = BoundedChannelFullMode.Wait,
+                    AllowSynchronousContinuations = true,
+                    SingleWriter = false,
+                    SingleReader = true
+                });
+
+        _parseResultsChannelWriter = _parseResultsChannel.Writer;
+
+        _workers.Add(StartAsyncTask(() => ConsumeParseResults(_consumerCompletionSource)));
+
+        var parsersCount = Math.Max(1, Environment.ProcessorCount - 1);
+        for (var i = 0; i < parsersCount; i++)
         {
-            Memory.Dispose();
-            Lines.Dispose();
+            _workers.Add(StartAsyncTask(ProcessParseTaskData));
         }
     }
 
-    public class LineProcessor : ILineDataConsumer
+    private Task StartAsyncTask(Func<Task> action,
+        [CallerArgumentExpression("action")] string actionExpression = "")
     {
-        private const int InitialBufferSize = 64 * 1024;
-        private readonly StringPool _stringPool;
-
-        private string? _currentString;
-        
-        private int _currentOffset;
-        private int _currentBufferLineCount;
-        private long _bufferOffset;
-        private readonly Encoding _encoding;
-        private readonly ILineParser _parser;
-        private readonly int _componentCount;
-        private readonly ParsedBufferConsumer _parsedBufferConsumer;
-        private readonly Channel<ParseTaskData> _parseTaskDataChannel;
-        private readonly ChannelWriter<ParseTaskData> _parseTaskDataChannelWriter;
-
-        private readonly Channel<ValueTask<(long bufferStartOffset, int lineCount, string parsedBuffer)>>
-            _parseResultsChannel;
-        private readonly ChannelWriter<ValueTask<(long bufferStartOffset, int lineCount, string parsedBuffer)>>
-            _parseResultsChannelWriter;
-        
-        public LineProcessor(LogFile logFile,
-            LogMetaInformation metaInformation,
-            ILineParser parser,
-            ParsedBufferConsumer parsedBufferConsumer,
-            StringPool stringPool)
+        return Task.Factory.StartNew(async () =>
         {
-            _encoding = logFile.Encoding;
-            _componentCount = metaInformation.IndexedFieldNumbers.Length;
-            _parsedBufferConsumer = parsedBufferConsumer;
-            _stringPool = stringPool;
-            _parser = parser;
-
-            _parseTaskDataChannel = Channel.CreateBounded<ParseTaskData>(
-                new BoundedChannelOptions(Environment.ProcessorCount)
-                {
-                    FullMode = BoundedChannelFullMode.Wait,
-                    AllowSynchronousContinuations = true,
-                    SingleWriter = true,
-                    SingleReader = true
-                });
-            
-            _parseTaskDataChannelWriter = _parseTaskDataChannel.Writer;
-            
-            _parseResultsChannel = Channel.CreateBounded<ValueTask<(long bufferStartOffset, int lineCount, string parsedBuffer)>>(
-                new BoundedChannelOptions(Environment.ProcessorCount)
-                {
-                    FullMode = BoundedChannelFullMode.Wait,
-                    AllowSynchronousContinuations = true,
-                    SingleWriter = true,
-                    SingleReader = true
-                });
-
-            _parseResultsChannelWriter = _parseResultsChannel.Writer;
-            
-            
-        }
-
-        async Task StartAsyncTask(Func<Task> action,
-            [CallerArgumentExpression("action")] string actionExpression = "")
-        {
-            await Task.Factory.StartNew(async () =>
+            try
             {
-                try
+                await action();
+            }
+            catch (OperationCanceledException)
+            {
+                Trace.TraceInformation($"Task '{actionExpression}' cancelled.");
+            }
+        });
+    }
+
+    public async Task CompleteAdding(long totalBytesRead)
+    {
+        _parseResultsChannelWriter.Complete();
+        _parseTaskDataChannelWriter.Complete();
+
+        await _consumerCompletionSource.Task;
+
+        _lineIndex.Finish((int)(totalBytesRead - _lineOffsetFromBufferStart));
+        _indexer.Finish();
+    }
+
+    public async Task AddLineData(
+        IMemoryOwner<byte> memory,
+        PooledList<(long offset, int start, int length)> lines)
+    {
+
+        ValueTaskSource<(long bufferStartOffset, int lineCount, string parsedBuffer)> parseTaskCompletionSource
+            = new();
+
+        await _parseTaskDataChannelWriter.WriteAsync(
+            new ParseTaskData
+            {
+                Memory = memory,
+                Lines = lines,
+                Completion = parseTaskCompletionSource
+            });
+
+        await _parseResultsChannel.Writer.WriteAsync(parseTaskCompletionSource.GetTask());
+    }
+
+    private async Task ProcessParseTaskData()
+    {
+        var counter = 0;
+        var lineCount = 0;
+        Trace.TraceInformation("ProcessParseTaskData started");
+        await foreach (var taskData in _parseTaskDataChannel.Reader.ReadAllAsync())
+        {
+            try
+            {
+                if (counter == 0)
                 {
-                    await action();
+                    Trace.TraceInformation("Processing first chunk of data");
                 }
-                catch (OperationCanceledException)
-                {
-                }
-            } );
-        }
-
-        public void CompleteAdding(long totalBytesRead)
-        {
-            if (_currentString != null)
-            {
-                _parsedBufferConsumer.AddParsedBuffer(_bufferOffset, _currentBufferLineCount, _currentString);
+                var parseResult = Parse(taskData);
+                lineCount += parseResult.bufferLineCount;
+                taskData.Completion.SetResult(parseResult);
+                counter++;
             }
-            
-            _parsedBufferConsumer.CompleteAdding(totalBytesRead);
-        }
-
-        public async void AddLineData(
-            MemoryOwner<byte> memory, 
-            PooledList<(long offset, int start, int length)> lines)
-        {
-
-            ValueTaskSource<(long bufferStartOffset, int lineCount, string parsedBuffer)> parseTaskCompletionSource 
-                = new();
-            
-            await _parseTaskDataChannelWriter.WriteAsync(
-                new ParseTaskData
-                {
-                    Memory = memory,
-                    Lines = lines,
-                    Completion = parseTaskCompletionSource 
-                });
-
-            await _parseResultsChannel.Writer.WriteAsync(parseTaskCompletionSource.GetTask());
-        }
-
-        private async void ProcessParseTaskData()
-        {
-            await foreach (var p in _parseTaskDataChannel.Reader.ReadAllAsync())
+            finally
             {
-                
+                taskData.Dispose();
             }
         }
 
-        public unsafe void AddLineData(long lineOffset, Span<byte> lineData)
+        Trace.TraceInformation($"Processed {counter} chunks of data, lineCount={lineCount}");
+
+    }
+
+    private (long bufferOffset, int bufferLineCount, string buffer) Parse(ParseTaskData taskData)
+    {
+        var lineCount = taskData.Lines.Count;
+
+        var metaSizeChars =
+            LineMetaInformation.GetSizeChars(_componentCount);
+        var necessarySpaceChars = metaSizeChars * lineCount +
+                                  _encoding.GetMaxCharCount(taskData.Memory.Memory.Length);
+        var stringBuffer = _stringPool.Rent(necessarySpaceChars);
+        var currentBufferPosition = 0;
+        var bufferLineCount = 0;
+        var sourceSpan = taskData.Memory.Memory.Span;
+        var (bufferOffset, _, _) = taskData.Lines[0];
+
+        foreach (var (lineOffset, start, length) in taskData.Lines)
         {
-            var metaSizeChars =
-                LineMetaInformation.GetSizeChars(_componentCount); 
-
-            var necessarySpaceChars = metaSizeChars + _encoding.GetMaxCharCount(lineData.Length);
-            
-            if (_currentString == null)
+            unsafe
             {
-                _currentString = SwitchToNewBuffer(necessarySpaceChars, lineOffset);
-            }
-            else if (_currentString.Length - _currentOffset < necessarySpaceChars)
-            {
-                _parsedBufferConsumer.AddParsedBuffer(_bufferOffset, _currentBufferLineCount, _currentString);
-                _currentString = SwitchToNewBuffer(necessarySpaceChars, lineOffset);
-            }
-
-            fixed (char* stringPointer = _currentString.AsSpan(_currentOffset))
-            {
-                var decodedStringSpan =
-                    new Span<char>(stringPointer + metaSizeChars, _currentString.Length - _currentOffset);
-                var stringLength = _encoding.GetChars(lineData, decodedStringSpan);
-                var stringFrom = _currentOffset + metaSizeChars;
-                
-                var lineMetaInformation =
-                    LineMetaInformation.Get(stringPointer, _componentCount);
-                
-                if (_parser.TryParse(_currentString, stringFrom, stringLength,
-                    lineMetaInformation.ParsedLineComponents))
+                var lineData = sourceSpan.Slice(start, length);
+                fixed (char* stringPointer = stringBuffer.AsSpan(currentBufferPosition))
                 {
-                    lineMetaInformation.LineOffsetFromBufferStart = (int)(lineOffset - _bufferOffset);
-                    _currentOffset += lineMetaInformation.TotalSizeWithPayloadCharsAligned;
-                    _currentBufferLineCount++;
-                    return;
-                }
+                    var decodedStringSpan =
+                        new Span<char>(stringPointer + metaSizeChars,
+                            stringBuffer.Length - currentBufferPosition);
 
-                if (_currentOffset == 0)
-                {
-                    _bufferOffset += lineData.Length;
+                    var stringLength = _encoding.GetChars(lineData, decodedStringSpan);
+                    var stringFrom = currentBufferPosition + metaSizeChars;
+
+                    var lineMetaInformation =
+                        LineMetaInformation.Get(stringPointer, _componentCount);
+
+                    if (_parser.TryParse(stringBuffer, stringFrom, stringLength,
+                            lineMetaInformation.ParsedLineComponents))
+                    {
+                        lineMetaInformation.LineOffsetFromBufferStart = (int)(lineOffset - bufferOffset);
+                        currentBufferPosition += lineMetaInformation.TotalSizeWithPayloadCharsAligned;
+                        bufferLineCount++;
+                    }
                 }
             }
+        }
 
-            string SwitchToNewBuffer(int minimumBufferSizeChars, long currentLineOffset)
+        return (bufferOffset, bufferLineCount, stringBuffer);
+    }
+
+    private async Task ConsumeParseResults(TaskCompletionSource taskCompletionSource)
+    {
+        await foreach (var parseResult in _parseResultsChannel.Reader.ReadAllAsync())
+        {
+            var (bufferStartOffset, lineCount, parsedBuffer) = await parseResult;
+            AddParsedBuffer(bufferStartOffset, lineCount, parsedBuffer);
+        }
+
+        taskCompletionSource.SetResult();
+        Trace.TraceInformation("ConsumeParseResults finished.");
+    }
+
+    public unsafe void AddParsedBuffer(long bufferStartOffset, int lineCount, string buffer)
+    {
+        var metaOffset = 0;
+        fixed (char* start = buffer)
+        {
+            for (var idx = 0; idx < lineCount; idx++)
             {
-                _currentOffset = 0;
-                _bufferOffset = currentLineOffset;
-                _currentBufferLineCount = 0;
-                return _stringPool.Rent((minimumBufferSizeChars / InitialBufferSize + 1) * InitialBufferSize);
+                var lineMetaInformation = LineMetaInformation.Get(start + metaOffset, _componentCount);
+                _lineOffsetFromBufferStart = bufferStartOffset +
+                                             lineMetaInformation.LineOffsetFromBufferStart;
+                var lineNum = _lineIndex.Add(_lineOffsetFromBufferStart);
+
+                var indexKey = new IndexKey(buffer, metaOffset, _componentCount);
+                _indexer.Add(indexKey, lineNum);
+                metaOffset += lineMetaInformation.TotalSizeWithPayloadCharsAligned;
             }
         }
+
+        _stringPool.Return(buffer);
     }
 }

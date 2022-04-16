@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Buffers;
+using System.Threading.Tasks;
 
 namespace LogGrokCore.Data.Tests
 {
@@ -10,17 +12,24 @@ namespace LogGrokCore.Data.Tests
             _lineIndexMock = lineIndexMock;
         }
 
-        public void AddLineData(long lineOffset, Span<byte> lineData)
+        public Task AddLineData(IMemoryOwner<byte> memory, PooledList<(long offset, int start, int length)> lines)
         {
-            var parsed = lineData[0] == 0;
-            if (parsed)
+            
+            var mem = memory.Memory;
+            foreach (var (offset, start, _) in lines)
             {
-                _lineIndexMock.Add(lineOffset);
+                if (mem.Span[start..][0] == 0)
+                {
+                    _lineIndexMock.Add(offset);
+                }
             }
+            memory.Dispose();
+            var taskCompletionSource = new TaskCompletionSource();
+            var task = taskCompletionSource.Task;
+            taskCompletionSource.SetResult();
+            return task;
         }
-
-        public void CompleteAdding(long totalBytesRead)
-        {
-        }
-   }
+        
+        public Task CompleteAdding(long totalBytesRead) => Task.CompletedTask;
+    }
 }
