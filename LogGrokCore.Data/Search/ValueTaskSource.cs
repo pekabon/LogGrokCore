@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using System.Threading.Tasks.Sources;
 
 namespace LogGrokCore.Data.Search;
@@ -17,4 +18,9 @@ public class ValueTaskSource<TResult> : IValueTaskSource<TResult>
     public void SetResult(TResult result) => _source.SetResult(result);
 
     public void SetException(Exception exception) => _source.SetException(exception);
+
+    public ValueTask<TResult> GetTask()
+    {
+        return new ValueTask<TResult>(this, 0);
+    }
 }

@@ -22,7 +22,7 @@ namespace LogGrokCore.Data.Monikers
         
         public ref int ComponentLength(int index) => ref _placeholder[index * 2 + 1];
 
-        public int GetAllCompnentsLength(int componentCount)
+        public int GetAllComponentsLength(int componentCount)
         {
             if (componentCount == 0) return 0;
             var lastComponentStart = ComponentStart(componentCount - 1);

@@ -28,7 +28,7 @@ namespace LogGrokCore.Data.Monikers
         public static int GetSizeChars(int componentCount) => GetSizeInts(componentCount) * sizeof(int) / sizeof(char);
 
         public int TotalSizeWithPayloadChars => GetSizeChars(_componentCount) 
-                                                + ParsedLineComponents.GetAllCompnentsLength(_componentCount);
+                                                + ParsedLineComponents.GetAllComponentsLength(_componentCount);
         public int TotalSizeWithPayloadCharsAligned => Align.Get(TotalSizeWithPayloadChars, 2);
     }
 }
