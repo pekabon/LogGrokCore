@@ -24,21 +24,24 @@ namespace LogGrokCore.Data
             Trace.TraceInformation($"Start loading {logFile.FilePath}.");
             var timeStamp = DateTime.Now;
             _loadingTask = Task.Factory.StartNew(
-                () => loaderImpl.Load(logFile.OpenForSequentialRead(), 
-                    encoding.GetBytes("\r"), encoding.GetBytes("\n"),
-                    _cancellationTokenSource.Token))
-                .ContinueWith(t =>
+
+                async () =>
                 {
-                    switch(t.Status)
+                    try
                     {
-                        case TaskStatus.RanToCompletion: 
-                            Trace.TraceInformation($"Loaded {logFile.FilePath}, time spent: {DateTime.Now - timeStamp}.");
-                            break; 
-                        case TaskStatus.Canceled: logger.LogInformation($"Loading of {logFile.FilePath} was cancelled.");
-                            break;
-                        default: 
-                            Trace.TraceError($"Unexpected loading result {t.Status} while loading {logFile.FilePath}.");
-                            break;
+                        await loaderImpl.Load(logFile.OpenForSequentialRead(),
+                            encoding.GetBytes("\r"), encoding.GetBytes("\n"),
+                            _cancellationTokenSource.Token);
+                        Trace.TraceInformation($"Loaded {logFile.FilePath}, time spent: {DateTime.Now - timeStamp}.");
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        Trace.TraceInformation($"Loading of {logFile.FilePath} was cancelled.");
+                    }
+                    catch (Exception e)
+                    {
+                        Trace.TraceError(
+                            $"Unexpected loading result while loading {logFile.FilePath}. Exception: \r\n{e}");
                     }
                 });
         }

@@ -1,11 +1,14 @@
-using System;
+using System.Buffers;
+using System.Threading.Tasks;
 
 namespace LogGrokCore.Data
 {
     public interface ILineDataConsumer
     {
-        void AddLineData(long offset, Span<byte> lineData);
+        Task CompleteAdding(long totalBytesRead);
 
-        void CompleteAdding(long totalBytesRead);
+        Task AddLineData(
+            IMemoryOwner<byte> memory,
+            PooledList<(long offset, int start, int length)> lines);
     }
 }

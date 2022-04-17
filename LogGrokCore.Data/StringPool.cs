@@ -13,6 +13,7 @@ namespace LogGrokCore.Data
             {
                 _stringSize = stringSize;
             }
+            
             public string Rent()
             {
                 if (_pool.TryTake(out var result))

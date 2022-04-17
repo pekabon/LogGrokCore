@@ -47,7 +47,6 @@ namespace LogGrokCore
             _container.Register<Loader>(Reuse.Singleton);
             _container.Register<ILineDataConsumer, LineProcessor>(
                 made: Parameters.Of.Type<ILineParser>(serviceKey: ParserType.OnlyIndexed));
-            _container.Register<ParsedBufferConsumer>(Reuse.Singleton);
             
             // log model
             _container.RegisterDelegate(c =>

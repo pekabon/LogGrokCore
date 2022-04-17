@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Buffers;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace LogGrokCore.Data
 {
@@ -18,7 +17,7 @@ namespace LogGrokCore.Data
             _lineDataConsumer = lineDataConsumer;
         }
 
-        public void Load(Stream stream, ReadOnlySpan<byte> cr, ReadOnlySpan<byte> lf, CancellationToken cancellationToken)
+        public async Task Load(Stream stream, byte[] cr, byte[] lf, CancellationToken cancellationToken)
         {
             var isInCrLfs = false;
             var crLength = cr.Length;
@@ -28,165 +27,120 @@ namespace LogGrokCore.Data
             
             var lineStartFromCurrentDataOffset = 0;
 
-            var buffer = ArrayPool<byte>.Shared.Rent(_bufferSize);
+            var bufferOwner = MemoryPool<byte>.Shared.Rent(_bufferSize);
+
             var bufferSize = _bufferSize;
-            var (rPattern, nPattern, minusPattern, andPattern) = GetPatterns(cr, lf);
-            
-            try
+            var linesList = new PooledList<(long offset, int start, int length)>();
+
+            var dataOffsetFromBufferStart = 0;
+            long streamPosition = 0;
+            while (!cancellationToken.IsCancellationRequested)
             {
-                var dataOffsetFromBufferStart = 0;
-                long streamPosition = 0;
-                long bufferStartPosition;
-                while (!cancellationToken.IsCancellationRequested)
+                var bufferStartPosition = streamPosition - dataOffsetFromBufferStart;
+                var dataLength = bufferSize - dataOffsetFromBufferStart;
+                var memory = bufferOwner.Memory;
+                var bytesRead = stream.Read(memory.Span.Slice(dataOffsetFromBufferStart, dataLength));
+                streamPosition += bytesRead;
+
+                while (true)
                 {
-                    bufferStartPosition = streamPosition - dataOffsetFromBufferStart;
-                    var data = buffer.AsSpan(dataOffsetFromBufferStart,
-                        bufferSize - dataOffsetFromBufferStart);
-                    var bytesRead = stream.Read(data);
+                    var i = 0;
+                    while (i < bytesRead)
+                    {
+                        if (!isInCrLfs)
+                        {
+                            var crlfPosition = memory.Span[(dataOffsetFromBufferStart + i)..].IndexOfAny(firstBytes);
+                            if (crlfPosition < 0)
+                            {
+                                break;
+                            }
+
+                            i += crlfPosition;
+                        }
+
+                        if (i >= bytesRead) break;
+
+                        
+                        if ((!isInCrLfs && isIsSingleByteCrLf) || 
+                            memory.Span.Slice((dataOffsetFromBufferStart + i), crLength).SequenceEqual(cr) ||
+                            memory.Span.Slice((dataOffsetFromBufferStart + i), crLength).SequenceEqual(lf))
+                        {
+                            isInCrLfs = true;
+                        }
+                        else if (isInCrLfs)
+                        {
+                            isInCrLfs = false;
+
+                            var lineStartInBuffer =
+                                dataOffsetFromBufferStart
+                                + lineStartFromCurrentDataOffset;
+
+                            linesList.Add((bufferStartPosition + lineStartInBuffer,
+                                lineStartInBuffer,
+                                i + dataOffsetFromBufferStart - lineStartInBuffer));
+                            lineStartFromCurrentDataOffset = i;
+                        }
+
+                        i += crLength;
+                    }
+
+                    var lineOffsetFromBufferStart =
+                        dataOffsetFromBufferStart + lineStartFromCurrentDataOffset;
+
+                    if (bytesRead < dataLength)
+                    {
+                        var bufferEndOffset = bytesRead + dataOffsetFromBufferStart;
+                        linesList.Add((bufferStartPosition + lineOffsetFromBufferStart,
+                            lineOffsetFromBufferStart,
+                            bufferEndOffset - lineOffsetFromBufferStart));
+                        await _lineDataConsumer.AddLineData(bufferOwner, linesList);
+                        await _lineDataConsumer.CompleteAdding(stream.Position);
+                        return;
+                    }
+
+                    if (lineOffsetFromBufferStart > 0)
+                    {
+                        // found line(s) inside the buffer
+                        // copy tail of buffer to new one
+                        dataOffsetFromBufferStart = bufferSize - lineOffsetFromBufferStart;
+                        lineStartFromCurrentDataOffset = -dataOffsetFromBufferStart;
+
+                        var oldBufferOwner = bufferOwner;
+
+                        var restLength = memory.Length - lineOffsetFromBufferStart;
+                        bufferSize = Math.Max(_bufferSize, restLength);
+                        bufferOwner = MemoryPool<byte>.Shared.Rent(bufferSize);
+                        
+                        memory.Span[lineOffsetFromBufferStart..].CopyTo(bufferOwner.Memory.Span);
+            
+                        await _lineDataConsumer.AddLineData(oldBufferOwner, linesList);
+                        linesList = new PooledList<(long offset, int start, int length)>();
+                        break;
+                    }
+
+                    // did not found next line start, grow buffer
+                    var newBufferOwner = MemoryPool<byte>.Shared.Rent(bufferSize * 2);
+                    var newMemory = newBufferOwner.Memory;
+                    memory.CopyTo(newBufferOwner.Memory);
+                    bufferOwner.Dispose();
+
+                    bufferOwner = newBufferOwner;
+                    memory = newBufferOwner.Memory;
+
+                    var lineOffsetFromBufferStart_ =
+                        dataOffsetFromBufferStart + lineStartFromCurrentDataOffset;
+
+                    dataOffsetFromBufferStart = bufferSize;
+
+                    lineStartFromCurrentDataOffset =
+                        lineOffsetFromBufferStart_ - dataOffsetFromBufferStart;
+
+                    bytesRead = stream.Read(memory.Span.Slice(dataOffsetFromBufferStart, bufferSize));
                     streamPosition += bytesRead;
 
-                    while (true)
-                    {
-                        var i = 0;
-                        while (i < bytesRead)
-                        {
-                            if (!isInCrLfs)
-                            {
-                                var crlfPosition = data[i..].IndexOfAny(firstBytes);
-                                if (crlfPosition < 0)
-                                {
-                                    break;
-                                }
-
-                                i += crlfPosition;
-                            }
-
-                            if (i >= bytesRead) break;
-                            
-                            var current = data.Slice(i, crLength);
-                            if ((!isInCrLfs && isIsSingleByteCrLf) || current.SequenceEqual(cr) || current.SequenceEqual(lf))
-                            {
-                                isInCrLfs = true;
-                            }
-                            else if (isInCrLfs)
-                            {
-                                isInCrLfs = false;
-
-                                var lineStartInBuffer =
-                                    dataOffsetFromBufferStart
-                                    + lineStartFromCurrentDataOffset;
-                             
-                                _lineDataConsumer.AddLineData(
-                                    bufferStartPosition + lineStartInBuffer,
-                                    buffer.AsSpan().Slice(
-                                        lineStartInBuffer, i + dataOffsetFromBufferStart - lineStartInBuffer));
-                                lineStartFromCurrentDataOffset = i;
-                            }
-                            i += crLength;
-                        }
-                        
-                        var lineOffsetFromBufferStart =
-                            dataOffsetFromBufferStart + lineStartFromCurrentDataOffset;
-
-                        if (bytesRead < data.Length)
-                        {
-                            var bufferEndOffset = bytesRead + dataOffsetFromBufferStart;
-                            FinishProcessing(lineOffsetFromBufferStart, bufferEndOffset, stream.Position);
-                            return;
-                        }
-
-                        if (lineOffsetFromBufferStart > 0)
-                        {
-                            // found line(s) inside the buffer
-                            // copy tail of buffer to new one
-                            dataOffsetFromBufferStart = bufferSize - lineOffsetFromBufferStart;
-                            lineStartFromCurrentDataOffset = - dataOffsetFromBufferStart;
-
-                            var bufferSpan = buffer.AsSpan();
-                            var rest = bufferSpan.Slice(lineOffsetFromBufferStart);
-
-                            if (bufferSize <= _bufferSize || rest.Length >= _bufferSize)
-                            {
-                                rest.CopyTo(bufferSpan);
-                            }
-                            else
-                            {
-                                var oldBuffer = buffer;
-                                buffer = ArrayPool<byte>.Shared.Rent(_bufferSize);
-                                bufferSize = _bufferSize;
-                                bufferSpan = buffer.AsSpan();
-                                rest.CopyTo(bufferSpan);
-                                ArrayPool<byte>.Shared.Return(oldBuffer);
-                            }
-                            break;
-                        }
-
-                        // did not found next line start, grow buffer
-                        var newBuffer = ArrayPool<byte>.Shared.Rent(bufferSize * 2);
-                        buffer.CopyTo(newBuffer.AsSpan());
-                        ArrayPool<byte>.Shared.Return(buffer);
-
-                        var lineOffsetFromBufferStart_ =
-                            dataOffsetFromBufferStart + lineStartFromCurrentDataOffset;
-
-                        dataOffsetFromBufferStart = bufferSize;
-
-                        lineStartFromCurrentDataOffset =
-                            lineOffsetFromBufferStart_ - dataOffsetFromBufferStart;
-
-                        data = newBuffer.AsSpan(dataOffsetFromBufferStart, bufferSize);
-                        bytesRead = stream.Read(data);
-                        streamPosition += bytesRead;
-
-                        bufferSize *= 2;
-                        buffer = newBuffer;
-                    }
-                }
-            
-                void FinishProcessing(int lastLineOffsetFromBufferStart, int bufferEndOffset, long totalBytesRead)
-                {
-                    _lineDataConsumer.AddLineData(
-                        bufferStartPosition + lastLineOffsetFromBufferStart,
-                        buffer.AsSpan().Slice(
-                            lastLineOffsetFromBufferStart,
-                            bufferEndOffset - lastLineOffsetFromBufferStart));
-                    _lineDataConsumer.CompleteAdding(totalBytesRead);
+                    bufferSize *= 2;
                 }
             }
-
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(buffer);
-            }
-        }
-
-        private (ulong rPattern, ulong nPattern, ulong minusPattern, ulong andPattern) 
-            GetPatterns(ReadOnlySpan<byte> r, ReadOnlySpan<byte> n)
-        {
-            ulong ToLongBe(byte[] value)
-            {
-                return BitConverter.ToUInt64(value.Reverse().ToArray(), value.Length - sizeof(ulong));
-            }
-            
-            var patternLength = r.Length;
-            
-            var rPattern = new byte[8];
-            var nPattern = new byte[8];
-            var minusPattern = new byte[8];
-            var andPattern = new byte[8];
-            
-            for (var idx = 0; idx < 8; idx += patternLength)
-            {
-                r.CopyTo(rPattern.AsSpan(idx));
-                n.CopyTo(nPattern.AsSpan(idx));
-                minusPattern[idx + patternLength - 1] = 0x01;
-                andPattern[idx] = 0x80;
-            }
-
-            return (BitConverter.ToUInt64(rPattern, 0), 
-                    BitConverter.ToUInt64(nPattern, 0), 
-                    ToLongBe(minusPattern),
-                    ToLongBe(andPattern));
         }
     }
 }
