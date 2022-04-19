@@ -17,7 +17,7 @@ namespace LogGrokCore.Data
             _lineDataConsumer = lineDataConsumer;
         }
 
-        public async Task Load(Stream stream, byte[] cr, byte[] lf, CancellationToken cancellationToken)
+        public async Task<long> Load(Stream stream, byte[] cr, byte[] lf, CancellationToken cancellationToken)
         {
             var isInCrLfs = false;
             var crLength = cr.Length;
@@ -33,7 +33,7 @@ namespace LogGrokCore.Data
             var linesList = new PooledList<(long offset, int start, int length)>();
 
             var dataOffsetFromBufferStart = 0;
-            long streamPosition = 0;
+            long streamPosition = stream.Position;
             while (!cancellationToken.IsCancellationRequested)
             {
                 var bufferStartPosition = streamPosition - dataOffsetFromBufferStart;
@@ -95,7 +95,7 @@ namespace LogGrokCore.Data
                             bufferEndOffset - lineOffsetFromBufferStart));
                         await _lineDataConsumer.AddLineData(bufferOwner, linesList);
                         await _lineDataConsumer.CompleteAdding(stream.Position);
-                        return;
+                        return stream.Position;
                     }
 
                     if (lineOffsetFromBufferStart > 0)
@@ -110,9 +110,8 @@ namespace LogGrokCore.Data
                         var restLength = memory.Length - lineOffsetFromBufferStart;
                         bufferSize = Math.Max(_bufferSize, restLength);
                         bufferOwner = MemoryPool<byte>.Shared.Rent(bufferSize);
-                        
                         memory.Span[lineOffsetFromBufferStart..].CopyTo(bufferOwner.Memory.Span);
-            
+                        
                         await _lineDataConsumer.AddLineData(oldBufferOwner, linesList);
                         linesList = new PooledList<(long offset, int start, int length)>();
                         break;
@@ -120,7 +119,6 @@ namespace LogGrokCore.Data
 
                     // did not found next line start, grow buffer
                     var newBufferOwner = MemoryPool<byte>.Shared.Rent(bufferSize * 2);
-                    var newMemory = newBufferOwner.Memory;
                     memory.CopyTo(newBufferOwner.Memory);
                     bufferOwner.Dispose();
 
@@ -141,6 +139,8 @@ namespace LogGrokCore.Data
                     bufferSize *= 2;
                 }
             }
+
+            return 0;
         }
     }
 }

@@ -27,7 +27,9 @@
             <mahapps:MetroProgressBar
                 Height="3"
                 HorizontalAlignment="Stretch"
+                Focusable="False"
                 Value="{Binding Progress}"
+                IsIndeterminate="{Binding IsInLiveMode}"
                 Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}" />
             <listControls:ListView Grid.Row="1" ItemsSource="{Binding Lines}"
                                     SelectionMode="Extended"

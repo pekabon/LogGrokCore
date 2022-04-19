@@ -30,6 +30,8 @@
             <avalonDockExtensions:MenuItemCollection x:Key="AdditionalDocumentMenuItems">
                 <MenuItem Header="Copy Full Path" Command="{Binding Model.Content.CopyPathToClipboardCommand}" />
                 <MenuItem Header="Open Containing Folder" Command="{Binding Model.Content.OpenContainingFolderCommand}" />
+                <MenuItem Header="Autoscroll" IsCheckable="True" IsChecked="{Binding Model.Content.LogViewModel.IsAutoscrollEnabled}"
+                          Visibility="{Binding Model.Content.LogViewModel.IsInLiveMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
             </avalonDockExtensions:MenuItemCollection>
         </ResourceDictionary>
     </mahapps:MetroWindow.Resources>

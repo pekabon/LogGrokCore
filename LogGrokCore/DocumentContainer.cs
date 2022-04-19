@@ -45,6 +45,13 @@ namespace LogGrokCore
             
             // loader pipeline
             _container.Register<Loader>(Reuse.Singleton);
+            
+            _container.RegisterDelegate<Func<ILineDataConsumer>>(c =>
+                () =>
+                {
+                    var parser = c.Resolve<ILineParser>(serviceKey: ParserType.OnlyIndexed);
+                    return c.Resolve<LineProcessor>(parser);
+                });
             _container.Register<ILineDataConsumer, LineProcessor>(
                 made: Parameters.Of.Type<ILineParser>(serviceKey: ParserType.OnlyIndexed));
             
@@ -65,6 +72,9 @@ namespace LogGrokCore
             _container.RegisterDelegate<ILineParser>(
                 r => new RegexBasedLineParser(r.Resolve<LogMetaInformation>(), true), 
                 serviceKey: ParserType.OnlyIndexed);
+            
+            _container.RegisterDelegate<Func<ILineParser>>(r => 
+                () => r.Resolve<ILineParser>(ParserType.OnlyIndexed));
 
             _container.RegisterDelegate<ILineParser>(
                 r => new RegexBasedLineParser(r.Resolve<LogMetaInformation>()), 
@@ -109,9 +119,9 @@ namespace LogGrokCore
                     var viewFactory = r.Resolve<GridViewFactory>(GridViewType.NotFilteringGridViewType);
                     var markedLines = r.Resolve<Selection>();
                     var columnSettings = r.Resolve<ColumnSettings>();
-                    var transofrmationPerformer = r.Resolve<TransformationPerformer>();
+                    var transformationPerformer = r.Resolve<TransformationPerformer>();
                     return pattern => new SearchDocumentViewModel(logModelFacade, filterSettings, viewFactory, pattern,
-                        markedLines, columnSettings, transofrmationPerformer);
+                        markedLines, columnSettings, transformationPerformer);
                 });
             
             // view

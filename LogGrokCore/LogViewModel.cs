@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using LogGrokCore.Controls;
 using LogGrokCore.Controls.GridView;
 using LogGrokCore.Controls.ListControls;
@@ -28,14 +29,19 @@ namespace LogGrokCore
         private readonly FilterSettings _filterSettings;
         private int _currentItemIndex;
         private readonly IReadOnlyList<ItemViewModel> _headerCollection;
+        private readonly Loader _loader;
+        private bool _isInLiveMode;
+        private bool _isAutoscrollEnabled;
 
         public LogViewModel(
+            Loader loader,
             LogModelFacade logModelFacade,
             LineViewModelCollectionProvider lineViewModelCollectionProvider,
             GridViewFactory viewFactory,
             FilterSettings filterSettings,
             ColumnSettings columnSettings)
         {
+            _loader = loader;
             _logModelFacade = logModelFacade;
             _filterSettings = filterSettings;
             
@@ -133,6 +139,18 @@ namespace LogGrokCore
             set => SetAndRaiseIfChanged(ref _isLoading, value);
         }
 
+        public bool IsInLiveMode
+        {
+            get => _isInLiveMode;
+            set => SetAndRaiseIfChanged(ref _isInLiveMode, value);
+        }
+
+        public bool IsAutoscrollEnabled
+        {
+            get => _isAutoscrollEnabled;
+            set => SetAndRaiseIfChanged(ref _isAutoscrollEnabled, value);
+        }
+
         public ViewBase CustomView => _viewFactory.CreateView(ColumnSettings.ColumnWidths);
 
         public NavigateToLineRequest NavigateToLineRequest { get; } = new();
@@ -150,6 +168,7 @@ namespace LogGrokCore
             return lineViewModels.Select(line => line[componentIndex].OriginalText ?? string.Empty).Distinct();
         }
 
+        private bool _haveAutoscrollTask;
         private async void UpdateDocumentWhileLoading()
         {
             var delay = 10;
@@ -164,6 +183,28 @@ namespace LogGrokCore
 
             Lines.UpdateCount();
             IsLoading = false;
+
+            await foreach (var _ in _loader.LogUpdates)
+            {
+                if (!IsLoading)
+                {
+                    IsLoading = true;
+                    IsInLiveMode = true;
+                }
+                
+                Lines.UpdateCount();
+                if (!IsAutoscrollEnabled) continue;
+                if (!_haveAutoscrollTask)
+                {
+                    _haveAutoscrollTask = true;
+                    Dispatcher.CurrentDispatcher.BeginInvoke(
+                        () =>
+                        {
+                            _haveAutoscrollTask = false;
+                            NavigateTo(Lines.Count - 1);
+                        }, DispatcherPriority.Background);
+                }
+            }
         }
 
         private async void UpdateProgress()

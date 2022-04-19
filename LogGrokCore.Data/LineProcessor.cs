@@ -31,7 +31,7 @@ public class LineProcessor : ILineDataConsumer
 {
     private readonly StringPool _stringPool;
     private readonly Encoding _encoding;
-    private readonly ILineParser _parser;
+    private readonly Func<ILineParser> _parserFactory;
     private readonly int _componentCount;
     private readonly LineIndex _lineIndex;
     private readonly Indexer _indexer;
@@ -51,7 +51,8 @@ public class LineProcessor : ILineDataConsumer
 
     public LineProcessor(LogFile logFile,
         LogMetaInformation metaInformation,
-        ILineParser parser,
+        Func<ILineParser> parserFactory,
+        
         StringPool stringPool, LineIndex lineIndex, Indexer indexer)
     {
         _encoding = logFile.Encoding;
@@ -60,7 +61,7 @@ public class LineProcessor : ILineDataConsumer
         _stringPool = stringPool;
         _lineIndex = lineIndex;
         _indexer = indexer;
-        _parser = parser;
+        _parserFactory = parserFactory;
 
         _parseTaskDataChannel = Channel.CreateBounded<ParseTaskData>(
             new BoundedChannelOptions(Environment.ProcessorCount)
@@ -72,13 +73,12 @@ public class LineProcessor : ILineDataConsumer
             });
 
         _parseTaskDataChannelWriter = _parseTaskDataChannel.Writer;
-
         _parseResultsChannel =
             Channel.CreateBounded<ValueTask<(long bufferStartOffset, int lineCount, string parsedBuffer)>>(
                 new BoundedChannelOptions(Environment.ProcessorCount)
                 {
                     FullMode = BoundedChannelFullMode.Wait,
-                    AllowSynchronousContinuations = true,
+                    AllowSynchronousContinuations = false,
                     SingleWriter = false,
                     SingleReader = true
                 });
@@ -90,7 +90,8 @@ public class LineProcessor : ILineDataConsumer
         var parsersCount = Math.Max(1, Environment.ProcessorCount - 1);
         for (var i = 0; i < parsersCount; i++)
         {
-            _workers.Add(StartAsyncTask(ProcessParseTaskData));
+            var workerId = i;
+            _workers.Add(StartAsyncTask(() => ProcessParseTaskData(workerId)));
         }
     }
 
@@ -140,20 +141,23 @@ public class LineProcessor : ILineDataConsumer
         await _parseResultsChannel.Writer.WriteAsync(parseTaskCompletionSource.GetTask());
     }
 
-    private async Task ProcessParseTaskData()
+    private async Task ProcessParseTaskData(int workerId)
     {
         var counter = 0;
         var lineCount = 0;
-        Trace.TraceInformation("ProcessParseTaskData started");
+        var tracePrefix = $"Worker #{workerId}: ";
+        Trace.TraceInformation($"{tracePrefix}ProcessParseTaskData started");
+        var parser = _parserFactory();
         await foreach (var taskData in _parseTaskDataChannel.Reader.ReadAllAsync())
         {
             try
             {
                 if (counter == 0)
                 {
-                    Trace.TraceInformation("Processing first chunk of data");
+                    Trace.TraceInformation($"{tracePrefix}Processing first chunk of data");
                 }
-                var parseResult = Parse(taskData);
+
+                var parseResult = Parse(taskData, parser);
                 lineCount += parseResult.bufferLineCount;
                 taskData.Completion.SetResult(parseResult);
                 counter++;
@@ -164,11 +168,12 @@ public class LineProcessor : ILineDataConsumer
             }
         }
 
-        Trace.TraceInformation($"Processed {counter} chunks of data, lineCount={lineCount}");
+        Trace.TraceInformation($"{tracePrefix}Processed {counter} chunks of data, lineCount={lineCount}");
 
     }
 
-    private (long bufferOffset, int bufferLineCount, string buffer) Parse(ParseTaskData taskData)
+    private (long bufferOffset, int bufferLineCount, string buffer) Parse(ParseTaskData taskData,
+        ILineParser lineParser)
     {
         var lineCount = taskData.Lines.Count;
 
@@ -199,7 +204,7 @@ public class LineProcessor : ILineDataConsumer
                     var lineMetaInformation =
                         LineMetaInformation.Get(stringPointer, _componentCount);
 
-                    if (_parser.TryParse(stringBuffer, stringFrom, stringLength,
+                    if (lineParser.TryParse(stringBuffer, stringFrom, stringLength,
                             lineMetaInformation.ParsedLineComponents))
                     {
                         lineMetaInformation.LineOffsetFromBufferStart = (int)(lineOffset - bufferOffset);
