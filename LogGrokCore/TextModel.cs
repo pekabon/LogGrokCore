@@ -95,7 +95,7 @@ public class TextModel : IReadOnlyList<StringRange>
                 _textLines = textLines.Select(c => TextOperations.Normalize(c, viewSettings)).ToList();
             }
 
-            if (textLines.Count > CollapseToLines)
+            if (textLines.Count > CollapseToLines + 1)
             {
                 var linesToCollapse = textLines.Count - CollapseToLines;
                 CollapsibleRanges = new List<(int start, int length)>
