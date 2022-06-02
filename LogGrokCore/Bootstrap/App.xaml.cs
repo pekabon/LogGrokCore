@@ -27,11 +27,13 @@ namespace LogGrokCore.Bootstrap
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             _container = new Container();
             LoggerRegistrationHelper.Register(_container);
+
+            Trace.TraceInformation($"Git info: {ThisAssembly.Git.Branch}:{ThisAssembly.Git.Commit}");
+
             _container.UseDryIocDependencyResolver();
             RegisterDependencies(_container);
-            
             Trace.TraceInformation("Initialization complete.");
-
+            
             InitializeComponent();
         }
 
