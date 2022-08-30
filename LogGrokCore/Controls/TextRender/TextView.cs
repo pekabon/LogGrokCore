@@ -13,6 +13,7 @@ namespace LogGrokCore.Controls.TextRender;
 
 public class TextView : Control, IClippingRectChangesAware
 {
+    private const int MaxLineLength = 8192;  
     private class OutlineData
     {
         public OutlineData(int lineCount, 
@@ -531,9 +532,16 @@ public class TextView : Control, IClippingRectChangesAware
             return StringRange.FromString(stringRange.ToString().TrimEnd().TrimEnd('{') + "{...}");
         }
 
+        StringRange TrimVeryLongLine(StringRange stringRange)
+        {
+            return stringRange.Length <= MaxLineLength ? stringRange : 
+                StringRange.FromString(stringRange.Span[..MaxLineLength].ToString() + "...");
+        }
+
         foreach (var stringRange in newText)
         {
-            var lineWithPostfix = ApplyCollapsedPostfix(stringRange);
+            var lineWithPostfix = TrimVeryLongLine(ApplyCollapsedPostfix(stringRange));
+            
             list.Add(new GlyphLine(lineWithPostfix, glyphTypeFace, FontSize, pixelsPerDip, constraintWidth));
             lineIndex++;
         }
