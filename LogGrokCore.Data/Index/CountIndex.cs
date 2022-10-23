@@ -6,11 +6,11 @@ namespace LogGrokCore.Data.Index
    public class CountIndex<TIndex> where TIndex : IIndex<int>
     {
         public const int Granularity = 16384;
-        private ImmutableList<List<(IndexKey, int)>> _counts = ImmutableList<List<(IndexKey, int)>>.Empty;
-        private readonly IDictionary<IndexKey,TIndex> _indices;
+        private ImmutableList<List<(IndexKeyNum, int)>> _counts = ImmutableList<List<(IndexKeyNum, int)>>.Empty;
+        private readonly IDictionary<IndexKeyNum,TIndex> _indices;
         private bool _isFinished = false;
 
-        public IReadOnlyList<List<(IndexKey, int)>> Counts
+        public IReadOnlyList<List<(IndexKeyNum, int)>> Counts
         {
             get
             {
@@ -21,18 +21,18 @@ namespace LogGrokCore.Data.Index
             }
         }
 
-        public CountIndex(IDictionary<IndexKey, TIndex> indices)
+        public CountIndex(IDictionary<IndexKeyNum, TIndex> indices)
         {
             _indices = indices;
         }
 
-        public void Add(int currentIndex, IDictionary<IndexKey, TIndex> indices)
+        public void Add(int currentIndex, IDictionary<IndexKeyNum, TIndex> indices)
         {
             if (currentIndex % Granularity == 0 && currentIndex != 0)
                 UpdateCountsSnapshot();
         }
 
-        public void Finish(IDictionary<IndexKey, TIndex> indices)
+        public void Finish(IDictionary<IndexKeyNum, TIndex> indices)
         {
             UpdateCountsSnapshot();
             _isFinished = true;
@@ -43,9 +43,9 @@ namespace LogGrokCore.Data.Index
             _counts = _counts.Add(MakeCountsSnapshot());
         }
 
-        private List<(IndexKey, int)> MakeCountsSnapshot()
+        private List<(IndexKeyNum, int)> MakeCountsSnapshot()
         {
-            var snapshotList = new List<(IndexKey, int)>(_indices.Count);
+            var snapshotList = new List<(IndexKeyNum, int)>(_indices.Count);
             
 
 #pragma warning disable CS8619

@@ -6,87 +6,70 @@ using LogGrokCore.Data.IndexTree;
 
 namespace LogGrokCore.Data.Index;
 
-public class Indexer : IDisposable
+public class SubIndexer : IndexerBase
 {
-    private readonly ConcurrentDictionary<IndexKey, IndexTree<int, SimpleLeaf<int>>> _indices =
-        new(1, 16384);
+    public SubIndexer(
+        ConcurrentDictionary<IndexKey, IndexKeyNum> keysToNumbers, ConcurrentDictionary<IndexKeyNum, IndexKey> numbersToKeys) 
+        : base(keysToNumbers, numbersToKeys)
+    {
+    }
 
-    private readonly Func<IndexKey, IndexTree<int, SimpleLeaf<int>>> _indexValueFactory;
+    public void Add(IndexKeyNum keyNumber, int lineNumber)
+    {
+        var index = Indices.GetOrAdd(keyNumber, static _ => CreateIndexTree());
+            
+        index.Add(lineNumber);
+        CountIndex.Add(lineNumber, Indices);
+    }
+}
+
+public class Indexer : IndexerBase
+{
+    private readonly object _componentsLocker = new();
 
     private readonly ConcurrentDictionary<int, HashSet<IndexKey>> _components = new();
 
-    private readonly CountIndex<IndexTree<int, SimpleLeaf<int>>> _countIndex;
+    private readonly ChunkedList<IndexKeyNum> _lineAndKeyIndex = new(16384);
 
-    private readonly object _componentsLocker = new();
-
-    private readonly Dictionary<IndexKey, IndexKey> _keyDictionary = new();
-
-    private readonly IndexTree<LineAndKey, SimpleLeaf<LineAndKey>> _lineAndKeyIndex;
-
-    public Indexer()
+    private int _currentCount = 0;
+    public Indexer() 
+        : base(new ConcurrentDictionary<IndexKey, IndexKeyNum>(), 
+            new ConcurrentDictionary<IndexKeyNum, IndexKey>())
     {
-        _countIndex = new CountIndex<IndexTree<int, SimpleLeaf<int>>>(_indices);
-        _lineAndKeyIndex =
-            new IndexTree<LineAndKey, SimpleLeaf<LineAndKey>>(16384,
-                static value => new SimpleLeaf<LineAndKey>(value, 0));
-        _indexValueFactory = _ => CreateIndexTree();
+        _keyNumbersValueFactory =  KeyNumbersValueFactory;
     }
 
-    public IEnumerable<string> GetAllComponents(int componentNumber)
+    public SubIndexer CreateSubIndexer()
     {
-        if (!_components.TryGetValue(componentNumber, out var componentSet))
-            return Enumerable.Empty<string>();
-
-        lock (_componentsLocker)
-        {
-            return componentSet
-                .Select(key => key.GetComponent(componentNumber).ToString()).ToList();
-        }
+        return new SubIndexer(KeysToNumbers, NumbersToKeys);
     }
 
-    public IIndexedLinesProvider GetIndexedLinesProvider(
-        IReadOnlyDictionary<int, IEnumerable<string>> excludedComponents)
+    private IndexKeyNum KeyNumbersValueFactory(IndexKey indexKey)
     {
-        var updatableCounts =
-            UpdatableValue.Create(() => _countIndex.Counts);
-        return new IndexedLinesProvider(this, updatableCounts,
-            CountIndex<IndexTree<int, SimpleLeaf<int>>>.Granularity, excludedComponents);
+        indexKey.MakeLocalCopy();
+        _currentCount++;
+        return new IndexKeyNum { KeyNum = _currentCount };
     }
 
-    public IndexTree<int, SimpleLeaf<int>> GetIndex(IndexKey key) => _indices[key];
-
+    private readonly Func<IndexKey, IndexKeyNum> _keyNumbersValueFactory;
 
     public void Add(IndexKey key, int lineNumber)
     {
-        if (!_keyDictionary.TryGetValue(key, out var localKey))
-        {
-            key.MakeLocalCopy();
-            _keyDictionary[key] = key;
-            localKey = key;
-        }
+        var keyCount = _currentCount;
+        var keyNumber = KeysToNumbers.GetOrAdd(key, _keyNumbersValueFactory);
+        var haveNewKey = _currentCount > keyCount;
+        if (haveNewKey)
+            NumbersToKeys.TryAdd(keyNumber, key);
 
-        _lineAndKeyIndex.Add(new LineAndKey(lineNumber, localKey));
+        _lineAndKeyIndex.Add(keyNumber);
             
-        var index = _indices.GetOrAdd(localKey, static _ => CreateIndexTree());
+        var index = Indices.GetOrAdd(keyNumber, static _ => CreateIndexTree());
             
         index.Add(lineNumber);
-        _countIndex.Add(lineNumber, _indices);
+        CountIndex.Add(lineNumber, Indices);
 
-        var newIndexCreated = key.HasLocalBuffer;
-        if (newIndexCreated)
+        if (haveNewKey)
             UpdateComponents(key);
-
-            
-    }
-
-    public event Action<(int compnentNumber, IndexKey key)>? NewComponentAdded;
-
-    public int GetIndexCountForComponent(int componentIndex, string componentValue)
-    {
-        return _indices
-            .Where(keyValuePair =>
-                keyValuePair.Key.GetComponent(componentIndex).SequenceEqual(componentValue.AsSpan()))
-            .Sum(kv => kv.Value.Count);
     }
 
     private class ComponentComparer : IEqualityComparer<IndexKey>
@@ -101,7 +84,7 @@ public class Indexer : IDisposable
 
         public int GetHashCode(IndexKey obj) => string.GetHashCode(obj.GetComponent(_index));
     }
-
+    
     private void UpdateComponents(IndexKey key)
     {
         for (var componentIndex = 0; componentIndex < key.ComponentCount; componentIndex++)
@@ -120,45 +103,19 @@ public class Indexer : IDisposable
         }
     }
 
-    private static IndexTree<int, SimpleLeaf<int>> CreateIndexTree()
+    public IEnumerable<string> GetAllComponents(int componentNumber)
     {
-        return new(16,
-            static value => new SimpleLeaf<int>(value, 0));
-    }
+        if (!_components.TryGetValue(componentNumber, out var componentSet))
+            return Enumerable.Empty<string>();
 
-    public void Dispose()
-    {
-        _indices.Clear();
-    }
-
-    public void Finish()
-    {
-        _countIndex.Finish(_indices);
-    }
-
-    public readonly struct LineAndKey : IComparable<LineAndKey>
-    {
-        public readonly int LineNumber;
-        public readonly IndexKey Key;
-
-        public LineAndKey(int lineNumber, IndexKey key)
+        lock (_componentsLocker)
         {
-            LineNumber = lineNumber;
-            Key = key;
+            return componentSet
+                .Select(key => key.GetComponent(componentNumber).ToString()).ToList();
         }
-
-        public int CompareTo(LineAndKey other)
-        {
-            return LineNumber.CompareTo(other.LineNumber);
-        }
-
-        public void Deconstruct(out int lineAndNumber, out IndexKey indexKey)
-        {
-            lineAndNumber = LineNumber;
-            indexKey = Key;
-        }
-
     }
 
-    public IEnumerable<LineAndKey> GetIndexedSequenceFrom(int from) =>  _lineAndKeyIndex.GetEnumerableFromIndex(from); 
+    public event Action<(int compnentNumber, IndexKey key)>? NewComponentAdded;
+
+    public IndexKeyNum GetIndexKeyNum(int index) => _lineAndKeyIndex[index];
 }

@@ -49,14 +49,14 @@ public static class Search
         private bool _isFinished;
     }
 
-    public static (Progress, Indexer, SearchLineIndex) CreateSearchIndex(
+    public static (Progress, SubIndexer, SearchLineIndex) CreateSearchIndex(
         LogModelFacade logModelFacade,
         Regex regex,
         CancellationToken cancellationToken)
     {
         var sourceLineIndex = logModelFacade.LineIndex;
         SearchLineIndex lineIndex = new(sourceLineIndex); // searchResultLineNumber -> originalLogLineNumber mapping
-        var searchIndexer = new Indexer();                // components -> searchResultLineNumber
+        var searchIndexer = logModelFacade.Indexer.CreateSubIndexer(); // components -> searchResultLineNumber
         var progress = new Progress();
 
         var pipeline = new Pipeline(regex, logModelFacade);

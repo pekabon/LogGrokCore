@@ -6,24 +6,25 @@ namespace LogGrokCore.Data.Index
 {
     internal class IndexedLinesProvider : IIndexedLinesProvider
     {
-        private readonly Indexer _indexer;
-        private readonly FilteredCountIndicesProvider<IndexKey> _filteredCountIndicesProvider;
+        private readonly IndexerBase _indexer;
+        private readonly FilteredCountIndicesProvider<IndexKeyNum> _filteredCountIndicesProvider;
 
         public IndexedLinesProvider(
-            Indexer indexer, 
-            UpdatableValue<IReadOnlyList<List<(IndexKey, int)>>> countIndices,
+            IndexerBase indexer, 
+            UpdatableValue<IReadOnlyList<List<(IndexKeyNum, int)>>> countIndices,
             int countIndexGranularity,
-            IReadOnlyDictionary<int, IEnumerable<string>> excludedComponents)
+            IReadOnlyDictionary<int, IEnumerable<string>> excludedComponents,
+            IReadOnlyDictionary<IndexKeyNum, IndexKey> numbersToKeys)
         {
             _indexer = indexer;
 
-            bool IsKeyExcluded(IndexKey key)
+            bool IsKeyExcluded(IndexKeyNum keyNum)
             {
 #pragma warning disable CS8619
                 foreach (var (componentIndex, componentValues) in excludedComponents)
 #pragma warning restore CS8619
                 {
-                    var keyComponent = key.GetComponent(componentIndex);
+                    var keyComponent = numbersToKeys[keyNum].GetComponent(componentIndex);
                     foreach (var componentValue in componentValues)
                     {
                         if (keyComponent.SequenceEqual(componentValue))
@@ -34,9 +35,9 @@ namespace LogGrokCore.Data.Index
                 return false;
             }
 
-            Predicate<IndexKey> isKeyIncluded = key => !IsKeyExcluded(key);
+            Predicate<IndexKeyNum> isKeyIncluded = key => !IsKeyExcluded(key);
             _filteredCountIndicesProvider =
-                new FilteredCountIndicesProvider<IndexKey>(
+                new FilteredCountIndicesProvider<IndexKeyNum>(
                     isKeyIncluded, countIndices,
                     countIndexGranularity);
         }
@@ -65,7 +66,7 @@ namespace LogGrokCore.Data.Index
             return Count - 1;
         }
 
-        private IEnumerable<int> GetEnumerable(CountIndexItem<IndexKey> countIndicesItem)
+        private IEnumerable<int> GetEnumerable(CountIndexItem<IndexKeyNum> countIndicesItem)
         {
             var startIndices = 
                 countIndicesItem.Counts.ToDictionary(item => item.key, 

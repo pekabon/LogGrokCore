@@ -32,7 +32,7 @@ namespace LogGrokCore.Search
         private Regex? _highlightRegex;
         private readonly FilterSettings _filterSettings;
      
-        private Indexer? _currentSearchIndexer;
+        private SubIndexer? _currentSearchIndexer;
         private int? _currentItemIndex;
         private readonly LogModelFacade _logModelFacade;
         private SearchLineIndex? _currentSearchLineIndex;
@@ -175,7 +175,7 @@ namespace LogGrokCore.Search
         }
 
         private IReadOnlyList<ItemViewModel> GetLineCollection(
-            Indexer searchIndexer,          // components -> searchResultLineNumber
+            SubIndexer searchIndexer,          // components -> searchResultLineNumber
             SearchLineIndex searchLineIndex, // searchResultLineNumber -> originalLogLineNumber mapping
 
             IReadOnlyDictionary<int, IEnumerable<string>> exclusions)

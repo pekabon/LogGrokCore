@@ -41,7 +41,7 @@ public class Pipeline
     }
     
     public async Task StartSearch(
-        Indexer searchIndexer,
+        SubIndexer searchIndexer,
         SearchLineIndex lineIndex,
         Search.Progress progress,
         CancellationToken cancellationToken)
@@ -233,40 +233,34 @@ public class Pipeline
     
     private async Task ProcessSearchResultsWorker(SearchLineIndex lineIndex,
         Indexer sourceIndexer,
-        Indexer searchIndexer,
+        SubIndexer searchIndexer,
         ChannelReader<ValueTask<PooledList<int>>> searchResultsChannelReader,
         TaskCompletionSource taskCompletionSource,
         CancellationToken cancellationToken)
     {
         Trace("ProcessSearchResultsWorker started");
 
+        var lastIndex = -1;
         await foreach (var searchResult in searchResultsChannelReader.ReadAllAsync(cancellationToken))
         {
             using var result = await searchResult;
             if (result.Count == 0)
                 continue;
 
-            var sourceIndexedSequence = sourceIndexer.GetIndexedSequenceFrom(result[0]);
-            using var lineAndKeyEnumerator = sourceIndexedSequence.GetEnumerator();
-            var enumerateResult = lineAndKeyEnumerator.MoveNext();
-            Debug.Assert(enumerateResult);
-            var (lineNum, indexKey) = lineAndKeyEnumerator.Current;
-
+            
             foreach (var index in result)
             {
-                while (lineNum != index)
-                {
-                    enumerateResult = lineAndKeyEnumerator.MoveNext();
-                    Debug.Assert(enumerateResult);
-                    (lineNum, indexKey) = lineAndKeyEnumerator.Current;
-                }
+                if (index <= lastIndex)
+                    Console.Write("");
 
-                Debug.Assert(lineNum == index);
-
+                lastIndex = index;
+                
+                var indexKeyNum = sourceIndexer.GetIndexKeyNum(index);
                 var currentSearchResultLineNumber = lineIndex.Add(index);
-                searchIndexer.Add(indexKey, currentSearchResultLineNumber);
+                searchIndexer.Add(indexKeyNum, currentSearchResultLineNumber);
             }
         }
+        
         taskCompletionSource.SetResult();
         Trace("ProcessSearchResultsWorker finished");
     }
