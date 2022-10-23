@@ -7,19 +7,19 @@ namespace LogGrokCore.Data;
 
 public static class ChannelExtensions
 {
-    public static Task StartProducers<T>(this Channel<T> channel,
-        Func<ChannelWriter<T>, Task> producerFactory, int producerCount)
+    public static Task StartConsumers<T>(this Channel<T> channel,
+        Func<ChannelReader<T>, Task> producerFactory, int consumerCount)
     {
-        var aliveConsumers = producerCount;
+        var aliveConsumers = consumerCount;
         var taskCompletionSource = new TaskCompletionSource(); 
-        for (var i = 0; i < producerCount; i++)
+        for (var i = 0; i < consumerCount; i++)
         {
             _ = Task.Factory.StartNew(
                 async () =>
                 {
                     try
                     {
-                        await producerFactory(channel.Writer);
+                        await producerFactory(channel.Reader);
                     }
                     catch (OperationCanceledException)
                     {
@@ -28,7 +28,6 @@ public static class ChannelExtensions
                     {
                         if (Interlocked.Decrement(ref aliveConsumers) == 0)
                         {
-                            channel.Writer.Complete();
                             taskCompletionSource.SetResult();
                         }
                     }

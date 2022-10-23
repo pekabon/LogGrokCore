@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -39,6 +38,22 @@ public class Pipeline
 
         System.Diagnostics.Trace.TraceInformation($"Search({_regex}, {_id}): {message}");
     }
+
+    private async Task StartAsyncTask(Func<Task> action, CancellationToken cancellationToken,
+        [CallerArgumentExpression("action")] string actionExpression = "")
+    {
+        await Task.Factory.StartNew(async () =>
+        {
+            try
+            {
+                await action();
+            }
+            catch (OperationCanceledException)
+            {
+                Trace($"Operation canceled: {actionExpression}.");
+            }
+        } , cancellationToken);
+    }
     
     public async Task StartSearch(
         SubIndexer searchIndexer,
@@ -72,38 +87,33 @@ public class Pipeline
                 SingleReader = true
             });
 
-        
-        async Task StartAsyncTask(Func<Task> action,
-            [CallerArgumentExpression("action")] string actionExpression = "")
-        {
-            await Task.Factory.StartNew(async () =>
+        var searchTasksChannel = Channel.CreateBounded<(IMemoryOwner<byte> memory, int startLine, int EndLine, 
+            ValueTaskSource<PooledList<int>>)>(
+            new BoundedChannelOptions(Environment.ProcessorCount)
             {
-                try
-                {
-                    await action();
-                }
-                catch (OperationCanceledException)
-                {
-                    Trace($"Operation canceled: {actionExpression}.");
-                }
-            } , cancellationToken);
-        }
+                FullMode = BoundedChannelFullMode.Wait,
+                AllowSynchronousContinuations = true,
+                SingleWriter = true,
+                SingleReader = false
+            });
+
 
         var processSearchResultsCompletionSource = new TaskCompletionSource();
         var workers = new List<Task>
         {
-            StartAsyncTask(() => LoadBuffersWorker(_logModelFacade, progress, buffersChannel.Writer, cancellationToken)),
+            StartAsyncTask(() => LoadBuffersWorker(_logModelFacade, progress, buffersChannel.Writer, cancellationToken),
+                cancellationToken),
             StartAsyncTask(() => ProcessSearchResultsWorker(lineIndex, 
                  sourceIndexer, searchIndexer, searchResultsChannel.Reader, 
-                 processSearchResultsCompletionSource, cancellationToken))
-
+                 processSearchResultsCompletionSource, cancellationToken), cancellationToken),
+            StartAsyncTask(() => SearchInBufferTaskGenerator(
+                buffersChannel.Reader, searchResultsChannel.Writer, searchTasksChannel.Writer, cancellationToken), cancellationToken)
         };
-        
-        var searchInBufferCompletion = searchResultsChannel.StartProducers(channelWriter =>
-            SearchInBufferWorker(_regex, sourceLineIndex, encoding,
-                buffersChannel.Reader, channelWriter, cancellationToken), _searchWorkersCount);
 
-        await searchInBufferCompletion;
+        await searchTasksChannel.StartConsumers(async reader =>
+            await SearchInBufferWorker(_regex, sourceLineIndex, encoding, reader, cancellationToken),
+            Environment.ProcessorCount);
+        
         await Task.WhenAll(workers.ToArray());
         await processSearchResultsCompletionSource.Task;
         Trace($"Search finished, spent: {DateTime.Now-timestamp}");
@@ -145,17 +155,18 @@ public class Pipeline
         buffersQueue.Complete();
         Trace("LoadBuffersWorker finished, buffersChannel completed");
     }
-    
-    private async Task SearchInBufferWorker(
-        Regex regex, LineIndex lineIndex, Encoding encoding,
-        ChannelReader<(IMemoryOwner<byte> memory, int startLine, int EndLine)> buffersReader,
-        ChannelWriter<ValueTask<PooledList<int>>> resultChannelWriter,
+
+    private async Task SearchInBufferWorker(Regex regex, LineIndex lineIndex, Encoding encoding,
+        ChannelReader<(IMemoryOwner<byte> memory, int startLine, int EndLine, ValueTaskSource<PooledList<int>>)>
+            searchTasksChannelReader,
         CancellationToken cancellationToken)
     {
         Trace("SearchInBufferWorker started");
-        var stringBuffer = _stringPool.Rent(2048);
         var counter = 0;
-        await foreach(var (memory, startLine, endLine) in buffersReader.ReadAllAsync(cancellationToken))
+        var stringBuffer = _stringPool.Rent(2048);
+
+        await foreach (var (memory, startLine, endLine, resultTaskSource) in searchTasksChannelReader.ReadAllAsync(
+                           cancellationToken))
         {
             if (counter == 0)
             {
@@ -163,20 +174,34 @@ public class Pipeline
             }
 
             counter++;
-            var source = new ValueTaskSource<PooledList<int>>();
-            var resultTask = new ValueTask<PooledList<int>>(source, 0);
-            await resultChannelWriter.WriteAsync(resultTask, cancellationToken);
             var result = SearchInBufferRegex(regex, memory.Memory, startLine, endLine,
                 lineIndex, encoding, ref stringBuffer, cancellationToken);
+
             memory.Dispose();
-            source.SetResult(result);            
+            resultTaskSource.SetResult(result);
         }
-        
         _stringPool.Return(stringBuffer);
         Trace($"SearchInBufferWorker finished, processed {counter} chunks of data");
     }
-    
-    PooledList<int> SearchInBufferRegex(Regex regex, Memory<byte> memory, int start, int end, 
+    private async Task SearchInBufferTaskGenerator(
+        ChannelReader<(IMemoryOwner<byte> memory, int startLine, int EndLine)> buffersReader,
+        ChannelWriter<ValueTask<PooledList<int>>> resultChannelWriter,
+        ChannelWriter<(IMemoryOwner<byte> memory, int startLine, int EndLine, ValueTaskSource<PooledList<int>>)> searchTasksChannelWriter,
+        CancellationToken cancellationToken)
+    {
+        await foreach(var (memory, startLine, endLine) in buffersReader.ReadAllAsync(cancellationToken))
+        {
+            var source = new ValueTaskSource<PooledList<int>>();
+            var resultTask = new ValueTask<PooledList<int>>(source, 0);
+            await resultChannelWriter.WriteAsync(resultTask, cancellationToken);
+            await searchTasksChannelWriter.WriteAsync((memory, startLine, endLine, source), cancellationToken);
+        }
+
+        searchTasksChannelWriter.Complete();
+        resultChannelWriter.Complete();
+    }
+
+    private PooledList<int> SearchInBufferRegex(Regex regex, Memory<byte> memory, int start, int end, 
         LineIndex lineIndex, Encoding encoding, ref string stringBuffer, CancellationToken cancellationToken)
     {
         var result = new PooledList<int>();
@@ -228,6 +253,7 @@ public class Pipeline
             (currentLineOffset, currentLineLength) = offsets[index - start];
                     
         } while (!cancellationToken.IsCancellationRequested);
+        
         return result;
     }
     
@@ -240,21 +266,14 @@ public class Pipeline
     {
         Trace("ProcessSearchResultsWorker started");
 
-        var lastIndex = -1;
         await foreach (var searchResult in searchResultsChannelReader.ReadAllAsync(cancellationToken))
         {
             using var result = await searchResult;
             if (result.Count == 0)
                 continue;
-
             
             foreach (var index in result)
             {
-                if (index <= lastIndex)
-                    Console.Write("");
-
-                lastIndex = index;
-                
                 var indexKeyNum = sourceIndexer.GetIndexKeyNum(index);
                 var currentSearchResultLineNumber = lineIndex.Add(index);
                 searchIndexer.Add(indexKeyNum, currentSearchResultLineNumber);
