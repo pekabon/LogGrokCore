@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>NU1605, CS8604, CS8625,  CS8602, CS8618, CS8601, CS8603, CS8614, CS8600, CS8610</WarningsAsErrors>
     <IsPackable>false</IsPackable>
+    <TargetFrameworks>net7.0-windows</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>

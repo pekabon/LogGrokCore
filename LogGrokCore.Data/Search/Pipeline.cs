@@ -217,9 +217,7 @@ public class Pipeline
                 }
             }
 
-            // TODO: there is no regex.IsMatch function that accepts string length
-            // get rid of regex.Match 
-            if (regex.Match(stringBuffer, 0, stringLength).Success)
+            if (regex.IsMatch(stringBuffer.AsSpan()[..stringLength]))
             {
                 result.Add(index);
             }
