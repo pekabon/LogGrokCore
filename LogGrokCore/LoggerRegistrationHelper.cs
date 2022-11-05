@@ -17,7 +17,8 @@ namespace LogGrokCore
 
         public static void Register(Container container)
         {
-            container.UseInstance(LoggerProvider);
+            
+            container.RegisterInstance(LoggerProvider);
             container.Register(Made.Of(
                 r => ServiceInfo.Of<NLogLoggerProvider>(),
                 (NLogLoggerProvider f) => f.CreateLogger(Arg.Index<string>(0)),

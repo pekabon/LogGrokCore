@@ -6,7 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Markup;
-using ImTools;
+using DryIoc.ImTools;
 using LogGrokCore.Data;
 
 namespace LogGrokCore.Controls
