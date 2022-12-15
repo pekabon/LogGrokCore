@@ -198,7 +198,7 @@ namespace LogGrokCore
         private async void UpdateFilteredCollection()
         {
             var currentItemIndex = CurrentItemIndex;
-            var item = Lines[currentItemIndex];
+            var item = currentItemIndex > 0 && currentItemIndex < Lines.Count ? Lines[currentItemIndex] : null;
             var originalLineIndex = (item as LineViewModel)?.Index;
 
             var exclusionsCopy = _filterSettings.Exclusions.ToDictionary(kv 
