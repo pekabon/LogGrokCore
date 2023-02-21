@@ -28,9 +28,14 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
             {
                 if (ItemsControl.GetItemsOwner(this)?.ItemsSource is not IGrowingCollection newItems ||
                     currentItems == newItems) return;
-                
+
                 currentItems = newItems;
                 currentItems.CollectionGrown += _ => InvalidateMeasure();
+                currentItems.SourceChanged += () =>
+                {
+                    _selection.Clear();
+                    InvalidateMeasure();
+                };
             }
 
             Loaded += (_, _) =>

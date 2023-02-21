@@ -10,6 +10,8 @@ namespace LogGrokCore
     public interface IGrowingCollection
     {
         public event Action<int> CollectionGrown;
+        
+        public event Action SourceChanged;
     }
 
     public class GrowingLogLinesCollection: IList<ItemViewModel>, IList, INotifyCollectionChanged, INotifyPropertyChanged, IGrowingCollection
@@ -36,6 +38,7 @@ namespace LogGrokCore
         {
             _sourceCollection = sourceCollection;
             _headerCollection = headerCollection;
+            SourceChanged?.Invoke();
             UpdateCount();
         }
         
@@ -136,5 +139,7 @@ namespace LogGrokCore
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         
         public event Action<int>? CollectionGrown;
+
+        public event Action? SourceChanged;
     }
 }
