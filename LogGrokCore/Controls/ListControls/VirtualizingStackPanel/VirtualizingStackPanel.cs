@@ -6,7 +6,9 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Media;
+using MahApps.Metro.Controls;
 
 namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
 {
@@ -40,6 +42,9 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
 
             Loaded += (_, _) =>
             {
+                if (GetIsVirtualizingWhenGrouping(this))
+                    throw new NotSupportedException("VirtualizingWhenGrouping is not supported");
+
                 // ReSharper disable once UnusedVariable
                 var necessaryChildrenTouch = Children;
                 var itemContainerGenerator = (ItemContainerGenerator) ItemContainerGenerator;
@@ -62,7 +67,7 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
 
             _selection.Changed += () =>
             {
-                ListView.UpdateReadonlySelectedItems(_selection);
+                ListView.UpdateReadonlySelectedItems();
                 SelectionChanged?.Invoke();
             };
         }
@@ -193,7 +198,14 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
             return (newItems, oldItems.ToList());
         }
 
-        private IList Items => ItemsControl.GetItemsOwner(this)?.Items ?? (IList)new ArrayList();
+        private IList Items =>
+            ItemsControl.GetItemsOwner(this) switch
+            {
+                null => new ArrayList(),
+                { IsGrouping: true } when this.TryFindParent<GroupItem>() is
+                    { Content: CollectionViewGroup group } => group.Items,
+                { Items: { } items } => items
+            };
 
         private void InsertAndMeasureItem(ListViewItem item, int itemIndex, bool isNewElement)
         {

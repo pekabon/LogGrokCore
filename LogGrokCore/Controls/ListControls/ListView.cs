@@ -47,23 +47,20 @@ namespace LogGrokCore.Controls.ListControls
             CommandBindings.Add(new CommandBinding(RoutedCommands.ToggleMarks,
                 (_, args) =>
                 {
-                    RoutedCommands.ToggleMarksHandler(GetSelectedIndices().Select(i => Items[i]).OfType<ILineMark>());
+                    RoutedCommands.ToggleMarksHandler(GetSelectedItems().OfType<ILineMark>());
                     args.Handled = true;
                 },
                 (_, args) =>
                 {
-                    args.CanExecute = GetSelectedIndices().Any();
+                    args.CanExecute = GetSelectedItems().Any();
                     args.Handled = true;
                 }));
             ScheduleResetColumnsWidth();
         }
 
-        public void UpdateReadonlySelectedItems(IEnumerable<int> selectedIndices)
+        public void UpdateReadonlySelectedItems()
         {
-            ReadonlySelectedItems =
-                selectedIndices
-                    .Where(index => index < Items.Count && index >= 0)
-                    .Select(index => Items[index]).ToList();
+            ReadonlySelectedItems = GetSelectedItems();
         }
 
         public void PrepareItemContainer(ListViewItem container, object item)
@@ -92,23 +89,6 @@ namespace LogGrokCore.Controls.ListControls
             GetPanel()?.BringIndexIntoViewPublic(lineNumber);
         }
 
-        protected override void OnKeyDown(KeyEventArgs e)
-        {
-            if (GetPanel()?.ProcessKeyDown(e.Key) == true)
-                e.Handled = true;
-            else 
-                base.OnKeyDown(e);
-        }
-
-        protected override void OnMouseDown(MouseButtonEventArgs e)
-        {
-            if (GetPanel()?.ProcessMouseDown(e.ChangedButton) == true)
-            {
-                e.Handled = true;
-            }
-            
-            base.OnMouseDown(e);
-        }
         protected override void OnItemsChanged(NotifyCollectionChangedEventArgs e)
         {
             base.OnItemsChanged(e);
@@ -147,7 +127,8 @@ namespace LogGrokCore.Controls.ListControls
             ScheduleRemeasure(0);
         }
         
-        protected override IEnumerable<int> GetSelectedIndices() => GetPanel()?.SelectedIndices ?? Enumerable.Empty<int>();
+        protected override IEnumerable<object?> GetSelectedItems() => 
+            GetPanels().SelectMany(p => p.SelectedItems).ToList();
 
         protected override void OnTextInput(TextCompositionEventArgs e)
         {
@@ -268,5 +249,8 @@ namespace LogGrokCore.Controls.ListControls
             _panel ??= this.GetVisualChildren<VirtualizingStackPanel.VirtualizingStackPanel>().FirstOrDefault();
             return _panel;
         }
+
+        private IEnumerable<VirtualizingStackPanel.VirtualizingStackPanel> GetPanels() => 
+            this.GetVisualChildren<VirtualizingStackPanel.VirtualizingStackPanel>();
     }
 }

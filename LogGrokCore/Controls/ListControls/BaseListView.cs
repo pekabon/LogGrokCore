@@ -19,23 +19,21 @@ namespace LogGrokCore.Controls.ListControls
                 },
                 (_, args) =>
                 {
-                    args.CanExecute = GetSelectedIndices().Any();
+                    args.CanExecute = GetSelectedItems().Any();
                     args.Handled = true;
                 }));
         }
                
         private void CopySelectedItemsToClipboard()
         {
-            var indices = GetSelectedIndices();
-            
-            var items =  
-                indices
-                    .OrderBy(i => i)
-                    .Select(i => Items[i]);
+            var items = GetSelectedItems();
             
             var  text = new StringBuilder();
             foreach (var line in items)
             {
+                if (line == null)
+                    continue;
+                
                 _ = text.Append(line.ToString()?.TrimEnd());
                 _ = text.Append("\r\n");
             }
@@ -44,6 +42,6 @@ namespace LogGrokCore.Controls.ListControls
             TextCopy.ClipboardService.SetText(text.ToString());
         }
 
-        protected abstract IEnumerable<int> GetSelectedIndices();
+        protected abstract IEnumerable<object?> GetSelectedItems();
     }
 }

@@ -38,7 +38,11 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
             {
                  SetIsCurrentItem(visibleItem.Element, visibleItem.Index == newValue);
             }
-            panel.ListView.Items.MoveCurrentToPosition(newValue);
+
+            if (panel.ListView.IsGrouping)
+                panel.ListView.Items.MoveCurrentTo(panel.Items[newValue]);
+            else
+                panel.ListView.Items.MoveCurrentToPosition(newValue);
         }
 
         public int CurrentPosition
@@ -50,11 +54,23 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
         private readonly Selection _selection = new();
         private ScrollContentPresenter? _scrollContentPresenter;
 
-        public IEnumerable<int> SelectedIndices => _selection;
+        public IEnumerable<object?> SelectedItems => 
+            _selection.OrderBy(i => i).Select(i => Items[i]);
 
         public event Action? SelectionChanged;
         
-        public bool ProcessKeyDown(Key key)
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            if (ProcessKeyDown(e.Key))
+            {
+                e.Handled = true;
+                return;
+            }
+
+            base.OnKeyDown(e);
+        }
+        
+        private bool ProcessKeyDown(Key key)
         {
             switch (key)
             {
@@ -84,7 +100,18 @@ namespace LogGrokCore.Controls.ListControls.VirtualizingStackPanel
             return true;
         }
 
-        public bool ProcessMouseDown(MouseButton changedButton)
+        protected override void OnMouseDown(MouseButtonEventArgs e)
+        {
+            if (ProcessMouseDown(e.ChangedButton))
+            {
+                e.Handled = true;
+                return;
+            }
+            
+            base.OnMouseDown(e);
+        }
+
+        private bool ProcessMouseDown(MouseButton changedButton)
         {
             var item = GetItemUnderMouse();
             var suitableVisibleItems = _visibleItems.Where(i => i.Element == item).ToList();

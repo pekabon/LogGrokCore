@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Media;
 using AvalonDock.Controls;
+using MahApps.Metro.Controls;
 
 namespace LogGrokCore.Controls
 {
@@ -12,7 +13,7 @@ namespace LogGrokCore.Controls
             for (var i = 0; i< VisualTreeHelper.GetChildrenCount(obj); i++)
                 yield return VisualTreeHelper.GetChild(obj, i);
         }
-
+        
         public static IEnumerable<T> GetVisualChildren<T> (this DependencyObject obj) 
             where T : DependencyObject
         {

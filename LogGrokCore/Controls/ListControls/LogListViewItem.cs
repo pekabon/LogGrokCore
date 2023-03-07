@@ -25,5 +25,11 @@ namespace LogGrokCore.Controls.ListControls
             if (!ReferenceEquals(focusedElement, this))
                 Focus();
         }
+
+        public override string ToString()
+        {
+            return Content?.ToString() ?? "<Empty>";
+        }
+
     }
 }

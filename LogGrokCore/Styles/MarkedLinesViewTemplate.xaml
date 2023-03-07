@@ -7,6 +7,7 @@
                     xmlns:colors="clr-namespace:LogGrokCore.Colors"
                     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
                     xmlns:listControls="clr-namespace:LogGrokCore.Controls.ListControls"
+                    xmlns:panel="clr-namespace:LogGrokCore.Controls.ListControls.VirtualizingStackPanel"
                     xmlns:textRender="clr-namespace:LogGrokCore.Controls.TextRender"
                     mc:Ignorable="d">
     <ResourceDictionary.MergedDictionaries>
@@ -33,13 +34,11 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <listControls:MarkedLinesListView
+            <listControls:ListView
                 SelectionMode="Extended"
                 Grid.Row="1" ItemsSource="{Binding MarkedLines}"
                 ItemContainerStyle="{StaticResource MarkedLinesItemContainerStyle}"
                 FontFamily="{StaticResource JetBrainsMono}"
-                VirtualizingStackPanel.IsVirtualizing="True"
-                VirtualizingStackPanel.VirtualizationMode="Recycling"
                 IsSynchronizedWithCurrentItem="True"
                 ReadonlySelectedItems="{Binding SelectedItems, Mode=OneWayToSource}"
                 listControls:BaseLogListViewItem.OnItemActivatedCommand="{Binding ItemActivatedCommand}"
@@ -48,14 +47,14 @@
                 <textRender:TextView.SharedFoldingState>
                     <textRender:TextViewSharedFoldingState/>
                 </textRender:TextView.SharedFoldingState>
-                <listControls:MarkedLinesListView.ItemsPanel>
+                <listControls:ListView.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <VirtualizingStackPanel
+                        <panel:VirtualizingStackPanel
                             Tag="{Binding
-                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:MarkedLinesListView}}}"
+                                RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type listControls:ListView}}}"
                             ContextMenu="{StaticResource LogViewContextMenu}" />
                     </ItemsPanelTemplate>
-                </listControls:MarkedLinesListView.ItemsPanel>
+                </listControls:ListView.ItemsPanel>
                 <ListView.View>
                     <GridView>
                         <GridViewColumn>
@@ -106,7 +105,7 @@
                                                             FontWeight="Bold"
                                                             VerticalAlignment="Center" />
                                                         <Button
-                                                            Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type listControls:MarkedLinesListView}},
+                                                            Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type listControls:ListView}},
                                                                     Path=DataContext.CopyLinesCommand}"
                                                             CommandParameter="{Binding Name}"
                                                             Margin="10, 0, 0, 0"
@@ -131,7 +130,7 @@
                         </GroupStyle.ContainerStyle>
                     </GroupStyle>
                 </ListView.GroupStyle>
-            </listControls:MarkedLinesListView>
+            </listControls:ListView>
         </Grid>
     </DataTemplate>
 </ResourceDictionary>
