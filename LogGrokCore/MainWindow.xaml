@@ -81,6 +81,7 @@
                                   avalonDockExtensions:BindingBehavior.CurrentDocument="{Binding CurrentDocument}"
                                   avalonDockExtensions:BindingBehavior.DocumentViewTemplate="{StaticResource DocumentTemplate}"
                                   avalonDockExtensions:BindingBehavior.DocumentsSource="{Binding Documents}"
+                                  avalonDockExtensions:BindingBehavior.OnDocumentCloseCommand="{Binding OnDocumentCloseCommand}"
                                   avalonDockExtensions:DocumentContextMenu.AdditionalContextMenuItems="{StaticResource AdditionalDocumentMenuItems}">
             <DockingManager.LayoutItemContainerStyle>
                 <Style TargetType="{x:Type LayoutItem}">
