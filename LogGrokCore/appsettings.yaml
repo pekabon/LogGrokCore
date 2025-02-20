@@ -1,5 +1,9 @@
 Settings:
-  EnableCrashDumps: true
+  DebugSettings:
+    # Restart required after changing debug settings
+    EnableCrashDumps: false
+    MaxDumpsCount: 10
+
   ColorSettings:
     # Find list of supported values for Color here https://docs.microsoft.com/ru-ru/dotnet/api/system.drawing.color?view=net-6.0
     # or use "#AARRGGBB" notation
