@@ -1,4 +1,5 @@
 Settings:
+  EnableCrashDumps: true
   ColorSettings:
     # Find list of supported values for Color here https://docs.microsoft.com/ru-ru/dotnet/api/system.drawing.color?view=net-6.0
     # or use "#AARRGGBB" notation
