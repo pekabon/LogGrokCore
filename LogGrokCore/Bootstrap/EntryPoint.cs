@@ -105,7 +105,7 @@ namespace LogGrokCore.Bootstrap
             key.SetValue("DumpType", 2, RegistryValueKind.DWord);
         }
 
-        private static void StartElevatedInstanceWithParam(string type)
+        private static void StartElevatedInstanceWithParam(string argsToInstance)
         {
             var processPath = Environment.ProcessPath;
             if (processPath == null)
@@ -114,7 +114,7 @@ namespace LogGrokCore.Bootstrap
             var info = new ProcessStartInfo(processPath)
             {
                 UseShellExecute = true,
-                Arguments = type,
+                Arguments = argsToInstance,
                 Verb = "runas"
             };
 
