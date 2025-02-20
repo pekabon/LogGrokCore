@@ -17,6 +17,7 @@ namespace LogGrokCore
         private bool _isCurrentDocument;
         private readonly LineProvider _lineProvider;
         private readonly TransformationPerformer _transformationPerformer;
+        private Stream _fileHolder;
 
         public DocumentViewModel(
             LineProvider lineProvider,
@@ -44,7 +45,8 @@ namespace LogGrokCore
             _transformationPerformer = transformationPerformer;
             _lineProvider = lineProvider;
             _markedLines.Changed += () => MarkedLinesChanged?.Invoke();
-            
+            _fileHolder = logModelFacade.LogFile.Open();
+
             CopyPathToClipboardCommand =
                 new DelegateCommand(() => TextCopy.ClipboardService.SetText(logFileFilePath));
             OpenContainingFolderCommand = new DelegateCommand(() => OpenContainingFolder(logFileFilePath));
@@ -106,6 +108,11 @@ namespace LogGrokCore
                 : $"/select, {Directory.GetParent(filePath)?.FullName}";
 
             _ = Process.Start("explorer.exe", cmdLine);
+        }
+
+        public void CloseFile()
+        {
+            _fileHolder.Dispose();
         }
     }
 }

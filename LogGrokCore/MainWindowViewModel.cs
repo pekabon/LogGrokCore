@@ -26,7 +26,12 @@ namespace LogGrokCore
         public MarkedLinesViewModel MarkedLinesViewModel { get; }
         
         public ICommand OpenFileCommand => new DelegateCommand(OpenFile);
-        
+
+        public ICommand OnDocumentCloseCommand => DelegateCommand.Create((DocumentViewModel document) =>
+        {
+            document.CloseFile();
+        });
+
         public ICommand DropCommand => new DelegateCommand(
             obj=> OpenFiles((IEnumerable<string>)obj), 
             o => o is IEnumerable<string>);
