@@ -2,57 +2,110 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
+using DryIoc;
 using Microsoft.Win32;
+using Microsoft.Xaml.Behaviors.Media;
 
 namespace LogGrokCore.Bootstrap
 {
     static class EntryPoint
     {
-        private const string SetupWerOnly = "SetupWerOnly";
-        
+        private const string EnableWerOnly = "EnableWerOnly";
+        private const string DisableWerOnly = "DisableWerOnly";
+        private static string LogGrokErrorReportingKeyPath = $@"SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\{Path.GetFileName(Environment.ProcessPath)}";
+
         [STAThread]
         public static void Main(string[] args)
         {
-            try
-            {
-                SetupWindowsErrorReporting();
-            }
-            catch (UnauthorizedAccessException)
-            {
-                if (args.FirstOrDefault() == SetupWerOnly)
-                    return;
+            var command = args.SingleOrDefault();
 
-                StartElevatedInstanceToSetupWer();
-            }
+            ConfigureErrorReporting(command);
 
-            if (args.SingleOrDefault() == SetupWerOnly)
+            if (IsNeedStopExecution(command))
                 return;
-            
+
             var fullPaths = args.Select(Path.GetFullPath).ToArray();
             var manager = new SingleInstanceManager();
             manager.Run(fullPaths);
         }
 
-        private static void SetupWindowsErrorReporting()
+        private static bool IsNeedStopExecution(string? command)
         {
-            var executableName = Path.GetFileName(Environment.ProcessPath);
-            var keyName = $@"SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\{executableName}";
-            var existingKey = Registry.LocalMachine.OpenSubKey(keyName);
-            
-            if (existingKey != null)
-            {
-                return;
-            }
+            return command == EnableWerOnly || command == DisableWerOnly;
+        }
 
-            var key = Registry.LocalMachine.CreateSubKey(keyName);
+        private static void EvaluateIfNeed(Action func, string arguemntToEvaluatedProcess, string? currentCommand)
+        {
+            try
+            {
+                func();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                if (IsNeedStopExecution(currentCommand))
+                    return;
+
+                StartElevatedInstanceWithParam(arguemntToEvaluatedProcess);
+            }
+        }
+
+        private static void ConfigureErrorReporting(string? command)
+        {
+            var isErrorReportingEnabled = IsErrorReportingEnabled();
+            var isCrashDumpsEnabled = ApplicationSettings.Instance().DebugSettings.EnableCrashDumps;
+            var isErrorReportingSettingsWasChanged = IsErrorReportingSettingsWasChanged();
+
+            var isNeedEnableWer = (isCrashDumpsEnabled && !isErrorReportingEnabled) || command == EnableWerOnly || isErrorReportingSettingsWasChanged;
+            var isNeedDisableWer = (!isCrashDumpsEnabled && isErrorReportingEnabled) || command == DisableWerOnly;
+
+            if (isNeedEnableWer)
+            {
+                EvaluateIfNeed(EnableErrorReporting, EnableWerOnly, command);
+            }
+            else if (isNeedDisableWer)
+            {
+                EvaluateIfNeed(DisableErrorReporting, DisableWerOnly, command);
+            }
+        }
+
+        private static bool IsErrorReportingSettingsWasChanged()
+        {
+            var key = Registry.LocalMachine.OpenSubKey(LogGrokErrorReportingKeyPath);
+
+            if (key == null) 
+                return false;
+
+            var maxDumpsCount = ApplicationSettings.Instance().DebugSettings.MaxDumpsCount;
+
+            return (int)key.GetValue("DumpCount", -1) != maxDumpsCount;
+        }
+
+        private static bool IsErrorReportingEnabled()
+        {
+            var key = Registry.LocalMachine.OpenSubKey(LogGrokErrorReportingKeyPath);
+            return key != null;
+        }
+
+        private static void DisableErrorReporting()
+        {
+            Registry.LocalMachine.DeleteSubKey(LogGrokErrorReportingKeyPath);
+        }
+
+        private static void EnableErrorReporting()
+        {
+
+            var key = Registry.LocalMachine.CreateSubKey(LogGrokErrorReportingKeyPath);
             key.SetValue("DumpFolder",
                 HomeDirectoryPathProvider.GetDirectoryFullPath("Dumps"),
                 RegistryValueKind.ExpandString);
-            key.SetValue("DumpCount", 10, RegistryValueKind.DWord);
+
+            var maxDumpsCount = ApplicationSettings.Instance().DebugSettings.MaxDumpsCount;
+            key.SetValue("DumpCount", maxDumpsCount, RegistryValueKind.DWord);
             key.SetValue("DumpType", 2, RegistryValueKind.DWord);
         }
-        
-        private static void StartElevatedInstanceToSetupWer()
+
+        private static void StartElevatedInstanceWithParam(string argsToInstance)
         {
             var processPath = Environment.ProcessPath;
             if (processPath == null)
@@ -61,7 +114,7 @@ namespace LogGrokCore.Bootstrap
             var info = new ProcessStartInfo(processPath)
             {
                 UseShellExecute = true,
-                Arguments = SetupWerOnly,
+                Arguments = argsToInstance,
                 Verb = "runas"
             };
 

@@ -13,7 +13,9 @@ namespace LogGrokCore
         private static ApplicationSettings? instance;
 
         public static string SettingsFileName => PathHelpers.GetLocalFilePath("appsettings.yaml");
-        
+
+        public DebugSettings DebugSettings { get; set; } = new();
+
         public ColorSettings ColorSettings { get; private set; } = new();
 
         public ViewSettings ViewSettings { get; private set; } = new();
@@ -46,10 +48,10 @@ namespace LogGrokCore
                 .AddYamlFile(SettingsFileName, true, true);
 
             var settings = new ApplicationSettings();
-            
+
             var configuration = builder.Build();
             configuration.GetSection("Settings").Bind(settings);
-            
+
             ChangeToken.OnChange(() => configuration.GetReloadToken(), () =>
             {
                 var newSettings = new ApplicationSettings();
@@ -57,7 +59,7 @@ namespace LogGrokCore
                 settings.ColorSettings = newSettings.ColorSettings;
                 settings.LogFormats = newSettings.LogFormats;
             });
-            
+
             return settings;
         }
 
