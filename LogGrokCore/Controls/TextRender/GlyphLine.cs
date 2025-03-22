@@ -37,9 +37,9 @@ public class GlyphLine : IDisposable
             if (!(relativeHorizontalPosition <= currentOffset)) continue;
             if (relativeHorizontalPosition + currentCharWidth / 2.0 < currentOffset)
                 return i;
-            return i + 1;
+            return i < _advanceWidthForChar.Count - 1 ? i + 1 : i;
         }
-        return _advanceWidthForChar.Count;
+        return _advanceWidthForChar.Count - 1;
     }
 
     public Rect GetTextBounds(Point startPoint, int firstTextSourceCharacterIndex, int textLength)
