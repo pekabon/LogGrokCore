@@ -28,6 +28,7 @@
             <th:MetroTheme x:Key="MetroTheme" />
             <localControls:StringShortenerConvereter x:Key="StringShortenerConverter" />
             <avalonDockExtensions:MenuItemCollection x:Key="AdditionalDocumentMenuItems">
+                <MenuItem Header="Copy Filename" Command="{Binding Model.Content.CopyFilenameToClipboardCommand}" />
                 <MenuItem Header="Copy Full Path" Command="{Binding Model.Content.CopyPathToClipboardCommand}" />
                 <MenuItem Header="Open Containing Folder" Command="{Binding Model.Content.OpenContainingFolderCommand}" />
             </avalonDockExtensions:MenuItemCollection>
