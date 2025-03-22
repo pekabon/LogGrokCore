@@ -323,6 +323,9 @@ public class TextControl : Control
             left--;
         }
 
+        if (position >= span.Length)
+            return (left, span.Length - left);
+
         var right = position;
         while (right < span.Length - 1 && IsWordPart(span[right + 1]))
         {
